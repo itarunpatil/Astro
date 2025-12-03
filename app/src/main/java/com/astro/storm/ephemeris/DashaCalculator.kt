@@ -11,6 +11,7 @@ import java.time.temporal.ChronoUnit
  * Days per year for dasha calculations.
  */
 private const val DAYS_PER_YEAR = 365.25
+private const val NAKSHATRA_SPAN = 360.0 / 27.0
 
 /**
  * Convert years to days with proper rounding to avoid cumulative precision loss.
@@ -80,7 +81,6 @@ object DashaCalculator {
      */
     private const val TOTAL_CYCLE_YEARS = 120.0
 
-private const val NAKSHATRA_SPAN = 360.0 / 27.0
 /**
  * Mahadasha period
      */
