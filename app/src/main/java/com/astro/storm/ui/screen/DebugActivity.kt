@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.astro.storm.MainActivity
+import com.astro.storm.ui.theme.AstroStormTheme
 import com.astro.storm.ui.theme.AppTheme
 
 class DebugActivity : ComponentActivity() {
@@ -32,21 +33,22 @@ class DebugActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val stackTrace = intent.getStringExtra(EXTRA_STACK_TRACE) ?: "No stack trace available."
+        val activity = this
 
         setContent {
-            AppTheme {
+            AstroStormTheme {
                 DebugScreen(
                     stackTrace = stackTrace,
                     onCopy = {
-                        val clipboard = this@DebugActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clipboard = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("Crash Log", stackTrace)
                         clipboard.setPrimaryClip(clip)
                     },
                     onRestart = {
-                        val intent = Intent(this@DebugActivity, MainActivity::class.java)
+                        val intent = Intent(activity, MainActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        this@DebugActivity.startActivity(intent)
-                        this@DebugActivity.finish()
+                        activity.startActivity(intent)
+                        activity.finish()
                     }
                 )
             }
