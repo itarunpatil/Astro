@@ -1,6 +1,7 @@
 package com.astro.storm.ephemeris
 
 import com.astro.storm.data.model.*
+import com.astro.storm.util.AstrologicalUtils.normalizeLongitude
 
 /**
  * High-precision Divisional Chart (Varga) Calculator
@@ -25,6 +26,9 @@ import com.astro.storm.data.model.*
  *
  * The formulas used are based on Parashari principles from BPHS (Brihat Parasara Hora Shastra)
  */
+private const val DEGREES_IN_SIGN = 30.0
+private const val DEGREES_IN_CIRCLE = 360.0
+
 object DivisionalChartCalculator {
 
     // ===================== D2 - HORA =====================
@@ -56,22 +60,23 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateHoraLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
         val isOddSign = signNumber % 2 == 0 // Aries=0 is odd in Vedic
+        val horaSize = DEGREES_IN_SIGN / 2.0
 
         val horaSign = if (isOddSign) {
-            if (degreeInSign < 15.0) 4 else 3 // Leo (4) or Cancer (3)
+            if (degreeInSign < horaSize) 4 else 3 // Leo (4) or Cancer (3)
         } else {
-            if (degreeInSign < 15.0) 3 else 4 // Cancer (3) or Leo (4)
+            if (degreeInSign < horaSize) 3 else 4 // Cancer (3) or Leo (4)
         }
 
         // Map to the first 15° within the hora sign
-        val positionInHora = degreeInSign % 15.0
-        val horaDegree = positionInHora * 2.0 // Scale to 30°
+        val positionInHora = degreeInSign % horaSize
+        val horaDegree = (positionInHora / horaSize) * DEGREES_IN_SIGN
 
-        return (horaSign * 30.0) + horaDegree
+        return (horaSign * DEGREES_IN_SIGN) + horaDegree
     }
 
     // ===================== D3 - DREKKANA =====================
@@ -102,11 +107,12 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateDrekkanaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
+        val drekkanaSize = DEGREES_IN_SIGN / 3.0
 
-        val drekkanaPart = (degreeInSign / 10.0).toInt().coerceIn(0, 2) // 0, 1, or 2
+        val drekkanaPart = (degreeInSign / drekkanaSize).toInt().coerceIn(0, 2) // 0, 1, or 2
 
         val drekkanaSign = when (drekkanaPart) {
             0 -> signNumber                   // First decanate: same sign
@@ -115,10 +121,10 @@ object DivisionalChartCalculator {
             else -> signNumber
         }
 
-        val positionInDrekkana = degreeInSign % 10.0
-        val drekkanaDegree = (positionInDrekkana / 10.0) * 30.0
+        val positionInDrekkana = degreeInSign % drekkanaSize
+        val drekkanaDegree = (positionInDrekkana / drekkanaSize) * DEGREES_IN_SIGN
 
-        return (drekkanaSign * 30.0) + drekkanaDegree
+        return (drekkanaSign * DEGREES_IN_SIGN) + drekkanaDegree
     }
 
     // ===================== D4 - CHATURTHAMSA =====================
@@ -150,18 +156,19 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateChaturthamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
+        val chaturthamsaSize = DEGREES_IN_SIGN / 4.0
 
-        val chaturthamsaPart = (degreeInSign / 7.5).toInt().coerceIn(0, 3) // 0, 1, 2, or 3
+        val chaturthamsaPart = (degreeInSign / chaturthamsaSize).toInt().coerceIn(0, 3) // 0, 1, 2, or 3
 
         val chaturthamsaSign = (signNumber + (chaturthamsaPart * 3)) % 12
 
-        val positionInChaturthamsa = degreeInSign % 7.5
-        val chaturthamsaDegree = (positionInChaturthamsa / 7.5) * 30.0
+        val positionInChaturthamsa = degreeInSign % chaturthamsaSize
+        val chaturthamsaDegree = (positionInChaturthamsa / chaturthamsaSize) * DEGREES_IN_SIGN
 
-        return (chaturthamsaSign * 30.0) + chaturthamsaDegree
+        return (chaturthamsaSign * DEGREES_IN_SIGN) + chaturthamsaDegree
     }
 
     // ===================== D7 - SAPTAMSA =====================
@@ -191,20 +198,21 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateSaptamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
         val isOddSign = signNumber % 2 == 0 // Aries=0 is odd
+        val saptamsaSize = DEGREES_IN_SIGN / 7.0
 
-        val saptamsaPart = (degreeInSign / (30.0 / 7.0)).toInt().coerceIn(0, 6) // 0-6
+        val saptamsaPart = (degreeInSign / saptamsaSize).toInt().coerceIn(0, 6) // 0-6
 
         val startingSign = if (isOddSign) signNumber else (signNumber + 6) % 12
         val saptamsaSign = (startingSign + saptamsaPart) % 12
 
-        val positionInSaptamsa = degreeInSign % (30.0 / 7.0)
-        val saptamsaDegree = (positionInSaptamsa / (30.0 / 7.0)) * 30.0
+        val positionInSaptamsa = degreeInSign % saptamsaSize
+        val saptamsaDegree = (positionInSaptamsa / saptamsaSize) * DEGREES_IN_SIGN
 
-        return (saptamsaSign * 30.0) + saptamsaDegree
+        return (saptamsaSign * DEGREES_IN_SIGN) + saptamsaDegree
     }
 
     // ===================== D9 - NAVAMSA =====================
@@ -236,12 +244,13 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateNavamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
+        val navamsaSize = DEGREES_IN_SIGN / 9.0
 
         // Use exact division instead of approximation to maintain precision
-        val navamsaPart = (degreeInSign / (30.0 / 9.0)).toInt().coerceIn(0, 8) // 0-8
+        val navamsaPart = (degreeInSign / navamsaSize).toInt().coerceIn(0, 8) // 0-8
 
         val startingSignIndex = when (signNumber % 3) {
             0 -> signNumber              // Movable: start from same sign
@@ -252,10 +261,10 @@ object DivisionalChartCalculator {
 
         val navamsaSignIndex = (startingSignIndex + navamsaPart) % 12
 
-        val positionInNavamsa = degreeInSign % (30.0 / 9.0)
-        val navamsaDegree = (positionInNavamsa / (30.0 / 9.0)) * 30.0
+        val positionInNavamsa = degreeInSign % navamsaSize
+        val navamsaDegree = (positionInNavamsa / navamsaSize) * DEGREES_IN_SIGN
 
-        return (navamsaSignIndex * 30.0) + navamsaDegree
+        return (navamsaSignIndex * DEGREES_IN_SIGN) + navamsaDegree
     }
 
     // ===================== D10 - DASAMSA =====================
@@ -285,20 +294,21 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateDasamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
         val isOddSign = signNumber % 2 == 0
+        val dasamsaSize = DEGREES_IN_SIGN / 10.0
 
-        val dasamsaPart = (degreeInSign / 3.0).toInt().coerceIn(0, 9) // 0-9
+        val dasamsaPart = (degreeInSign / dasamsaSize).toInt().coerceIn(0, 9) // 0-9
 
         val startingSignIndex = if (isOddSign) signNumber else (signNumber + 8) % 12
         val dasamsaSignIndex = (startingSignIndex + dasamsaPart) % 12
 
-        val positionInDasamsa = degreeInSign % 3.0
-        val dasamsaDegree = (positionInDasamsa / 3.0) * 30.0
+        val positionInDasamsa = degreeInSign % dasamsaSize
+        val dasamsaDegree = (positionInDasamsa / dasamsaSize) * DEGREES_IN_SIGN
 
-        return (dasamsaSignIndex * 30.0) + dasamsaDegree
+        return (dasamsaSignIndex * DEGREES_IN_SIGN) + dasamsaDegree
     }
 
     // ===================== D12 - DWADASAMSA =====================
@@ -327,18 +337,19 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateDwadasamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
+        val dwadasamsaSize = DEGREES_IN_SIGN / 12.0
 
-        val dwadasamsaPart = (degreeInSign / 2.5).toInt().coerceIn(0, 11) // 0-11
+        val dwadasamsaPart = (degreeInSign / dwadasamsaSize).toInt().coerceIn(0, 11) // 0-11
 
         val dwadasamsaSign = (signNumber + dwadasamsaPart) % 12
 
-        val positionInDwadasamsa = degreeInSign % 2.5
-        val dwadasamsaDegree = (positionInDwadasamsa / 2.5) * 30.0
+        val positionInDwadasamsa = degreeInSign % dwadasamsaSize
+        val dwadasamsaDegree = (positionInDwadasamsa / dwadasamsaSize) * DEGREES_IN_SIGN
 
-        return (dwadasamsaSign * 30.0) + dwadasamsaDegree
+        return (dwadasamsaSign * DEGREES_IN_SIGN) + dwadasamsaDegree
     }
 
     // ===================== D16 - SHODASAMSA =====================
@@ -369,11 +380,12 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateShodasamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
+        val shodasamsaSize = DEGREES_IN_SIGN / 16.0
 
-        val shodasamsaPart = (degreeInSign / (30.0 / 16.0)).toInt().coerceIn(0, 15) // 0-15
+        val shodasamsaPart = (degreeInSign / shodasamsaSize).toInt().coerceIn(0, 15) // 0-15
 
         // Starting sign based on sign modality
         val startingSign = when (signNumber % 3) {
@@ -385,10 +397,10 @@ object DivisionalChartCalculator {
 
         val shodasamsaSign = (startingSign + shodasamsaPart) % 12
 
-        val positionInShodasamsa = degreeInSign % (30.0 / 16.0)
-        val shodasamsaDegree = (positionInShodasamsa / (30.0 / 16.0)) * 30.0
+        val positionInShodasamsa = degreeInSign % shodasamsaSize
+        val shodasamsaDegree = (positionInShodasamsa / shodasamsaSize) * DEGREES_IN_SIGN
 
-        return (shodasamsaSign * 30.0) + shodasamsaDegree
+        return (shodasamsaSign * DEGREES_IN_SIGN) + shodasamsaDegree
     }
 
     // ===================== D20 - VIMSAMSA =====================
@@ -419,11 +431,12 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateVimsamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
+        val vimsamsaSize = DEGREES_IN_SIGN / 20.0
 
-        val vimsamsaPart = (degreeInSign / 1.5).toInt().coerceIn(0, 19) // 0-19
+        val vimsamsaPart = (degreeInSign / vimsamsaSize).toInt().coerceIn(0, 19) // 0-19
 
         // Starting sign based on sign modality
         val startingSign = when (signNumber % 3) {
@@ -435,10 +448,10 @@ object DivisionalChartCalculator {
 
         val vimsamsaSign = (startingSign + vimsamsaPart) % 12
 
-        val positionInVimsamsa = degreeInSign % 1.5
-        val vimsamsaDegree = (positionInVimsamsa / 1.5) * 30.0
+        val positionInVimsamsa = degreeInSign % vimsamsaSize
+        val vimsamsaDegree = (positionInVimsamsa / vimsamsaSize) * DEGREES_IN_SIGN
 
-        return (vimsamsaSign * 30.0) + vimsamsaDegree
+        return (vimsamsaSign * DEGREES_IN_SIGN) + vimsamsaDegree
     }
 
     // ===================== D24 - CHATURVIMSAMSA =====================
@@ -468,20 +481,21 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateChaturvimsamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
         val isOddSign = signNumber % 2 == 0
+        val chaturvimsamsaSize = DEGREES_IN_SIGN / 24.0
 
-        val chaturvimsamsaPart = (degreeInSign / 1.25).toInt().coerceIn(0, 23) // 0-23
+        val chaturvimsamsaPart = (degreeInSign / chaturvimsamsaSize).toInt().coerceIn(0, 23) // 0-23
 
         val startingSign = if (isOddSign) 4 else 3 // Leo or Cancer
         val chaturvimsamsaSign = (startingSign + chaturvimsamsaPart) % 12
 
-        val positionInChaturvimsamsa = degreeInSign % 1.25
-        val chaturvimsamsaDegree = (positionInChaturvimsamsa / 1.25) * 30.0
+        val positionInChaturvimsamsa = degreeInSign % chaturvimsamsaSize
+        val chaturvimsamsaDegree = (positionInChaturvimsamsa / chaturvimsamsaSize) * DEGREES_IN_SIGN
 
-        return (chaturvimsamsaSign * 30.0) + chaturvimsamsaDegree
+        return (chaturvimsamsaSign * DEGREES_IN_SIGN) + chaturvimsamsaDegree
     }
 
     // ===================== D27 - SAPTAVIMSAMSA (BHAMSA) =====================
@@ -513,11 +527,12 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateSaptavimsamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
+        val saptavimsamsaSize = DEGREES_IN_SIGN / 27.0
 
-        val saptavimsamsaPart = (degreeInSign / (30.0 / 27.0)).toInt().coerceIn(0, 26) // 0-26
+        val saptavimsamsaPart = (degreeInSign / saptavimsamsaSize).toInt().coerceIn(0, 26) // 0-26
 
         // Starting sign based on element
         val startingSign = when (signNumber % 4) {
@@ -530,10 +545,10 @@ object DivisionalChartCalculator {
 
         val saptavimsamsaSign = (startingSign + saptavimsamsaPart) % 12
 
-        val positionInSaptavimsamsa = degreeInSign % (30.0 / 27.0)
-        val saptavimsamsaDegree = (positionInSaptavimsamsa / (30.0 / 27.0)) * 30.0
+        val positionInSaptavimsamsa = degreeInSign % saptavimsamsaSize
+        val saptavimsamsaDegree = (positionInSaptavimsamsa / saptavimsamsaSize) * DEGREES_IN_SIGN
 
-        return (saptavimsamsaSign * 30.0) + saptavimsamsaDegree
+        return (saptavimsamsaSign * DEGREES_IN_SIGN) + saptavimsamsaDegree
     }
 
     // ===================== D30 - TRIMSAMSA =====================
@@ -562,9 +577,9 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateTrimsamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
         val isOddSign = signNumber % 2 == 0
 
         // Trimsamsa divisions (based on Parashari system)
@@ -632,8 +647,8 @@ object DivisionalChartCalculator {
             }
         }
 
-        val trimsamsaDegree = (degreeWithinPart / partSize) * 30.0
-        return (trimsamsaSign * 30.0) + trimsamsaDegree
+        val trimsamsaDegree = (degreeWithinPart / partSize) * DEGREES_IN_SIGN
+        return (trimsamsaSign * DEGREES_IN_SIGN) + trimsamsaDegree
     }
 
     // ===================== D60 - SHASHTIAMSA =====================
@@ -663,20 +678,21 @@ object DivisionalChartCalculator {
     }
 
     private fun calculateShashtiamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val signNumber = (normalizedLong / 30.0).toInt() // 0-11
-        val degreeInSign = normalizedLong % 30.0
+        val normalizedLong = normalizeLongitude(longitude)
+        val signNumber = (normalizedLong / DEGREES_IN_SIGN).toInt() // 0-11
+        val degreeInSign = normalizedLong % DEGREES_IN_SIGN
         val isOddSign = signNumber % 2 == 0
+        val shashtiamsaSize = DEGREES_IN_SIGN / 60.0
 
-        val shashtiamsaPart = (degreeInSign / 0.5).toInt().coerceIn(0, 59) // 0-59
+        val shashtiamsaPart = (degreeInSign / shashtiamsaSize).toInt().coerceIn(0, 59) // 0-59
 
         val startingSignIndex = if (isOddSign) signNumber else (signNumber + 6) % 12
         val shashtiamsaSignIndex = (startingSignIndex + shashtiamsaPart) % 12
 
-        val positionInShashtiamsa = degreeInSign % 0.5
-        val shashtiamsaDegree = (positionInShashtiamsa / 0.5) * 30.0
+        val positionInShashtiamsa = degreeInSign % shashtiamsaSize
+        val shashtiamsaDegree = (positionInShashtiamsa / shashtiamsaSize) * DEGREES_IN_SIGN
 
-        return (shashtiamsaSignIndex * 30.0) + shashtiamsaDegree
+        return (shashtiamsaSignIndex * DEGREES_IN_SIGN) + shashtiamsaDegree
     }
 
     // ===================== HELPER FUNCTIONS =====================
@@ -691,7 +707,7 @@ object DivisionalChartCalculator {
     ): PlanetPosition {
         val divisionalLongitude = calculateLongitude(position.longitude)
         val divisionalSign = ZodiacSign.fromLongitude(divisionalLongitude)
-        val degreeInSign = divisionalLongitude % 30.0
+        val degreeInSign = divisionalLongitude % DEGREES_IN_SIGN
         val (nakshatra, pada) = Nakshatra.fromLongitude(divisionalLongitude)
 
         val divisionalHouse = calculateHouseFromSign(divisionalSign.number, ascendantSignNumber)
@@ -822,7 +838,7 @@ data class DivisionalChartData(
     }
 
     private fun formatDegree(degree: Double): String {
-        val normalizedDegree = (degree % 360.0 + 360.0) % 360.0
+        val normalizedDegree = normalizeLongitude(degree)
         val deg = normalizedDegree.toInt()
         val min = ((normalizedDegree - deg) * 60).toInt()
         val sec = ((((normalizedDegree - deg) * 60) - min) * 60).toInt()
@@ -830,7 +846,7 @@ data class DivisionalChartData(
     }
 
     private fun formatDegreeInSign(longitude: Double): String {
-        val degreeInSign = longitude % 30.0
+        val degreeInSign = longitude % DEGREES_IN_SIGN
         val deg = degreeInSign.toInt()
         val min = ((degreeInSign - deg) * 60).toInt()
         val sec = ((((degreeInSign - deg) * 60) - min) * 60).toInt()

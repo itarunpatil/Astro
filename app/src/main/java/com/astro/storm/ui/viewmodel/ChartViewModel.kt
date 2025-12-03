@@ -16,10 +16,12 @@ import com.astro.storm.ui.chart.ChartRenderer
 import com.astro.storm.util.ChartExporter
 import com.astro.storm.util.ExportUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
+import java.util.concurrent.Executors
 
 /**
  * ViewModel for chart operations
@@ -30,6 +32,9 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     private val ephemerisEngine: SwissEphemerisEngine
     private val chartRenderer = ChartRenderer()
     private val chartExporter: ChartExporter
+
+    // Single-threaded dispatcher for sequential state updates
+    private val singleThreadContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private val _uiState = MutableStateFlow<ChartUiState>(ChartUiState.Initial)
     val uiState: StateFlow<ChartUiState> = _uiState.asStateFlow()
@@ -61,7 +66,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         birthData: BirthData,
         houseSystem: HouseSystem = HouseSystem.DEFAULT
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             _uiState.value = ChartUiState.Calculating
 
             try {
@@ -79,7 +84,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * Load a saved chart
      */
     fun loadChart(chartId: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             _uiState.value = ChartUiState.Loading
 
             try {
@@ -99,7 +104,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * Save current chart
      */
     fun saveChart(chart: VedicChart) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 repository.saveChart(chart)
                 _uiState.value = ChartUiState.Saved
@@ -113,7 +118,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * Delete a saved chart
      */
     fun deleteChart(chartId: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 repository.deleteChart(chartId)
             } catch (e: Exception) {
@@ -126,7 +131,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * Export chart as image
      */
     fun exportChartImage(chart: VedicChart, fileName: String, density: Density) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 val bitmap = withContext(Dispatchers.Default) {
                     chartRenderer.createChartBitmap(chart, 2048, 2048, density)
@@ -165,7 +170,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         density: Density,
         options: ChartExporter.PdfExportOptions = ChartExporter.PdfExportOptions()
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 _uiState.value = ChartUiState.Exporting("Generating PDF report...")
                 val result = chartExporter.exportToPdf(chart, options, density)
@@ -187,7 +192,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * Export chart to JSON
      */
     fun exportChartToJson(chart: VedicChart) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 _uiState.value = ChartUiState.Exporting("Generating JSON...")
                 val result = chartExporter.exportToJson(chart)
@@ -209,7 +214,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * Export chart to CSV
      */
     fun exportChartToCsv(chart: VedicChart) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 _uiState.value = ChartUiState.Exporting("Generating CSV...")
                 val result = chartExporter.exportToCsv(chart)
@@ -235,7 +240,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         density: Density,
         options: ChartExporter.ImageExportOptions = ChartExporter.ImageExportOptions()
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 _uiState.value = ChartUiState.Exporting("Generating image...")
                 val result = chartExporter.exportToImage(chart, options, density)
@@ -257,7 +262,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * Export chart as plain text report
      */
     fun exportChartToText(chart: VedicChart) {
-        viewModelScope.launch {
+        viewModelScope.launch(singleThreadContext) {
             try {
                 _uiState.value = ChartUiState.Exporting("Generating text report...")
                 val result = chartExporter.exportToText(chart)
@@ -292,6 +297,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         ephemerisEngine.close()
+        singleThreadContext.close()
     }
 }
 
