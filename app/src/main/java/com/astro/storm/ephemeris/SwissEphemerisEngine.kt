@@ -15,9 +15,9 @@ import kotlin.math.abs
  * High-precision Swiss Ephemeris calculation engine for Vedic astrology.
  * Uses JPL ephemeris files for maximum accuracy.
  */
-class SwissEphemerisEngine(context: Context) {
+class SwissEphemerisEngine(context: Context) : AutoCloseable {
 
-    private val swissEph = SwissEph()
+    private val swissEph: SwissEph
     private val ephemerisPath: String
 
     companion object {
@@ -31,22 +31,21 @@ class SwissEphemerisEngine(context: Context) {
     }
 
     init {
+        var swissEphInstance: SwissEph? = null
         try {
+            swissEphInstance = SwissEph()
             // Set ephemeris path to app's files directory
             ephemerisPath = context.filesDir.absolutePath + "/ephe"
             File(ephemerisPath).mkdirs()
 
             // Initialize Swiss Ephemeris with JPL mode
-            swissEph.swe_set_ephe_path(ephemerisPath)
-            swissEph.swe_set_sid_mode(AYANAMSA_LAHIRI, 0.0, 0.0)
+            swissEphInstance.swe_set_ephe_path(ephemerisPath)
+            swissEphInstance.swe_set_sid_mode(AYANAMSA_LAHIRI, 0.0, 0.0)
+            swissEph = swissEphInstance
         } catch (e: Exception) {
             android.util.Log.e("SwissEphemerisEngine", "Failed to initialize Swiss Ephemeris", e)
             // Close any partially initialized resources
-            try {
-                swissEph.swe_close()
-            } catch (closeException: Exception) {
-                android.util.Log.e("SwissEphemerisEngine", "Error during cleanup after initialization failure", closeException)
-            }
+            swissEphInstance?.swe_close()
             throw e
         }
     }
@@ -109,7 +108,7 @@ class SwissEphemerisEngine(context: Context) {
         val ascmc = DoubleArray(10)
         swissEph.swe_houses(
             julianDay,
-            0,
+            SEFLG_SIDEREAL,
             birthData.latitude.toDouble(),
             birthData.longitude.toDouble(),
             houseSystem.code.code,
@@ -175,7 +174,7 @@ class SwissEphemerisEngine(context: Context) {
         }
 
         // Normalize longitude
-        longitude = (longitude % 360.0 + 360.0) % 360.0
+        longitude = com.astro.storm.util.AstrologicalUtils.normalizeLongitude(longitude)
 
         // Determine sign and degree within sign
         val sign = ZodiacSign.fromLongitude(longitude)
@@ -270,7 +269,7 @@ class SwissEphemerisEngine(context: Context) {
     /**
      * Clean up resources
      */
-    fun close() {
+    override fun close() {
         swissEph.swe_close()
     }
 }

@@ -270,6 +270,11 @@ object YogaCalculator {
 
         // Get house lords
         val houseLords = getHouseLords(ascendantSign)
+        if (houseLords.isEmpty()) {
+            // Log an error or handle the case where house lords cannot be determined.
+            // For now, returning an empty list as no yogas can be calculated.
+            return yogas
+        }
         val kendraLords = listOf(houseLords[1], houseLords[4], houseLords[7], houseLords[10]).filterNotNull()
         val trikonaLords = listOf(houseLords[1], houseLords[5], houseLords[9]).filterNotNull()
 

@@ -17,7 +17,9 @@ private const val DAYS_PER_YEAR = 365.25
  * Uses banker's rounding (round half to even) for consistent results.
  */
 private fun yearsToRoundedDays(years: Double): Long {
-    return kotlin.math.round(years * DAYS_PER_YEAR).toLong()
+    val yearsBd = years.toBigDecimal()
+    val daysPerYearBd = DAYS_PER_YEAR.toBigDecimal()
+    return (yearsBd * daysPerYearBd).toLong()
 }
 
 /**
@@ -188,19 +190,17 @@ object DashaCalculator {
         val (birthNakshatra, pada) = Nakshatra.fromLongitude(moonLongitude)
         val nakshatraLord = birthNakshatra.ruler
 
-        // Calculate progress within the nakshatra (0.0 to 1.0) with precision rounding
-        val nakshatraStartDegree = birthNakshatra.startDegree
-        var degreesIntoNakshatra = moonLongitude - nakshatraStartDegree
+        // High-precision calculation for nakshatra progress
+        val nakshatraStartDegree = birthNakshatra.startDegree.toBigDecimal()
+        val moonLongitudeBd = moonLongitude.toBigDecimal()
+        val nakshatraSpanBd = NAKSHATRA_SPAN.toBigDecimal()
 
-        // Normalize degrees to 0-360 range for accuracy
-        if (degreesIntoNakshatra < 0) {
-            degreesIntoNakshatra += 360.0
-        }
-        if (degreesIntoNakshatra > NAKSHATRA_SPAN) {
-            degreesIntoNakshatra = degreesIntoNakshatra % NAKSHATRA_SPAN
+        var degreesIntoNakshatra = (moonLongitudeBd - nakshatraStartDegree) % nakshatraSpanBd
+        if (degreesIntoNakshatra < java.math.BigDecimal.ZERO) {
+            degreesIntoNakshatra += nakshatraSpanBd
         }
 
-        val nakshatraProgress = (degreesIntoNakshatra / NAKSHATRA_SPAN).coerceIn(0.0, 1.0)
+        val nakshatraProgress = (degreesIntoNakshatra / nakshatraSpanBd).toDouble().coerceIn(0.0, 1.0)
 
         // Calculate remaining balance of first Mahadasha
         val firstDashaYears = DASHA_YEARS[nakshatraLord] ?: 0.0
@@ -477,7 +477,7 @@ object ConditionalDashaCalculator {
 
         // Calculate progress in nakshatra to determine balance
         val nakshatraStart = nakshatra.startDegree
-        val progressInNakshatra = (moonLongitude - nakshatraStart) / 13.333333333
+        val progressInNakshatra = ((moonLongitude - nakshatraStart) / NAKSHATRA_SPAN).coerceIn(0.0, 1.0)
 
         val yoginis = mutableListOf<YoginiDasha>()
         var currentStart = birthDate

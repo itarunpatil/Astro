@@ -21,7 +21,7 @@ import java.time.temporal.ChronoUnit
  * All predictions are derived from Vedic astrological principles,
  * not random text generation.
  */
-class HoroscopeCalculator(private val context: Context) {
+class HoroscopeCalculator(private val context: Context) : AutoCloseable {
 
     private val ephemerisEngine = SwissEphemerisEngine(context)
 
@@ -975,7 +975,12 @@ class HoroscopeCalculator(private val context: Context) {
         }
     }
 
-    fun close() {
+    private fun calculateHouseFromSign(sign: ZodiacSign, ascendantSign: ZodiacSign): Int {
+        val houseOffset = (sign.ordinal - ascendantSign.ordinal + 12) % 12
+        return houseOffset + 1
+    }
+
+    override fun close() {
         ephemerisEngine.close()
     }
 }

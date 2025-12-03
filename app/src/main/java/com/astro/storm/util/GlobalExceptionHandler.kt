@@ -41,8 +41,10 @@ class GlobalExceptionHandler(
 
                 override fun onActivityStopped(activity: Activity) {
                     if (isDebugActivity(activity)) return
-                    activityCount--
-                    if (activityCount < 0) {
+                    if (activityCount > 0) {
+                        activityCount--
+                    }
+                    if (activityCount == 0) {
                         lastActivity = null
                     }
                 }

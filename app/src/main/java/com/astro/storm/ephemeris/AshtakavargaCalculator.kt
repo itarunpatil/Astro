@@ -343,7 +343,7 @@ object AshtakavargaCalculator {
         val prastaraMatrix = mutableMapOf<ZodiacSign, MutableMap<String, Boolean>>()
 
         // Get bindu rules for this planet
-        val binduRules = getBinbuRulesForPlanet(planet)
+        val binduRules = getBinduRulesForPlanet(planet)
         val ascendantBindus = getAscendantBindusForPlanet(planet)
 
         // Initialize matrices
@@ -464,12 +464,25 @@ object AshtakavargaCalculator {
         longitude: Double,
         chart: VedicChart
     ): KakshaPosition {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
+        val normalizedLong = com.astro.storm.util.AstrologicalUtils.normalizeLongitude(longitude)
         val sign = ZodiacSign.fromLongitude(normalizedLong)
         val degreeInSign = normalizedLong % 30.0
 
         // Each Kaksha is 3.75° (30° / 8)
-        val kakshaNumber = ((degreeInSign / 3.75).toInt() + 1).coerceIn(1, 8)
+        val kakshaSize = 3.75
+        if (kakshaSize <= 0) {
+            // Handle division by zero or invalid kakshaSize
+            // You might want to log an error or return a default/error state
+            return KakshaPosition(
+                sign = sign,
+                kakshaNumber = 0,
+                kakshaLord = "Error",
+                degreeStart = 0.0,
+                degreeEnd = 0.0,
+                isBeneficial = false
+            )
+        }
+        val kakshaNumber = ((degreeInSign / kakshaSize).toInt() + 1).coerceIn(1, 8)
         val degreeStart = (kakshaNumber - 1) * 3.75
         val degreeEnd = kakshaNumber * 3.75
 
@@ -651,7 +664,7 @@ object AshtakavargaCalculator {
     /**
      * Get bindu rules for a planet
      */
-    private fun getBinbuRulesForPlanet(planet: Planet): Map<Planet, List<Int>> {
+    private fun getBinduRulesForPlanet(planet: Planet): Map<Planet, List<Int>> {
         return when (planet) {
             Planet.SUN -> SUN_BINDU_RULES
             Planet.MOON -> MOON_BINDU_RULES

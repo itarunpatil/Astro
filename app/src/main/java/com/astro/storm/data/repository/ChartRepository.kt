@@ -83,49 +83,36 @@ class ChartRepository(private val chartDao: ChartDao) {
     }
 
     private fun ChartEntity.toVedicChart(): VedicChart {
-        val planetPositions = try {
-            JSONArray(planetPositionsJson).let { array ->
-                (0 until array.length()).mapNotNull { i ->
-                    try {
-                        val obj = array.getJSONObject(i)
-                        PlanetPosition(
-                            planet = Planet.valueOf(obj.getString("planet")),
-                            longitude = obj.getDouble("longitude"),
-                            latitude = obj.getDouble("latitude"),
-                            distance = obj.getDouble("distance"),
-                            speed = obj.getDouble("speed"),
-                            sign = ZodiacSign.valueOf(obj.getString("sign")),
-                            degree = obj.getDouble("degree"),
-                            minutes = obj.getDouble("minutes"),
-                            seconds = obj.getDouble("seconds"),
-                            isRetrograde = obj.getBoolean("isRetrograde"),
-                            nakshatra = Nakshatra.valueOf(obj.getString("nakshatra")),
-                            nakshatraPada = obj.getInt("nakshatraPada"),
-                            house = obj.getInt("house")
-                        )
-                    } catch (e: IllegalArgumentException) {
-                        android.util.Log.e("ChartRepository", "Invalid planet, sign, or nakshatra enum at index $i", e)
-                        null
-                    } catch (e: Exception) {
-                        android.util.Log.e("ChartRepository", "Error parsing planet position at index $i", e)
-                        null
-                    }
+        try {
+            val planetPositions = JSONArray(planetPositionsJson).let { array ->
+                (0 until array.length()).map { i ->
+                    val obj = array.getJSONObject(i)
+                    PlanetPosition(
+                        planet = Planet.valueOf(obj.getString("planet")),
+                        longitude = obj.getDouble("longitude"),
+                        latitude = obj.getDouble("latitude"),
+                        distance = obj.getDouble("distance"),
+                        speed = obj.getDouble("speed"),
+                        sign = ZodiacSign.valueOf(obj.getString("sign")),
+                        degree = obj.getDouble("degree"),
+                        minutes = obj.getDouble("minutes"),
+                        seconds = obj.getDouble("seconds"),
+                        isRetrograde = obj.getBoolean("isRetrograde"),
+                        nakshatra = Nakshatra.valueOf(obj.getString("nakshatra")),
+                        nakshatraPada = obj.getInt("nakshatraPada"),
+                        house = obj.getInt("house")
+                    )
                 }
             }
-        } catch (e: Exception) {
-            android.util.Log.e("ChartRepository", "Failed to parse planet positions JSON", e)
-            emptyList()
-        }
 
-        val houseCusps = try {
-            JSONArray(houseCuspsJson).let { array ->
+            val houseCusps = JSONArray(houseCuspsJson).let { array ->
                 (0 until array.length()).map { i ->
                     array.getDouble(i)
                 }
             }
         } catch (e: Exception) {
-            android.util.Log.e("ChartRepository", "Failed to parse house cusps JSON", e)
-            emptyList()
+            android.util.Log.e("ChartRepository", "Failed to parse chart entity", e)
+            throw IllegalStateException("Failed to parse chart data from database", e)
         }
 
         return VedicChart(

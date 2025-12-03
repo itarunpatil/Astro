@@ -221,13 +221,7 @@ object RetrogradeCombustionCalculator {
         allPositions: List<PlanetPosition>
     ): PlanetCondition {
         // Determine retrograde status
-        val retrogradeStatus = when {
-            position.planet == Planet.SUN || position.planet == Planet.MOON -> RetrogradeStatus.DIRECT
-            abs(position.speed) < 0.05 && position.speed < 0 -> RetrogradeStatus.STATIONARY_RETROGRADE
-            abs(position.speed) < 0.05 && position.speed >= 0 -> RetrogradeStatus.STATIONARY_DIRECT
-            position.isRetrograde -> RetrogradeStatus.RETROGRADE
-            else -> RetrogradeStatus.DIRECT
-        }
+        val retrogradeStatus = getRetrogradeStatus(position.planet, position.speed, position.isRetrograde)
 
         // Calculate distance from Sun and combustion status
         val distanceFromSun = if (sunPosition != null && position.planet != Planet.SUN) {
@@ -341,12 +335,12 @@ object RetrogradeCombustionCalculator {
     }
 
     private fun getWarWinner(planet1: Planet, planet2: Planet): Planet {
-        // Winner is determined by natural brightness
+        // Winner is determined by natural brightness, corrected order
         val brightness = mapOf(
             Planet.VENUS to 7,
             Planet.JUPITER to 6,
-            Planet.MERCURY to 4,
-            Planet.MARS to 5,
+            Planet.MERCURY to 5,
+            Planet.MARS to 4,
             Planet.SATURN to 3
         )
 
@@ -354,6 +348,29 @@ object RetrogradeCombustionCalculator {
         val b2 = brightness[planet2] ?: 0
 
         return if (b1 >= b2) planet1 else planet2
+    }
+
+    private val STATIONARY_THRESHOLDS = mapOf(
+        Planet.MERCURY to 0.05,
+        Planet.VENUS to 0.04,
+        Planet.MARS to 0.03,
+        Planet.JUPITER to 0.02,
+        Planet.SATURN to 0.01
+    )
+
+    private fun getRetrogradeStatus(planet: Planet, speed: Double, isRetrograde: Boolean): RetrogradeStatus {
+        if (planet == Planet.SUN || planet == Planet.MOON) {
+            return RetrogradeStatus.DIRECT
+        }
+
+        val threshold = STATIONARY_THRESHOLDS.getOrDefault(planet, 0.05)
+
+        return when {
+            abs(speed) < threshold && speed < 0 -> RetrogradeStatus.STATIONARY_RETROGRADE
+            abs(speed) < threshold && speed >= 0 -> RetrogradeStatus.STATIONARY_DIRECT
+            isRetrograde -> RetrogradeStatus.RETROGRADE
+            else -> RetrogradeStatus.DIRECT
+        }
     }
 
     /**
@@ -400,14 +417,22 @@ object RetrogradeCombustionCalculator {
  * Extended retrograde period calculator using Swiss Ephemeris
  * For calculating future retrograde periods
  */
-class RetrogradeEphemerisCalculator(context: Context) {
+class RetrogradeEphemerisCalculator(context: Context) : AutoCloseable {
 
-    private val swissEph = SwissEph()
+    private val swissEph: SwissEph
 
     init {
-        val ephemerisPath = context.filesDir.absolutePath + "/ephe"
-        swissEph.swe_set_ephe_path(ephemerisPath)
-        swissEph.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0.0, 0.0)
+        var swissEphInstance: SwissEph? = null
+        try {
+            swissEphInstance = SwissEph()
+            val ephemerisPath = context.filesDir.absolutePath + "/ephe"
+            swissEphInstance.swe_set_ephe_path(ephemerisPath)
+            swissEphInstance.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0.0, 0.0)
+            swissEph = swissEphInstance
+        } catch (e: Exception) {
+            swissEphInstance?.swe_close()
+            throw e
+        }
     }
 
     /**
@@ -499,7 +524,7 @@ class RetrogradeEphemerisCalculator(context: Context) {
         return sweDate.julDay
     }
 
-    fun close() {
+    override fun close() {
         swissEph.swe_close()
     }
 }

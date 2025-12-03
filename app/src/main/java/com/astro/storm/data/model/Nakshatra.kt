@@ -75,18 +75,18 @@ enum class Nakshatra(
         private const val NAKSHATRA_SPAN = 360.0 / 27.0 // ~13.333 degrees
 
         fun fromLongitude(longitude: Double): Pair<Nakshatra, Int> {
-            val normalizedLongitude = (longitude % 360.0 + 360.0) % 360.0
+            val longitudeBd = longitude.toBigDecimal()
+            val circleBd = 360.toBigDecimal()
+            val nakshatraSpanBd = NAKSHATRA_SPAN.toBigDecimal()
+            val padaSpanBd = nakshatraSpanBd / 4.toBigDecimal()
 
-            // Handle edge case where normalized longitude is exactly 360.0
-            // This can occur due to floating-point precision near 0.0°
-            val adjustedLongitude = if (normalizedLongitude >= 360.0) 359.999 else normalizedLongitude
+            val normalizedLongitude = (longitudeBd % circleBd + circleBd) % circleBd
 
-            val nakshatraIndex = (adjustedLongitude / NAKSHATRA_SPAN).toInt()
-            val nakshatra = values()[nakshatraIndex.coerceIn(0, 26)]
+            val nakshatraIndex = (normalizedLongitude / nakshatraSpanBd).toInt().coerceIn(0, 26)
+            val nakshatra = values()[nakshatraIndex]
 
-            // Calculate pada (1-4)
-            val positionInNakshatra = adjustedLongitude - nakshatra.startDegree
-            val pada = (positionInNakshatra / (NAKSHATRA_SPAN / 4.0)).toInt() + 1
+            val positionInNakshatra = normalizedLongitude - nakshatra.startDegree.toBigDecimal()
+            val pada = (positionInNakshatra / padaSpanBd).toInt() + 1
             return nakshatra to pada.coerceIn(1, 4)
         }
     }

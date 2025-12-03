@@ -489,9 +489,9 @@ object ShadbalaCalculator {
 
         // Check friendships
         return when (getPlanetRelationship(planet, sign.ruler)) {
-            Relationship.FRIEND -> 15.0
-            Relationship.NEUTRAL -> 10.0
-            Relationship.ENEMY -> 7.5
+            com.astro.storm.util.PlanetaryRelationships.Relationship.FRIEND -> 15.0
+            com.astro.storm.util.PlanetaryRelationships.Relationship.NEUTRAL -> 10.0
+            com.astro.storm.util.PlanetaryRelationships.Relationship.ENEMY -> 7.5
         }
     }
 
@@ -852,35 +852,8 @@ object ShadbalaCalculator {
         }
     }
 
-    private enum class Relationship { FRIEND, NEUTRAL, ENEMY }
-
-    private fun getPlanetRelationship(planet: Planet, signLord: Planet): Relationship {
-        // Planetary friendship table (simplified)
-        val friendships = mapOf(
-            Planet.SUN to listOf(Planet.MOON, Planet.MARS, Planet.JUPITER),
-            Planet.MOON to listOf(Planet.SUN, Planet.MERCURY),
-            Planet.MARS to listOf(Planet.SUN, Planet.MOON, Planet.JUPITER),
-            Planet.MERCURY to listOf(Planet.SUN, Planet.VENUS),
-            Planet.JUPITER to listOf(Planet.SUN, Planet.MOON, Planet.MARS),
-            Planet.VENUS to listOf(Planet.MERCURY, Planet.SATURN),
-            Planet.SATURN to listOf(Planet.MERCURY, Planet.VENUS)
-        )
-
-        val enemies = mapOf(
-            Planet.SUN to listOf(Planet.VENUS, Planet.SATURN),
-            Planet.MOON to emptyList<Planet>(),
-            Planet.MARS to listOf(Planet.MERCURY),
-            Planet.MERCURY to listOf(Planet.MOON),
-            Planet.JUPITER to listOf(Planet.MERCURY, Planet.VENUS),
-            Planet.VENUS to listOf(Planet.SUN, Planet.MOON),
-            Planet.SATURN to listOf(Planet.SUN, Planet.MOON, Planet.MARS)
-        )
-
-        return when {
-            friendships[planet]?.contains(signLord) == true -> Relationship.FRIEND
-            enemies[planet]?.contains(signLord) == true -> Relationship.ENEMY
-            else -> Relationship.NEUTRAL
-        }
+    private fun getPlanetRelationship(planet: Planet, signLord: Planet): com.astro.storm.util.PlanetaryRelationships.Relationship {
+        return com.astro.storm.util.PlanetaryRelationships.getRelationship(planet, signLord)
     }
 
     private fun getDayLord(dayOfWeek: Int): Planet {
@@ -915,12 +888,12 @@ object ShadbalaCalculator {
     }
 
     private fun getWarWinner(planet1: Planet, planet2: Planet): Planet {
-        // Winner is determined by natural brightness
+        // Winner is determined by natural brightness, corrected order
         val brightness = mapOf(
             Planet.VENUS to 7,
             Planet.JUPITER to 6,
-            Planet.MARS to 5,
-            Planet.MERCURY to 4,
+            Planet.MERCURY to 5,
+            Planet.MARS to 4,
             Planet.SATURN to 3
         )
 
