@@ -1,14 +1,17 @@
 package com.astro.storm.ui.screen.main
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,12 +23,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.astro.storm.data.model.Planet
@@ -33,149 +40,37 @@ import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.DashaCalculator
 import com.astro.storm.ephemeris.HoroscopeCalculator
 import com.astro.storm.ui.theme.AppTheme
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-/**
- * Insights Tab - Daily Horoscope, Planetary Periods & Transits
- *
- * Displays:
- * - Daily, weekly, and monthly horoscope predictions
- * - Current planetary period (Dasha) with progress
- * - Upcoming transits and their effects
- */
-@Composable
-fun InsightsTab(
-    chart: VedicChart?,
-) {
-    val context = LocalContext.current
-    var dashaTimeline by remember { mutableStateOf<DashaCalculator.DashaTimeline?>(null) }
-    var planetaryInfluences by remember { mutableStateOf<List<HoroscopeCalculator.PlanetaryInfluence>>(emptyList()) }
-    var selectedPeriod by remember { mutableStateOf(HoroscopePeriod.TODAY) }
-    var dailyHoroscope by remember { mutableStateOf<HoroscopeCalculator.DailyHoroscope?>(null) }
-    var tomorrowHoroscope by remember { mutableStateOf<HoroscopeCalculator.DailyHoroscope?>(null) }
-    var weeklyHoroscope by remember { mutableStateOf<HoroscopeCalculator.WeeklyHoroscope?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
+private data class InsightsCache(
+    val chartHashCode: Int,
+    val calculationDate: LocalDate,
+    val dashaTimeline: DashaCalculator.DashaTimeline?,
+    val planetaryInfluences: List<HoroscopeCalculator.PlanetaryInfluence>,
+    val todayHoroscope: HoroscopeCalculator.DailyHoroscope?,
+    val tomorrowHoroscope: HoroscopeCalculator.DailyHoroscope?,
+    val weeklyHoroscope: HoroscopeCalculator.WeeklyHoroscope?,
+    val errors: List<InsightError> = emptyList()
+)
 
-    // Calculate insights and horoscopes when chart changes
-    LaunchedEffect(chart) {
-        if (chart != null) {
-            isLoading = true
-            withContext(Dispatchers.Default) {
-                dashaTimeline = DashaCalculator.calculateDashaTimeline(chart)
-                val calculator = HoroscopeCalculator(context)
-                try {
-                    val horoscope = calculator.calculateDailyHoroscope(chart)
-                    planetaryInfluences = horoscope.planetaryInfluences
-                    dailyHoroscope = calculator.calculateDailyHoroscope(chart, LocalDate.now())
-                    tomorrowHoroscope = calculator.calculateDailyHoroscope(chart, LocalDate.now().plusDays(1))
-                    weeklyHoroscope = calculator.calculateWeeklyHoroscope(chart, LocalDate.now())
-                } finally {
-                    calculator.close()
-                }
-            }
-            isLoading = false
-        }
-    }
+private data class InsightError(
+    val type: InsightErrorType,
+    val message: String
+)
 
-    if (chart == null) {
-        EmptyInsightsState()
-        return
-    }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppTheme.ScreenBackground),
-        contentPadding = PaddingValues(bottom = 100.dp)
-    ) {
-        // Loading state
-        if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = AppTheme.AccentPrimary,
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
-            }
-            return@LazyColumn
-        }
-
-        // Current Dasha Period
-        item {
-            dashaTimeline?.let { timeline ->
-                CurrentDashaCard(timeline)
-            }
-        }
-
-        // Dasha Timeline Preview
-        item {
-            dashaTimeline?.let { timeline ->
-                DashaTimelinePreview(timeline)
-            }
-        }
-
-        // Planetary Transits
-        item {
-            if (planetaryInfluences.isNotEmpty()) {
-                PlanetaryTransitsSection(planetaryInfluences)
-            }
-        }
-
-        // Spacer to separate sections
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = AppTheme.DividerColor, modifier = Modifier.padding(horizontal = 16.dp))
-        }
-
-        // Period Selector for Horoscopes
-        item {
-            PeriodSelector(
-                selectedPeriod = selectedPeriod,
-                onPeriodSelected = { selectedPeriod = it }
-            )
-        }
-
-        // Horoscope Content based on selected period
-        when (selectedPeriod) {
-            HoroscopePeriod.TODAY -> {
-                dailyHoroscope?.let { horoscope ->
-                    item { DailyHoroscopeHeader(horoscope) }
-                    item { EnergyCard(horoscope) }
-                    item { LifeAreasSection(horoscope.lifeAreas) }
-                    item { LuckyElementsCard(horoscope.luckyElements) }
-                    item { RecommendationsCard(horoscope.recommendations, horoscope.cautions) }
-                    item { AffirmationCard(horoscope.affirmation) }
-                }
-            }
-            HoroscopePeriod.TOMORROW -> {
-                tomorrowHoroscope?.let { horoscope ->
-                    item { DailyHoroscopeHeader(horoscope, isTomorrow = true) }
-                    item { EnergyCard(horoscope) }
-                    item { LifeAreasSection(horoscope.lifeAreas) }
-                    item { LuckyElementsCard(horoscope.luckyElements) }
-                }
-            }
-            HoroscopePeriod.WEEKLY -> {
-                weeklyHoroscope?.let { weekly ->
-                    item { WeeklyOverviewHeader(weekly) }
-                    item { WeeklyEnergyChart(weekly.dailyHighlights) }
-                    item { KeyDatesSection(weekly.keyDates) }
-                    item { WeeklyPredictionsSection(weekly.weeklyPredictions) }
-                    item { WeeklyAdviceCard(weekly.weeklyAdvice) }
-                }
-            }
-        }
-    }
+private enum class InsightErrorType {
+    TODAY_HOROSCOPE,
+    TOMORROW_HOROSCOPE,
+    WEEKLY_HOROSCOPE,
+    DASHA,
+    GENERAL
 }
 
 enum class HoroscopePeriod(val displayName: String) {
@@ -184,10 +79,590 @@ enum class HoroscopePeriod(val displayName: String) {
     WEEKLY("Weekly")
 }
 
+private sealed class InsightsState {
+    data object Loading : InsightsState()
+    data class Success(val cache: InsightsCache) : InsightsState()
+    data class Error(val message: String, val canRetry: Boolean = true) : InsightsState()
+}
+
+@Composable
+fun InsightsTab(chart: VedicChart?) {
+    val context = LocalContext.current
+    
+    var insightsState by remember { mutableStateOf<InsightsState>(InsightsState.Loading) }
+    var selectedPeriod by remember { mutableStateOf(HoroscopePeriod.TODAY) }
+    var retryTrigger by remember { mutableIntStateOf(0) }
+    
+    val cacheKey = remember(chart, retryTrigger) {
+        Triple(chart?.hashCode(), LocalDate.now(), retryTrigger)
+    }
+    
+    LaunchedEffect(cacheKey) {
+        val (chartHash, today, _) = cacheKey
+        if (chart == null || chartHash == null) {
+            insightsState = InsightsState.Success(
+                InsightsCache(
+                    chartHashCode = 0,
+                    calculationDate = today,
+                    dashaTimeline = null,
+                    planetaryInfluences = emptyList(),
+                    todayHoroscope = null,
+                    tomorrowHoroscope = null,
+                    weeklyHoroscope = null
+                )
+            )
+            return@LaunchedEffect
+        }
+        
+        val existingCache = (insightsState as? InsightsState.Success)?.cache
+        if (existingCache != null && 
+            existingCache.chartHashCode == chartHash && 
+            existingCache.calculationDate == today &&
+            existingCache.errors.isEmpty()) {
+            return@LaunchedEffect
+        }
+        
+        insightsState = InsightsState.Loading
+        
+        try {
+            val insights = withContext(Dispatchers.Default) {
+                calculateInsightsSafely(context, chart, chartHash, today)
+            }
+            insightsState = InsightsState.Success(insights)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            insightsState = InsightsState.Error(
+                message = e.message ?: "An unexpected error occurred while calculating insights",
+                canRetry = true
+            )
+        }
+    }
+
+    when {
+        chart == null -> EmptyInsightsState()
+        else -> when (val state = insightsState) {
+            is InsightsState.Loading -> InsightsLoadingSkeleton()
+            is InsightsState.Error -> InsightsErrorState(
+                message = state.message,
+                canRetry = state.canRetry,
+                onRetry = { retryTrigger++ }
+            )
+            is InsightsState.Success -> InsightsContent(
+                cache = state.cache,
+                selectedPeriod = selectedPeriod,
+                onPeriodSelected = { selectedPeriod = it },
+                onRetryFailed = { retryTrigger++ }
+            )
+        }
+    }
+}
+
+private suspend fun calculateInsightsSafely(
+    context: android.content.Context,
+    chart: VedicChart,
+    chartHash: Int,
+    today: LocalDate
+): InsightsCache {
+    val errors = mutableListOf<InsightError>()
+    
+    return supervisorScope {
+        val dashaDeferred = async {
+            try {
+                DashaCalculator.calculateDashaTimeline(chart)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                errors.add(InsightError(InsightErrorType.DASHA, e.message ?: "Dasha calculation failed"))
+                null
+            }
+        }
+        
+        val calculator = HoroscopeCalculator(context)
+        try {
+            val todayDeferred = async {
+                try {
+                    calculator.calculateDailyHoroscope(chart, today)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    errors.add(InsightError(InsightErrorType.TODAY_HOROSCOPE, e.message ?: "Today's horoscope calculation failed"))
+                    null
+                }
+            }
+            
+            val tomorrowDeferred = async {
+                try {
+                    calculator.calculateDailyHoroscope(chart, today.plusDays(1))
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    errors.add(InsightError(InsightErrorType.TOMORROW_HOROSCOPE, e.message ?: "Tomorrow's horoscope calculation failed"))
+                    null
+                }
+            }
+            
+            val weeklyDeferred = async {
+                try {
+                    calculator.calculateWeeklyHoroscope(chart, today)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    errors.add(InsightError(InsightErrorType.WEEKLY_HOROSCOPE, e.message ?: "Weekly horoscope calculation failed"))
+                    null
+                }
+            }
+            
+            val todayHoroscope = todayDeferred.await()
+            val tomorrowHoroscope = tomorrowDeferred.await()
+            val weeklyHoroscope = weeklyDeferred.await()
+            val dashaTimeline = dashaDeferred.await()
+            
+            InsightsCache(
+                chartHashCode = chartHash,
+                calculationDate = today,
+                dashaTimeline = dashaTimeline,
+                planetaryInfluences = todayHoroscope?.planetaryInfluences ?: emptyList(),
+                todayHoroscope = todayHoroscope,
+                tomorrowHoroscope = tomorrowHoroscope,
+                weeklyHoroscope = weeklyHoroscope,
+                errors = errors.toList()
+            )
+        } finally {
+            try {
+                calculator.close()
+            } catch (_: Exception) {
+            }
+        }
+    }
+}
+
+@Composable
+private fun InsightsContent(
+    cache: InsightsCache,
+    selectedPeriod: HoroscopePeriod,
+    onPeriodSelected: (HoroscopePeriod) -> Unit,
+    onRetryFailed: () -> Unit
+) {
+    val listState = rememberLazyListState()
+    
+    val hasAnyContent = cache.dashaTimeline != null || 
+                        cache.todayHoroscope != null || 
+                        cache.tomorrowHoroscope != null || 
+                        cache.weeklyHoroscope != null
+    
+    if (!hasAnyContent && cache.errors.isNotEmpty()) {
+        InsightsErrorState(
+            message = "Unable to calculate astrological insights. Please ensure ephemeris data is properly initialized.",
+            canRetry = true,
+            onRetry = onRetryFailed
+        )
+        return
+    }
+    
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppTheme.ScreenBackground),
+        contentPadding = PaddingValues(bottom = 100.dp)
+    ) {
+        if (cache.errors.isNotEmpty()) {
+            item(key = "partial_error_banner") {
+                PartialErrorBanner(
+                    errors = cache.errors,
+                    onRetry = onRetryFailed
+                )
+            }
+        }
+        
+        cache.dashaTimeline?.let { timeline ->
+            item(key = "dasha_current") {
+                CurrentDashaCard(timeline)
+            }
+            
+            item(key = "dasha_timeline") {
+                DashaTimelinePreview(timeline)
+            }
+        }
+        
+        cache.planetaryInfluences.takeIf { it.isNotEmpty() }?.let { influences ->
+            item(key = "transits") {
+                PlanetaryTransitsSection(influences)
+            }
+        }
+        
+        val hasHoroscopeContent = cache.todayHoroscope != null || 
+                                   cache.tomorrowHoroscope != null || 
+                                   cache.weeklyHoroscope != null
+        
+        if (hasHoroscopeContent) {
+            item(key = "section_divider") {
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(
+                    color = AppTheme.DividerColor,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            
+            item(key = "period_selector") {
+                PeriodSelector(
+                    selectedPeriod = selectedPeriod,
+                    onPeriodSelected = onPeriodSelected,
+                    todayAvailable = cache.todayHoroscope != null,
+                    tomorrowAvailable = cache.tomorrowHoroscope != null,
+                    weeklyAvailable = cache.weeklyHoroscope != null
+                )
+            }
+            
+            when (selectedPeriod) {
+                HoroscopePeriod.TODAY -> {
+                    cache.todayHoroscope?.let { horoscope ->
+                        item(key = "today_header") { 
+                            DailyHoroscopeHeader(horoscope, isTomorrow = false) 
+                        }
+                        item(key = "today_energy") { 
+                            EnergyCard(horoscope.overallEnergy) 
+                        }
+                        item(key = "today_areas") { 
+                            LifeAreasSection(horoscope.lifeAreas) 
+                        }
+                        item(key = "today_lucky") { 
+                            LuckyElementsCard(horoscope.luckyElements) 
+                        }
+                        item(key = "today_recs") { 
+                            RecommendationsCard(horoscope.recommendations, horoscope.cautions) 
+                        }
+                        item(key = "today_affirmation") { 
+                            AffirmationCard(horoscope.affirmation) 
+                        }
+                    } ?: run {
+                        item(key = "today_unavailable") {
+                            HoroscopeUnavailableCard(
+                                period = "today",
+                                onRetry = onRetryFailed
+                            )
+                        }
+                    }
+                }
+                HoroscopePeriod.TOMORROW -> {
+                    cache.tomorrowHoroscope?.let { horoscope ->
+                        item(key = "tomorrow_header") { 
+                            DailyHoroscopeHeader(horoscope, isTomorrow = true) 
+                        }
+                        item(key = "tomorrow_energy") { 
+                            EnergyCard(horoscope.overallEnergy) 
+                        }
+                        item(key = "tomorrow_areas") { 
+                            LifeAreasSection(horoscope.lifeAreas) 
+                        }
+                        item(key = "tomorrow_lucky") { 
+                            LuckyElementsCard(horoscope.luckyElements) 
+                        }
+                    } ?: run {
+                        item(key = "tomorrow_unavailable") {
+                            HoroscopeUnavailableCard(
+                                period = "tomorrow",
+                                onRetry = onRetryFailed
+                            )
+                        }
+                    }
+                }
+                HoroscopePeriod.WEEKLY -> {
+                    cache.weeklyHoroscope?.let { weekly ->
+                        item(key = "weekly_overview") { 
+                            WeeklyOverviewHeader(weekly) 
+                        }
+                        item(key = "weekly_chart") { 
+                            WeeklyEnergyChart(weekly.dailyHighlights) 
+                        }
+                        item(key = "weekly_dates") { 
+                            KeyDatesSection(weekly.keyDates) 
+                        }
+                        item(key = "weekly_predictions") { 
+                            WeeklyPredictionsSection(weekly.weeklyPredictions) 
+                        }
+                        item(key = "weekly_advice") { 
+                            WeeklyAdviceCard(weekly.weeklyAdvice) 
+                        }
+                    } ?: run {
+                        item(key = "weekly_unavailable") {
+                            HoroscopeUnavailableCard(
+                                period = "weekly",
+                                onRetry = onRetryFailed
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PartialErrorBanner(
+    errors: List<InsightError>,
+    onRetry: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = AppTheme.WarningColor.copy(alpha = 0.15f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Warning,
+                contentDescription = null,
+                tint = AppTheme.WarningColor,
+                modifier = Modifier.size(24.dp)
+            )
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Some insights unavailable",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = AppTheme.WarningColor
+                )
+                Text(
+                    text = "${errors.size} calculation(s) could not be completed",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppTheme.TextMuted
+                )
+            }
+            
+            TextButton(onClick = onRetry) {
+                Text(
+                    text = "Retry",
+                    color = AppTheme.WarningColor,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HoroscopeUnavailableCard(
+    period: String,
+    onRetry: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(AppTheme.ChipBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.CloudOff,
+                    contentDescription = null,
+                    tint = AppTheme.TextMuted,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "${period.replaceFirstChar { it.uppercase() }}'s horoscope unavailable",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                color = AppTheme.TextPrimary,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Unable to calculate planetary positions for this period. This may be due to ephemeris data limitations.",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppTheme.TextMuted,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            OutlinedButton(
+                onClick = onRetry,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = AppTheme.AccentPrimary
+                ),
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    brush = Brush.linearGradient(
+                        colors = listOf(AppTheme.AccentPrimary, AppTheme.AccentPrimary)
+                    )
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Try Again")
+            }
+        }
+    }
+}
+
+@Composable
+private fun InsightsErrorState(
+    message: String,
+    canRetry: Boolean,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppTheme.ScreenBackground)
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(AppTheme.ErrorColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ErrorOutline,
+                    contentDescription = null,
+                    tint = AppTheme.ErrorColor,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Unable to Load Insights",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = AppTheme.TextPrimary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppTheme.TextMuted,
+                textAlign = TextAlign.Center,
+                lineHeight = 22.sp
+            )
+            
+            if (canRetry) {
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppTheme.AccentPrimary,
+                        contentColor = AppTheme.ButtonText
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Try Again",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InsightsLoadingSkeleton() {
+    val shimmerColors = listOf(
+        AppTheme.CardBackground.copy(alpha = 0.9f),
+        AppTheme.CardBackground.copy(alpha = 0.4f),
+        AppTheme.CardBackground.copy(alpha = 0.9f)
+    )
+    
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmer_translate"
+    )
+    
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset(translateAnim - 500f, 0f),
+        end = Offset(translateAnim, 0f)
+    )
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppTheme.ScreenBackground)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        ShimmerCard(brush, 180.dp)
+        ShimmerCard(brush, 140.dp)
+        ShimmerCard(brush, 100.dp)
+        ShimmerCard(brush, 48.dp)
+        ShimmerCard(brush, 200.dp)
+        ShimmerCard(brush, 120.dp)
+    }
+}
+
+@Composable
+private fun ShimmerCard(brush: Brush, height: Dp) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(RoundedCornerShape(16.dp))
+            .background(brush)
+    )
+}
+
 @Composable
 private fun PeriodSelector(
     selectedPeriod: HoroscopePeriod,
-    onPeriodSelected: (HoroscopePeriod) -> Unit
+    onPeriodSelected: (HoroscopePeriod) -> Unit,
+    todayAvailable: Boolean = true,
+    tomorrowAvailable: Boolean = true,
+    weeklyAvailable: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -199,22 +674,64 @@ private fun PeriodSelector(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         HoroscopePeriod.entries.forEach { period ->
+            val isAvailable = when (period) {
+                HoroscopePeriod.TODAY -> todayAvailable
+                HoroscopePeriod.TOMORROW -> tomorrowAvailable
+                HoroscopePeriod.WEEKLY -> weeklyAvailable
+            }
             val isSelected = period == selectedPeriod
+            val backgroundColor by animateColorAsState(
+                targetValue = when {
+                    isSelected && isAvailable -> AppTheme.AccentPrimary
+                    isSelected && !isAvailable -> AppTheme.AccentPrimary.copy(alpha = 0.5f)
+                    else -> Color.Transparent
+                },
+                animationSpec = tween(250),
+                label = "period_bg_${period.name}"
+            )
+            val textColor by animateColorAsState(
+                targetValue = when {
+                    isSelected -> AppTheme.ButtonText
+                    !isAvailable -> AppTheme.TextMuted.copy(alpha = 0.5f)
+                    else -> AppTheme.TextSecondary
+                },
+                animationSpec = tween(250),
+                label = "period_text_${period.name}"
+            )
+            
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) AppTheme.AccentPrimary else Color.Transparent)
-                    .clickable { onPeriodSelected(period) }
+                    .background(backgroundColor)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        enabled = true
+                    ) { onPeriodSelected(period) }
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = period.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isSelected) AppTheme.ButtonText else AppTheme.TextSecondary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = period.displayName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = textColor
+                    )
+                    if (!isAvailable) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Outlined.CloudOff,
+                            contentDescription = "Unavailable",
+                            tint = textColor,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -223,9 +740,9 @@ private fun PeriodSelector(
 @Composable
 private fun DailyHoroscopeHeader(
     horoscope: HoroscopeCalculator.DailyHoroscope,
-    isTomorrow: Boolean = false
+    isTomorrow: Boolean
 ) {
-    val dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d")
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, MMMM d") }
 
     Card(
         modifier = Modifier
@@ -234,40 +751,66 @@ private fun DailyHoroscopeHeader(
         colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Text(
-                text = horoscope.date.format(dateFormatter),
-                style = MaterialTheme.typography.labelMedium,
-                color = AppTheme.TextMuted
-            )
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = horoscope.date.format(dateFormatter),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AppTheme.TextMuted
+                )
+                if (isTomorrow) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(AppTheme.AccentPrimary.copy(alpha = 0.15f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "Preview",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AppTheme.AccentPrimary
+                        )
+                    }
+                }
+            }
+            
             Spacer(Modifier.height(8.dp))
+            
             Text(
                 text = horoscope.theme,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = AppTheme.TextPrimary
             )
+            
             Spacer(Modifier.height(12.dp))
+            
             Text(
                 text = horoscope.themeDescription,
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppTheme.TextSecondary,
                 lineHeight = 22.sp
             )
+            
             Spacer(Modifier.height(16.dp))
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 InfoChip(
                     icon = Icons.Outlined.NightlightRound,
-                    label = "Moon in ${horoscope.moonSign.displayName}"
+                    label = "Moon in ${horoscope.moonSign.displayName}",
+                    modifier = Modifier.weight(1f)
                 )
                 InfoChip(
                     icon = Icons.Outlined.Schedule,
-                    label = horoscope.activeDasha
+                    label = horoscope.activeDasha,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -275,9 +818,13 @@ private fun DailyHoroscopeHeader(
 }
 
 @Composable
-private fun InfoChip(icon: ImageVector, label: String) {
+private fun InfoChip(
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(8.dp))
             .background(AppTheme.ChipBackground)
             .padding(horizontal = 12.dp, vertical = 8.dp),
@@ -293,13 +840,29 @@ private fun InfoChip(icon: ImageVector, label: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = AppTheme.TextSecondary
+            color = AppTheme.TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
 
 @Composable
-private fun EnergyCard(horoscope: HoroscopeCalculator.DailyHoroscope) {
+private fun EnergyCard(overallEnergy: Int) {
+    val animatedEnergy by animateIntAsState(
+        targetValue = overallEnergy,
+        animationSpec = tween(700, easing = FastOutSlowInEasing),
+        label = "energy_anim"
+    )
+    
+    val energyColor = remember(overallEnergy) {
+        when {
+            overallEnergy < 4 -> AppTheme.ErrorColor
+            overallEnergy < 7 -> AppTheme.WarningColor
+            else -> AppTheme.SuccessColor
+        }
+    }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -307,61 +870,62 @@ private fun EnergyCard(horoscope: HoroscopeCalculator.DailyHoroscope) {
         colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "Overall Energy",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
             )
+            
             Spacer(modifier = Modifier.height(16.dp))
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
                     repeat(10) { index ->
-                        val isActive = index < horoscope.overallEnergy
+                        val isActive = index < animatedEnergy
+                        val dotColor by animateColorAsState(
+                            targetValue = if (isActive) {
+                                when {
+                                    index < 3 -> AppTheme.ErrorColor
+                                    index < 6 -> AppTheme.WarningColor
+                                    else -> AppTheme.SuccessColor
+                                }
+                            } else {
+                                AppTheme.ChipBackground
+                            },
+                            animationSpec = tween(300, delayMillis = index * 50),
+                            label = "dot_$index"
+                        )
                         Box(
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(20.dp)
                                 .clip(CircleShape)
-                                .background(
-                                    if (isActive) {
-                                        when {
-                                            index < 3 -> AppTheme.ErrorColor
-                                            index < 6 -> AppTheme.WarningColor
-                                            else -> AppTheme.SuccessColor
-                                        }
-                                    } else {
-                                        AppTheme.ChipBackground
-                                    }
-                                )
+                                .background(dotColor)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.weight(1f))
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
                 Text(
-                    text = "${horoscope.overallEnergy}/10",
+                    text = "$overallEnergy/10",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = when {
-                        horoscope.overallEnergy < 4 -> AppTheme.ErrorColor
-                        horoscope.overallEnergy < 7 -> AppTheme.WarningColor
-                        else -> AppTheme.SuccessColor
-                    }
+                    color = energyColor
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
             Text(
-                text = when {
-                    horoscope.overallEnergy >= 8 -> "Excellent day ahead!"
-                    horoscope.overallEnergy >= 6 -> "Favorable energy today"
-                    horoscope.overallEnergy >= 4 -> "Balanced energy - stay steady"
-                    else -> "Take it easy today"
-                },
+                text = getEnergyDescription(overallEnergy),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTheme.TextMuted
             )
@@ -369,11 +933,21 @@ private fun EnergyCard(horoscope: HoroscopeCalculator.DailyHoroscope) {
     }
 }
 
+private fun getEnergyDescription(energy: Int): String = when {
+    energy >= 9 -> "Exceptional cosmic alignment - seize every opportunity!"
+    energy >= 8 -> "Excellent day ahead - favorable for important decisions"
+    energy >= 7 -> "Strong positive energy - good for new initiatives"
+    energy >= 6 -> "Favorable energy - maintain steady progress"
+    energy >= 5 -> "Balanced energy - stay centered and focused"
+    energy >= 4 -> "Moderate energy - pace yourself wisely"
+    energy >= 3 -> "Lower energy day - prioritize rest and reflection"
+    energy >= 2 -> "Challenging day - practice patience and self-care"
+    else -> "Rest and recharge recommended - avoid major decisions"
+}
+
 @Composable
 private fun LifeAreasSection(lifeAreas: List<HoroscopeCalculator.LifeAreaPrediction>) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(
             text = "Life Areas",
             style = MaterialTheme.typography.titleMedium,
@@ -381,9 +955,14 @@ private fun LifeAreasSection(lifeAreas: List<HoroscopeCalculator.LifeAreaPredict
             color = AppTheme.TextPrimary,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        lifeAreas.forEach { prediction ->
-            LifeAreaCard(prediction)
-            Spacer(modifier = Modifier.height(8.dp))
+        
+        lifeAreas.forEachIndexed { index, prediction ->
+            key(prediction.area.name) {
+                LifeAreaCard(prediction)
+                if (index < lifeAreas.lastIndex) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
         }
     }
 }
@@ -391,27 +970,24 @@ private fun LifeAreasSection(lifeAreas: List<HoroscopeCalculator.LifeAreaPredict
 @Composable
 private fun LifeAreaCard(prediction: HoroscopeCalculator.LifeAreaPrediction) {
     var expanded by remember { mutableStateOf(false) }
-    val areaColor = when (prediction.area) {
-        HoroscopeCalculator.LifeArea.CAREER -> AppTheme.LifeAreaCareer
-        HoroscopeCalculator.LifeArea.LOVE -> AppTheme.LifeAreaLove
-        HoroscopeCalculator.LifeArea.HEALTH -> AppTheme.LifeAreaHealth
-        HoroscopeCalculator.LifeArea.FINANCE -> AppTheme.LifeAreaFinance
-        HoroscopeCalculator.LifeArea.FAMILY -> AppTheme.AccentTeal
-        HoroscopeCalculator.LifeArea.SPIRITUALITY -> AppTheme.LifeAreaSpiritual
-    }
-    val areaIcon = when (prediction.area) {
-        HoroscopeCalculator.LifeArea.CAREER -> Icons.Outlined.Work
-        HoroscopeCalculator.LifeArea.LOVE -> Icons.Outlined.Favorite
-        HoroscopeCalculator.LifeArea.HEALTH -> Icons.Outlined.FavoriteBorder
-        HoroscopeCalculator.LifeArea.FINANCE -> Icons.Outlined.AccountBalance
-        HoroscopeCalculator.LifeArea.FAMILY -> Icons.Outlined.Home
-        HoroscopeCalculator.LifeArea.SPIRITUALITY -> Icons.Outlined.Star
+    
+    val areaConfig = remember(prediction.area) {
+        getLifeAreaConfig(prediction.area)
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded },
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { expanded = !expanded },
         colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -424,17 +1000,19 @@ private fun LifeAreaCard(prediction: HoroscopeCalculator.LifeAreaPrediction) {
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(areaColor.copy(alpha = 0.15f)),
+                        .background(areaConfig.color.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = areaIcon,
+                        imageVector = areaConfig.icon,
                         contentDescription = null,
-                        tint = areaColor,
+                        tint = areaConfig.color,
                         modifier = Modifier.size(22.dp)
                     )
                 }
+                
                 Spacer(modifier = Modifier.width(12.dp))
+                
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = prediction.area.displayName,
@@ -442,25 +1020,41 @@ private fun LifeAreaCard(prediction: HoroscopeCalculator.LifeAreaPrediction) {
                         fontWeight = FontWeight.Medium,
                         color = AppTheme.TextPrimary
                     )
-                    Row {
+                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                         repeat(5) { index ->
                             Icon(
-                                imageVector = if (index < prediction.rating) Icons.Filled.Star else Icons.Outlined.Star,
+                                imageVector = if (index < prediction.rating) 
+                                    Icons.Filled.Star else Icons.Outlined.Star,
                                 contentDescription = null,
-                                tint = if (index < prediction.rating) areaColor else AppTheme.TextSubtle,
+                                tint = if (index < prediction.rating) 
+                                    areaConfig.color else AppTheme.TextSubtle,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
                     }
                 }
+                
+                val rotation by animateFloatAsState(
+                    targetValue = if (expanded) 180f else 0f,
+                    animationSpec = tween(300),
+                    label = "expand_rotation"
+                )
+                
                 Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
                     tint = AppTheme.TextMuted,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .graphicsLayer { rotationZ = rotation }
                 )
             }
-            AnimatedVisibility(visible = expanded) {
+            
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn(tween(200)) + expandVertically(tween(300)),
+                exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
+            ) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
                     Text(
                         text = prediction.prediction,
@@ -468,31 +1062,47 @@ private fun LifeAreaCard(prediction: HoroscopeCalculator.LifeAreaPrediction) {
                         color = AppTheme.TextSecondary,
                         lineHeight = 20.sp
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(areaColor.copy(alpha = 0.1f))
+                            .background(areaConfig.color.copy(alpha = 0.1f))
                             .padding(12.dp),
                         verticalAlignment = Alignment.Top
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Lightbulb,
                             contentDescription = null,
-                            tint = areaColor,
+                            tint = areaConfig.color,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = prediction.advice,
                             style = MaterialTheme.typography.bodySmall,
-                            color = AppTheme.TextSecondary
+                            color = AppTheme.TextSecondary,
+                            lineHeight = 18.sp
                         )
                     }
                 }
             }
         }
+    }
+}
+
+private data class LifeAreaConfig(val color: Color, val icon: ImageVector)
+
+private fun getLifeAreaConfig(area: HoroscopeCalculator.LifeArea): LifeAreaConfig {
+    return when (area) {
+        HoroscopeCalculator.LifeArea.CAREER -> LifeAreaConfig(AppTheme.LifeAreaCareer, Icons.Outlined.Work)
+        HoroscopeCalculator.LifeArea.LOVE -> LifeAreaConfig(AppTheme.LifeAreaLove, Icons.Outlined.Favorite)
+        HoroscopeCalculator.LifeArea.HEALTH -> LifeAreaConfig(AppTheme.LifeAreaHealth, Icons.Outlined.FavoriteBorder)
+        HoroscopeCalculator.LifeArea.FINANCE -> LifeAreaConfig(AppTheme.LifeAreaFinance, Icons.Outlined.AccountBalance)
+        HoroscopeCalculator.LifeArea.FAMILY -> LifeAreaConfig(AppTheme.AccentTeal, Icons.Outlined.Home)
+        HoroscopeCalculator.LifeArea.SPIRITUALITY -> LifeAreaConfig(AppTheme.LifeAreaSpiritual, Icons.Outlined.Star)
     }
 }
 
@@ -512,7 +1122,9 @@ private fun LuckyElementsCard(lucky: HoroscopeCalculator.LuckyElements) {
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
             )
+            
             Spacer(modifier = Modifier.height(16.dp))
+            
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -544,7 +1156,11 @@ private fun LuckyElement(icon: ImageVector, label: String, value: String) {
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = AppTheme.TextMuted)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = AppTheme.TextMuted
+        )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
@@ -558,6 +1174,8 @@ private fun LuckyElement(icon: ImageVector, label: String, value: String) {
 
 @Composable
 private fun RecommendationsCard(recommendations: List<String>, cautions: List<String>) {
+    if (recommendations.isEmpty() && cautions.isEmpty()) return
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -575,7 +1193,10 @@ private fun RecommendationsCard(recommendations: List<String>, cautions: List<St
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 recommendations.forEach { rec ->
-                    Row(modifier = Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.Top) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.CheckCircle,
                             contentDescription = null,
@@ -583,12 +1204,20 @@ private fun RecommendationsCard(recommendations: List<String>, cautions: List<St
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = rec, style = MaterialTheme.typography.bodyMedium, color = AppTheme.TextSecondary)
+                        Text(
+                            text = rec,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppTheme.TextSecondary,
+                            lineHeight = 20.sp
+                        )
                     }
                 }
             }
+            
             if (cautions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
+                if (recommendations.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 Text(
                     text = "Cautions",
                     style = MaterialTheme.typography.titleMedium,
@@ -597,7 +1226,10 @@ private fun RecommendationsCard(recommendations: List<String>, cautions: List<St
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 cautions.forEach { caution ->
-                    Row(modifier = Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.Top) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.Warning,
                             contentDescription = null,
@@ -608,7 +1240,8 @@ private fun RecommendationsCard(recommendations: List<String>, cautions: List<St
                         Text(
                             text = caution,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = AppTheme.TextSecondary
+                            color = AppTheme.TextSecondary,
+                            lineHeight = 20.sp
                         )
                     }
                 }
@@ -623,7 +1256,9 @@ private fun AffirmationCard(affirmation: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = AppTheme.AccentPrimary.copy(alpha = 0.15f)),
+        colors = CardDefaults.cardColors(
+            containerColor = AppTheme.AccentPrimary.copy(alpha = 0.15f)
+        ),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
@@ -657,7 +1292,8 @@ private fun AffirmationCard(affirmation: String) {
 
 @Composable
 private fun WeeklyOverviewHeader(weekly: HoroscopeCalculator.WeeklyHoroscope) {
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM d")
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM d") }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -705,41 +1341,16 @@ private fun WeeklyEnergyChart(dailyHighlights: List<HoroscopeCalculator.DailyHig
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
             )
+            
             Spacer(modifier = Modifier.height(16.dp))
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 dailyHighlights.forEach { highlight ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .width(32.dp)
-                                .height(80.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(AppTheme.ChipBackground),
-                            contentAlignment = Alignment.BottomCenter
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight(highlight.energy / 10f)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(
-                                        when {
-                                            highlight.energy < 4 -> AppTheme.ErrorColor
-                                            highlight.energy < 7 -> AppTheme.WarningColor
-                                            else -> AppTheme.SuccessColor
-                                        }
-                                    )
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = highlight.dayOfWeek.take(3),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AppTheme.TextMuted
-                        )
+                    key(highlight.dayOfWeek) {
+                        DailyEnergyBar(highlight)
                     }
                 }
             }
@@ -748,11 +1359,52 @@ private fun WeeklyEnergyChart(dailyHighlights: List<HoroscopeCalculator.DailyHig
 }
 
 @Composable
+private fun DailyEnergyBar(highlight: HoroscopeCalculator.DailyHighlight) {
+    val animatedHeight by animateFloatAsState(
+        targetValue = highlight.energy / 10f,
+        animationSpec = tween(600, easing = FastOutSlowInEasing),
+        label = "energy_bar_${highlight.dayOfWeek}"
+    )
+    
+    val barColor = remember(highlight.energy) {
+        when {
+            highlight.energy < 4 -> AppTheme.ErrorColor
+            highlight.energy < 7 -> AppTheme.WarningColor
+            else -> AppTheme.SuccessColor
+        }
+    }
+    
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .width(32.dp)
+                .height(80.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(AppTheme.ChipBackground),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(animatedHeight)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(barColor)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = highlight.dayOfWeek.take(3),
+            style = MaterialTheme.typography.labelSmall,
+            color = AppTheme.TextMuted
+        )
+    }
+}
+
+@Composable
 private fun KeyDatesSection(keyDates: List<HoroscopeCalculator.KeyDate>) {
     if (keyDates.isEmpty()) return
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
+    
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(
             text = "Key Dates",
             style = MaterialTheme.typography.titleMedium,
@@ -760,49 +1412,12 @@ private fun KeyDatesSection(keyDates: List<HoroscopeCalculator.KeyDate>) {
             color = AppTheme.TextPrimary,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        keyDates.forEach { keyDate ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (keyDate.isPositive) AppTheme.SuccessColor.copy(alpha = 0.15f)
-                                else AppTheme.WarningColor.copy(alpha = 0.15f)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = keyDate.date.dayOfMonth.toString(),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = if (keyDate.isPositive) AppTheme.SuccessColor else AppTheme.WarningColor
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = keyDate.event,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = AppTheme.TextPrimary
-                        )
-                        Text(
-                            text = keyDate.significance,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = AppTheme.TextMuted
-                        )
-                    }
+        
+        keyDates.forEachIndexed { index, keyDate ->
+            key(keyDate.date.toString()) {
+                KeyDateCard(keyDate)
+                if (index < keyDates.lastIndex) {
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -810,10 +1425,65 @@ private fun KeyDatesSection(keyDates: List<HoroscopeCalculator.KeyDate>) {
 }
 
 @Composable
-private fun WeeklyPredictionsSection(predictions: Map<HoroscopeCalculator.LifeArea, String>) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+private fun KeyDateCard(keyDate: HoroscopeCalculator.KeyDate) {
+    val indicatorColor = if (keyDate.isPositive) AppTheme.SuccessColor else AppTheme.WarningColor
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
+        shape = RoundedCornerShape(12.dp)
     ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(indicatorColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = keyDate.date.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = indicatorColor
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = keyDate.event,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = AppTheme.TextPrimary
+                )
+                Text(
+                    text = keyDate.significance,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppTheme.TextMuted,
+                    lineHeight = 16.sp
+                )
+            }
+            
+            Icon(
+                imageVector = if (keyDate.isPositive) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown,
+                contentDescription = null,
+                tint = indicatorColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeeklyPredictionsSection(predictions: Map<HoroscopeCalculator.LifeArea, String>) {
+    if (predictions.isEmpty()) return
+    
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(
             text = "Weekly Overview by Area",
             style = MaterialTheme.typography.titleMedium,
@@ -821,44 +1491,95 @@ private fun WeeklyPredictionsSection(predictions: Map<HoroscopeCalculator.LifeAr
             color = AppTheme.TextPrimary,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        predictions.entries.forEach { (area, prediction) ->
-            var expanded by remember { mutableStateOf(false) }
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable { expanded = !expanded },
-                colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = area.displayName,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = AppTheme.TextPrimary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Icon(
-                            imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = null,
-                            tint = AppTheme.TextMuted
-                        )
-                    }
-                    AnimatedVisibility(visible = expanded) {
-                        Text(
-                            text = prediction,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AppTheme.TextSecondary,
-                            lineHeight = 20.sp,
-                            modifier = Modifier.padding(top = 12.dp)
-                        )
-                    }
+        
+        predictions.entries.forEachIndexed { index, (area, prediction) ->
+            key(area.name) {
+                WeeklyAreaCard(area, prediction)
+                if (index < predictions.size - 1) {
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeeklyAreaCard(area: HoroscopeCalculator.LifeArea, prediction: String) {
+    var expanded by remember { mutableStateOf(false) }
+    val areaConfig = remember(area) { getLifeAreaConfig(area) }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { expanded = !expanded },
+        colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(areaConfig.color.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = areaConfig.icon,
+                        contentDescription = null,
+                        tint = areaConfig.color,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Text(
+                    text = area.displayName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = AppTheme.TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                val rotation by animateFloatAsState(
+                    targetValue = if (expanded) 180f else 0f,
+                    animationSpec = tween(300),
+                    label = "weekly_expand_${area.name}"
+                )
+                
+                Icon(
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = AppTheme.TextMuted,
+                    modifier = Modifier.graphicsLayer { rotationZ = rotation }
+                )
+            }
+            
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn(tween(200)) + expandVertically(tween(300)),
+                exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
+            ) {
+                Text(
+                    text = prediction,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppTheme.TextSecondary,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
             }
         }
     }
@@ -870,7 +1591,9 @@ private fun WeeklyAdviceCard(advice: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = AppTheme.AccentPrimary.copy(alpha = 0.15f)),
+        colors = CardDefaults.cardColors(
+            containerColor = AppTheme.AccentPrimary.copy(alpha = 0.15f)
+        ),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -902,9 +1625,9 @@ private fun WeeklyAdviceCard(advice: String) {
 
 @Composable
 private fun CurrentDashaCard(timeline: DashaCalculator.DashaTimeline) {
-    val currentMahadasha = timeline.currentMahadasha
+    val currentMahadasha = timeline.currentMahadasha ?: return
     val currentAntardasha = timeline.currentAntardasha
-
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -912,9 +1635,7 @@ private fun CurrentDashaCard(timeline: DashaCalculator.DashaTimeline) {
         colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -926,8 +1647,7 @@ private fun CurrentDashaCard(timeline: DashaCalculator.DashaTimeline) {
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
                 )
-
-                // Status indicator
+                
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
@@ -941,74 +1661,86 @@ private fun CurrentDashaCard(timeline: DashaCalculator.DashaTimeline) {
                     )
                 }
             }
-
+            
             Spacer(modifier = Modifier.height(16.dp))
-
-            currentMahadasha?.let { mahadasha ->
-                // Mahadasha
+            
+            DashaPeriodRow(
+                label = "Mahadasha",
+                planet = currentMahadasha.planet,
+                startDate = currentMahadasha.startDate,
+                endDate = currentMahadasha.endDate,
+                isPrimary = true
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            val mahadashaProgress = remember(currentMahadasha) {
+                calculateProgress(currentMahadasha.startDate, currentMahadasha.endDate)
+            }
+            DashaProgressBar(
+                progress = mahadashaProgress,
+                color = getPlanetColor(currentMahadasha.planet)
+            )
+            
+            currentAntardasha?.let { antardasha ->
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = AppTheme.DividerColor)
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 DashaPeriodRow(
-                    label = "Mahadasha",
-                    planet = mahadasha.planet,
-                    startDate = mahadasha.startDate,
-                    endDate = mahadasha.endDate,
-                    isPrimary = true
+                    label = "Antardasha",
+                    planet = antardasha.planet,
+                    startDate = antardasha.startDate,
+                    endDate = antardasha.endDate,
+                    isPrimary = false
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Progress bar for Mahadasha
-                val mahadashaProgress = calculateProgress(mahadasha.startDate, mahadasha.endDate)
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                val antardashaProgress = remember(antardasha) {
+                    calculateProgress(antardasha.startDate, antardasha.endDate)
+                }
                 DashaProgressBar(
-                    progress = mahadashaProgress,
-                    color = getPlanetColor(mahadasha.planet)
+                    progress = antardashaProgress,
+                    color = getPlanetColor(antardasha.planet),
+                    height = 6
                 )
-
-                currentAntardasha?.let { antardasha ->
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    HorizontalDivider(color = AppTheme.DividerColor)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Antardasha (Bhukti)
-                    DashaPeriodRow(
-                        label = "Antardasha",
-                        planet = antardasha.planet,
-                        startDate = antardasha.startDate,
-                        endDate = antardasha.endDate,
-                        isPrimary = false
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    val antardashaProgress = calculateProgress(antardasha.startDate, antardasha.endDate)
-                    DashaProgressBar(
-                        progress = antardashaProgress,
-                        color = getPlanetColor(antardasha.planet),
-                        height = 6
-                    )
-
-                    // Pratyantardasha if available
-                    timeline.currentPratyantardasha?.let { pratyantardasha ->
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                
+                timeline.currentPratyantardasha?.let { pratyantardasha ->
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Pratyantardasha:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppTheme.TextMuted
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .background(getPlanetColor(pratyantardasha.planet).copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Pratyantardasha:",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppTheme.TextMuted
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = pratyantardasha.planet.displayName,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium,
-                                color = getPlanetColor(pratyantardasha.planet)
+                                text = pratyantardasha.planet.symbol,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = getPlanetColor(pratyantardasha.planet),
+                                fontSize = 8.sp
                             )
                         }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = pratyantardasha.planet.displayName,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = getPlanetColor(pratyantardasha.planet)
+                        )
                     }
                 }
             }
@@ -1024,30 +1756,30 @@ private fun DashaPeriodRow(
     endDate: LocalDate,
     isPrimary: Boolean
 ) {
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM yyyy")
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM yyyy") }
+    val planetColor = getPlanetColor(planet)
+    val daysRemaining = remember(endDate) {
+        ChronoUnit.DAYS.between(LocalDate.now(), endDate)
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Planet indicator
         Box(
             modifier = Modifier
                 .size(if (isPrimary) 44.dp else 36.dp)
                 .clip(CircleShape)
-                .background(getPlanetColor(planet).copy(alpha = 0.15f))
-                .border(
-                    width = 2.dp,
-                    color = getPlanetColor(planet),
-                    shape = CircleShape
-                ),
+                .background(planetColor.copy(alpha = 0.15f))
+                .border(width = 2.dp, color = planetColor, shape = CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = planet.symbol,
-                style = if (isPrimary) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+                style = if (isPrimary) MaterialTheme.typography.titleMedium 
+                        else MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = getPlanetColor(planet)
+                color = planetColor
             )
         }
 
@@ -1056,7 +1788,8 @@ private fun DashaPeriodRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "$label: ${planet.displayName}",
-                style = if (isPrimary) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyMedium,
+                style = if (isPrimary) MaterialTheme.typography.titleSmall 
+                        else MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = AppTheme.TextPrimary
             )
@@ -1067,8 +1800,6 @@ private fun DashaPeriodRow(
             )
         }
 
-        // Days remaining
-        val daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), endDate)
         if (daysRemaining > 0) {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
@@ -1093,6 +1824,12 @@ private fun DashaProgressBar(
     color: Color,
     height: Int = 8
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(800, easing = FastOutSlowInEasing),
+        label = "dasha_progress"
+    )
+    
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1102,7 +1839,7 @@ private fun DashaProgressBar(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(progress)
+                .fillMaxWidth(animatedProgress)
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(height / 2))
                 .background(color)
@@ -1112,6 +1849,14 @@ private fun DashaProgressBar(
 
 @Composable
 private fun DashaTimelinePreview(timeline: DashaCalculator.DashaTimeline) {
+    val currentMahadasha = timeline.currentMahadasha ?: return
+    val currentAntardasha = timeline.currentAntardasha ?: return
+    
+    val currentIndex = currentMahadasha.antardashas.indexOf(currentAntardasha)
+    val upcomingAntardashas = remember(currentMahadasha, currentIndex) {
+        currentMahadasha.antardashas.drop(currentIndex + 1).take(3)
+    }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1119,9 +1864,7 @@ private fun DashaTimelinePreview(timeline: DashaCalculator.DashaTimeline) {
         colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "Upcoming Periods",
                 style = MaterialTheme.typography.titleMedium,
@@ -1131,24 +1874,31 @@ private fun DashaTimelinePreview(timeline: DashaCalculator.DashaTimeline) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Show next 3 Antardashas
-            val currentMahadasha = timeline.currentMahadasha
-            val currentAntardasha = timeline.currentAntardasha
-
-            if (currentMahadasha != null && currentAntardasha != null) {
-                val currentIndex = currentMahadasha.antardashas.indexOf(currentAntardasha)
-                val upcomingAntardashas = currentMahadasha.antardashas
-                    .drop(currentIndex + 1)
-                    .take(3)
-
-                if (upcomingAntardashas.isEmpty()) {
+            if (upcomingAntardashas.isEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(AppTheme.ChipBackground)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = AppTheme.AccentPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Current Antardasha is the last in this Mahadasha",
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTheme.TextMuted
                     )
-                } else {
-                    upcomingAntardashas.forEachIndexed { index, antardasha ->
+                }
+            } else {
+                upcomingAntardashas.forEachIndexed { index, antardasha ->
+                    key(antardasha.planet.name + antardasha.startDate.toString()) {
                         UpcomingPeriodItem(
                             planet = antardasha.planet,
                             mahadashaPlanet = currentMahadasha.planet,
@@ -1172,8 +1922,11 @@ private fun UpcomingPeriodItem(
     startDate: LocalDate,
     isFirst: Boolean
 ) {
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
-    val daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), startDate)
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM d, yyyy") }
+    val daysUntil = remember(startDate) {
+        ChronoUnit.DAYS.between(LocalDate.now(), startDate)
+    }
+    val planetColor = getPlanetColor(planet)
 
     Row(
         modifier = Modifier
@@ -1187,14 +1940,14 @@ private fun UpcomingPeriodItem(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(getPlanetColor(planet).copy(alpha = 0.15f)),
+                .background(planetColor.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = planet.symbol,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = getPlanetColor(planet)
+                color = planetColor
             )
         }
 
@@ -1226,9 +1979,7 @@ private fun UpcomingPeriodItem(
 
 @Composable
 private fun PlanetaryTransitsSection(influences: List<HoroscopeCalculator.PlanetaryInfluence>) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(
             text = "Current Transits",
             style = MaterialTheme.typography.titleMedium,
@@ -1237,11 +1988,11 @@ private fun PlanetaryTransitsSection(influences: List<HoroscopeCalculator.Planet
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Horizontal scrolling transit cards
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(influences.take(6)) { influence ->
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(
+                items = influences.take(6),
+                key = { it.planet.name }
+            ) { influence ->
                 TransitCard(influence)
             }
         }
@@ -1250,15 +2001,15 @@ private fun PlanetaryTransitsSection(influences: List<HoroscopeCalculator.Planet
 
 @Composable
 private fun TransitCard(influence: HoroscopeCalculator.PlanetaryInfluence) {
+    val planetColor = getPlanetColor(influence.planet)
+    val trendColor = if (influence.isPositive) AppTheme.SuccessColor else AppTheme.WarningColor
+    
     Card(
-        modifier = Modifier
-            .width(160.dp),
+        modifier = Modifier.width(160.dp),
         colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1268,22 +2019,22 @@ private fun TransitCard(influence: HoroscopeCalculator.PlanetaryInfluence) {
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(getPlanetColor(influence.planet).copy(alpha = 0.15f)),
+                        .background(planetColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = influence.planet.symbol,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = getPlanetColor(influence.planet)
+                        color = planetColor
                     )
                 }
 
-                // Positive/Negative indicator
                 Icon(
-                    imageVector = if (influence.isPositive) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown,
+                    imageVector = if (influence.isPositive) Icons.Filled.TrendingUp 
+                                  else Icons.Filled.TrendingDown,
                     contentDescription = null,
-                    tint = if (influence.isPositive) AppTheme.SuccessColor else AppTheme.WarningColor,
+                    tint = trendColor,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -1310,21 +2061,15 @@ private fun TransitCard(influence: HoroscopeCalculator.PlanetaryInfluence) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Strength indicator
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val strengthDots = (influence.strength / 2).coerceIn(0, 5)
                 repeat(5) { index ->
                     Box(
                         modifier = Modifier
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(
-                                if (index < (influence.strength / 2)) {
-                                    if (influence.isPositive) AppTheme.SuccessColor else AppTheme.WarningColor
-                                } else {
-                                    AppTheme.ChipBackground
-                                }
+                                if (index < strengthDots) trendColor else AppTheme.ChipBackground
                             )
                     )
                     if (index < 4) Spacer(modifier = Modifier.width(4.dp))
@@ -1333,7 +2078,6 @@ private fun TransitCard(influence: HoroscopeCalculator.PlanetaryInfluence) {
         }
     }
 }
-
 
 @Composable
 private fun EmptyInsightsState() {
@@ -1344,15 +2088,21 @@ private fun EmptyInsightsState() {
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Insights,
-                contentDescription = null,
-                tint = AppTheme.TextMuted,
-                modifier = Modifier.size(64.dp)
-            )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(AppTheme.ChipBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Insights,
+                    contentDescription = null,
+                    tint = AppTheme.TextMuted,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -1366,31 +2116,52 @@ private fun EmptyInsightsState() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Select or create a profile to view your astrological insights",
+                text = "Select or create a profile to view your personalized astrological insights and predictions",
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppTheme.TextMuted,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                lineHeight = 22.sp
             )
         }
     }
 }
 
-// Helper functions
 private fun calculateProgress(startDate: LocalDate, endDate: LocalDate): Float {
     val today = LocalDate.now()
+    if (today.isBefore(startDate)) return 0f
+    if (today.isAfter(endDate)) return 1f
+    
     val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toFloat()
+    if (totalDays <= 0) return 1f
+    
     val elapsedDays = ChronoUnit.DAYS.between(startDate, today).toFloat()
     return (elapsedDays / totalDays).coerceIn(0f, 1f)
 }
 
 private fun formatDuration(days: Long): String {
+    if (days <= 0) return "0d"
+    
     return when {
-        days < 30 -> "$days days"
-        days < 365 -> "${days / 30}m ${days % 30}d"
+        days < 7 -> "${days}d"
+        days < 30 -> {
+            val weeks = days / 7
+            val remainingDays = days % 7
+            if (remainingDays == 0L) "${weeks}w" else "${weeks}w ${remainingDays}d"
+        }
+        days < 365 -> {
+            val months = days / 30
+            val remainingDays = days % 30
+            when {
+                remainingDays == 0L -> "${months}m"
+                remainingDays < 7 -> "${months}m ${remainingDays}d"
+                else -> "${months}m ${remainingDays / 7}w"
+            }
+        }
         else -> {
             val years = days / 365
-            val months = (days % 365) / 30
-            if (months > 0) "${years}y ${months}m" else "${years}y"
+            val remainingDays = days % 365
+            val months = remainingDays / 30
+            if (months == 0L) "${years}y" else "${years}y ${months}m"
         }
     }
 }

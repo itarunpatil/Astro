@@ -85,7 +85,8 @@ fun MuhurtaScreen(
             try {
                 val now = LocalDateTime.of(selectedDate, LocalTime.now())
                 todayMuhurta = calculator.calculateMuhurta(now, latitude, longitude, timezone)
-                choghadiyaList = calculator.getDailyChoghadiya(selectedDate, latitude, longitude, timezone)
+                val (dayChoghadiyas, _) = calculator.getDailyChoghadiya(selectedDate, latitude, longitude, timezone)
+                choghadiyaList = dayChoghadiyas
             } finally {
                 calculator.close()
             }
@@ -507,7 +508,7 @@ private fun PanchangaCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
                 PanchangaItem(
                     label = "Yoga",
                     value = muhurta.yoga.name,
-                    isPositive = muhurta.yoga.nature == "Auspicious",
+                    isPositive = muhurta.yoga.isAuspicious,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -521,7 +522,7 @@ private fun PanchangaCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
                 PanchangaItem(
                     label = "Karana",
                     value = muhurta.karana.name,
-                    isPositive = muhurta.karana.nature == "Auspicious",
+                    isPositive = muhurta.karana.isAuspicious,
                     modifier = Modifier.weight(1f)
                 )
                 PanchangaItem(
@@ -593,8 +594,8 @@ private fun InauspiciousPeriodsCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
 
             InauspiciousPeriodRow(
                 name = "Rahukala",
-                startTime = muhurta.inauspiciousPeriods.rahukala.first,
-                endTime = muhurta.inauspiciousPeriods.rahukala.second,
+                startTime = muhurta.inauspiciousPeriods.rahukala.startTime,
+                endTime = muhurta.inauspiciousPeriods.rahukala.endTime,
                 severity = "High"
             )
 
@@ -602,8 +603,8 @@ private fun InauspiciousPeriodsCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
 
             InauspiciousPeriodRow(
                 name = "Yamaghanta",
-                startTime = muhurta.inauspiciousPeriods.yamaghanta.first,
-                endTime = muhurta.inauspiciousPeriods.yamaghanta.second,
+                startTime = muhurta.inauspiciousPeriods.yamaghanta.startTime,
+                endTime = muhurta.inauspiciousPeriods.yamaghanta.endTime,
                 severity = "Medium"
             )
 
@@ -611,8 +612,8 @@ private fun InauspiciousPeriodsCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
 
             InauspiciousPeriodRow(
                 name = "Gulika Kala",
-                startTime = muhurta.inauspiciousPeriods.gulikaKala.first,
-                endTime = muhurta.inauspiciousPeriods.gulikaKala.second,
+                startTime = muhurta.inauspiciousPeriods.gulikaKala.startTime,
+                endTime = muhurta.inauspiciousPeriods.gulikaKala.endTime,
                 severity = "Medium"
             )
         }
@@ -1210,5 +1211,7 @@ private fun getActivityIcon(activity: MuhurtaCalculator.ActivityType): ImageVect
         MuhurtaCalculator.ActivityType.VEHICLE -> Icons.Outlined.DirectionsCar
         MuhurtaCalculator.ActivityType.SPIRITUAL -> Icons.Outlined.SelfImprovement
         MuhurtaCalculator.ActivityType.GENERAL -> Icons.Outlined.Star
+        MuhurtaCalculator.ActivityType.GRIHA_PRAVESHA -> Icons.Default.Home
+        MuhurtaCalculator.ActivityType.NAMING_CEREMONY -> Icons.Default.ChildCare
     }
 }
