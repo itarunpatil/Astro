@@ -374,10 +374,14 @@ fun VarshaphalaScreen(
                 contentColor = AppTheme.AccentPrimary,
                 divider = { HorizontalDivider(color = AppTheme.DividerColor.copy(alpha = 0.3f)) },
                 edgePadding = 8.dp,
-                indicator = { tabPositions ->
+indicator = @Composable { tabPositions ->
                     if (selectedTab < tabPositions.size) {
                         TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentSize(Alignment.BottomStart)
+                .offset(x = tabPositions[selectedTab].left)
+                .width(tabPositions[selectedTab].width),
                             color = AppTheme.AccentPrimary,
                             height = 3.dp
                         )
@@ -1126,7 +1130,7 @@ private fun SouthIndianChart(
             val sign = signOrder[signIndex]
 
             val textLayout = textMeasurer.measure(
-                text = sign.symbol,
+                text = getZodiacSymbol(sign),
                 style = TextStyle(
                     fontSize = 10.sp,
                     color = AppTheme.TextMuted
@@ -1501,7 +1505,7 @@ private fun TriPatakiChakraCard(result: ExtendedVarshaphalaResult) {
                                     Row {
                                         sector.signs.forEach { sign ->
                                             Text(
-                                                sign.symbol,
+                                                getZodiacSymbol(sign),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 modifier = Modifier.padding(horizontal = 2.dp)
                                             )
@@ -2399,7 +2403,7 @@ private fun SahamsOverviewCard(sahams: List<Saham>) {
                                     color = AppTheme.AccentGold
                                 )
                                 Text(
-                                    saham.sign.symbol,
+                                    getZodiacSymbol(saham.sign),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = AppTheme.TextMuted
                                 )
@@ -2450,7 +2454,7 @@ private fun SahamCard(saham: Saham) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            saham.sign.symbol,
+                                getZodiacSymbol(saham.sign),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = if (saham.isActive) AppTheme.AccentGold else AppTheme.TextMuted
@@ -3523,6 +3527,23 @@ private fun getMonthName(month: Int): String {
     return java.time.Month.of(month).name.lowercase().replaceFirstChar { it.uppercase() }
 }
 
+private fun getZodiacSymbol(sign: ZodiacSign): String {
+    return when (sign) {
+        ZodiacSign.ARIES -> "♈"
+        ZodiacSign.TAURUS -> "♉"
+        ZodiacSign.GEMINI -> "♊"
+        ZodiacSign.CANCER -> "♋"
+        ZodiacSign.LEO -> "♌"
+        ZodiacSign.VIRGO -> "♍"
+        ZodiacSign.LIBRA -> "♎"
+        ZodiacSign.SCORPIO -> "♏"
+        ZodiacSign.SAGITTARIUS -> "♐"
+        ZodiacSign.CAPRICORN -> "♑"
+        ZodiacSign.AQUARIUS -> "♒"
+        ZodiacSign.PISCES -> "♓"
+    }
+}
+
 private suspend fun calculateExtendedVarshaphala(
     chart: VedicChart,
     year: Int
@@ -3577,7 +3598,7 @@ private suspend fun calculateExtendedVarshaphala(
 }
 
 private fun calculateSolarReturnTime(chart: VedicChart, year: Int): LocalDateTime {
-    val natalSunLongitude = chart.planets[Planet.SUN]?.longitude ?: 0.0
+    val natalSunLongitude = chart.planetPositions.find { it.planet == Planet.SUN }?.longitude ?: 0.0
     val birthDate = chart.birthData.dateTime
 
     var searchDate = LocalDateTime.of(year, birthDate.monthValue, birthDate.dayOfMonth, 12, 0)
@@ -3644,13 +3665,13 @@ private fun normalizeAngle(angle: Double): Double {
 }
 
 private fun calculateSolarReturnChart(chart: VedicChart, solarReturnTime: LocalDateTime): SolarReturnChart {
-    val sunLongitude = chart.planets[Planet.SUN]?.longitude ?: 0.0
+    val sunLongitude = chart.planetPositions.find { it.planet == Planet.SUN }?.longitude ?: 0.0
     val ascendantDegree = calculateAscendant(solarReturnTime, chart.birthData.latitude, chart.birthData.longitude)
     val ascendant = ZodiacSign.fromLongitude(ascendantDegree)
 
     val planetPositions = mutableMapOf<Planet, PlanetPosition>()
 
-    Planet.entries.filter { it != Planet.ASCENDANT }.forEach { planet ->
+    listOf(Planet.SUN, Planet.MOON, Planet.MARS, Planet.MERCURY, Planet.JUPITER, Planet.VENUS, Planet.SATURN, Planet.RAHU, Planet.KETU).forEach { planet ->
         val longitude = calculatePlanetLongitude(planet, solarReturnTime)
         val sign = ZodiacSign.fromLongitude(longitude)
         val house = calculateHouse(longitude, ascendantDegree)
@@ -3951,7 +3972,7 @@ private fun calculateMuntha(chart: VedicChart, year: Int, solarReturnChart: Sola
     val birthYear = chart.birthData.dateTime.year
     val yearsElapsed = year - birthYear
 
-    val natalAscendantIndex = chart.ascendant.ordinal
+    val natalAscendantIndex = ZodiacSign.entries.indexOf(ZodiacSign.fromLongitude(chart.ascendant))
     val munthaSignIndex = (natalAscendantIndex + yearsElapsed) % 12
     val munthaSign = ZodiacSign.entries[munthaSignIndex]
 
