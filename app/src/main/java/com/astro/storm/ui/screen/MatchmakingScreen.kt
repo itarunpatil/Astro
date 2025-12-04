@@ -547,11 +547,7 @@ private fun EnhancedProfileCard(
                     .size(60.dp)
                     .clip(CircleShape)
                     .background(
-                        if (chart != null) 
-                            Brush.radialGradient(
-                                colors = listOf(color.copy(alpha = 0.3f), color.copy(alpha = 0.1f))
-                            )
-                        else AppTheme.ChipBackground
+                        if (chart != null) color.copy(alpha = 0.15f) else AppTheme.ChipBackground
                     )
                     .border(
                         width = 2.dp,
@@ -1226,7 +1222,7 @@ private fun SpecialConsiderationsCard(considerations: List<String>) {
             considerations.forEach { consideration ->
                 Row(
                     modifier = Modifier.padding(vertical = 6.dp),
-                    crossAxisAlignment = CrossAxisAlignment.Start
+                    verticalAlignment = Alignment.Top
                 ) {
                     Box(
                         modifier = Modifier
@@ -2697,7 +2693,7 @@ private fun ShareOptionItem(
                 )
             }
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                Icons.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = AppTheme.TextSubtle,
                 modifier = Modifier.size(20.dp)
@@ -2883,57 +2879,63 @@ private fun getManglikQuickStatus(result: MatchmakingCalculator.MatchmakingResul
 }
 
 private fun getNakshatraName(chart: VedicChart): String {
-    val moonLongitude = chart.planets.find { 
-        it.planet == com.astro.storm.ephemeris.Planet.MOON 
-    }?.longitude ?: return "Unknown"
+    val moonPosition = chart.planetPositions.find {
+        it.planet.name.equals("Moon", ignoreCase = true)
+    } ?: return "Unknown"
     
-    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27).toInt()
+    val moonLongitude = moonPosition.longitude
+    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27.0).toInt()
     return nakshatraNames.getOrElse(nakshatraIndex) { "Unknown" }
 }
 
 private fun getRashiName(chart: VedicChart): String {
-    val moonLongitude = chart.planets.find { 
-        it.planet == com.astro.storm.ephemeris.Planet.MOON 
-    }?.longitude ?: return "Unknown"
+    val moonPosition = chart.planetPositions.find {
+        it.planet.name.equals("Moon", ignoreCase = true)
+    } ?: return "Unknown"
     
+    val moonLongitude = moonPosition.longitude
     val rashiIndex = (moonLongitude / 30.0).toInt() % 12
     return rashiNames.getOrElse(rashiIndex) { "Unknown" }
 }
 
 private fun getPada(chart: VedicChart): String {
-    val moonLongitude = chart.planets.find { 
-        it.planet == com.astro.storm.ephemeris.Planet.MOON 
-    }?.longitude ?: return "Unknown"
+    val moonPosition = chart.planetPositions.find {
+        it.planet.name.equals("Moon", ignoreCase = true)
+    } ?: return "Unknown"
     
+    val moonLongitude = moonPosition.longitude
     val nakshatraDegree = moonLongitude % 13.333333333
     val pada = (nakshatraDegree / 3.333333333).toInt() + 1
     return "Pada $pada"
 }
 
 private fun getNakshatraLord(chart: VedicChart): String {
-    val moonLongitude = chart.planets.find { 
-        it.planet == com.astro.storm.ephemeris.Planet.MOON 
-    }?.longitude ?: return "Unknown"
+    val moonPosition = chart.planetPositions.find {
+        it.planet.name.equals("Moon", ignoreCase = true)
+    } ?: return "Unknown"
     
-    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27).toInt()
+    val moonLongitude = moonPosition.longitude
+    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27.0).toInt()
     return nakshatraLords.getOrElse(nakshatraIndex) { "Unknown" }
 }
 
 private fun getGana(chart: VedicChart): String {
-    val moonLongitude = chart.planets.find { 
-        it.planet == com.astro.storm.ephemeris.Planet.MOON 
-    }?.longitude ?: return "Unknown"
+    val moonPosition = chart.planetPositions.find {
+        it.planet.name.equals("Moon", ignoreCase = true)
+    } ?: return "Unknown"
     
-    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27).toInt()
+    val moonLongitude = moonPosition.longitude
+    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27.0).toInt()
     return nakshatraGana.getOrElse(nakshatraIndex) { "Unknown" }
 }
 
 private fun getYoni(chart: VedicChart): String {
-    val moonLongitude = chart.planets.find { 
-        it.planet == com.astro.storm.ephemeris.Planet.MOON 
-    }?.longitude ?: return "Unknown"
+    val moonPosition = chart.planetPositions.find {
+        it.planet.name.equals("Moon", ignoreCase = true)
+    } ?: return "Unknown"
     
-    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27).toInt()
+    val moonLongitude = moonPosition.longitude
+    val nakshatraIndex = ((moonLongitude / 13.333333333) % 27.0).toInt()
     return nakshatraYoni.getOrElse(nakshatraIndex) { "Unknown" }
 }
 
@@ -2976,27 +2978,3 @@ private val nakshatraYoni = listOf(
     "Mongoose (Male)", "Monkey (Female)", "Lion (Female)", "Horse (Female)",
     "Lion (Male)", "Cow (Female)", "Elephant (Female)"
 )
-
-@Composable
-private fun RowScope.CrossAxisAlignment(alignment: Alignment.Vertical): Modifier {
-    return Modifier.align(alignment)
-}
-
-private fun Row(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    verticalAlignment: Alignment.Vertical = Alignment.Top,
-    crossAxisAlignment: CrossAxisAlignment = CrossAxisAlignment.Start,
-    content: @Composable RowScope.() -> Unit
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = horizontalArrangement,
-        verticalAlignment = verticalAlignment,
-        content = content
-    )
-}
-
-private enum class CrossAxisAlignment {
-    Start, Center, End
-}
