@@ -12,9 +12,9 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.PlanetPosition
-import com.astro.storm.data.model.Quality
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.model.ZodiacSign
+import com.astro.storm.ephemeris.DivisionalChartCalculator
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -103,8 +103,6 @@ class ChartRenderer {
         const val SYMBOL_COMBUST = "^"
         const val SYMBOL_VARGOTTAMA = "\u00A4"
 
-        private const val NAVAMSA_PART_DEGREES = 10.0 / 3.0
-
         private const val BASE_TEXT_SIZE_RATIO = 0.030f
         private const val BASE_LINE_HEIGHT_RATIO = 0.040f
         private const val MIN_SCALE_FACTOR = 0.60f
@@ -166,29 +164,8 @@ class ChartRenderer {
         else -> false
     }
 
-    private fun isVargottama(planet: PlanetPosition, chart: VedicChart): Boolean {
-        val navamsaLongitude = calculateNavamsaLongitude(planet.longitude)
-        val navamsaSign = ZodiacSign.fromLongitude(navamsaLongitude)
-        return planet.sign == navamsaSign
-    }
-
-    private fun calculateNavamsaLongitude(longitude: Double): Double {
-        val normalizedLong = ((longitude % 360.0) + 360.0) % 360.0
-        val sign = ZodiacSign.fromLongitude(normalizedLong)
-        val degreeInSign = normalizedLong % 30.0
-        val navamsaPart = (degreeInSign / NAVAMSA_PART_DEGREES).toInt().coerceIn(0, 8)
-
-        val startingSignIndex = when (sign.quality) {
-            Quality.CARDINAL -> sign.ordinal
-            Quality.FIXED -> (sign.ordinal + 8) % 12
-            Quality.MUTABLE -> (sign.ordinal + 4) % 12
-        }
-
-        val navamsaSignIndex = (startingSignIndex + navamsaPart) % 12
-        val positionInNavamsa = degreeInSign % NAVAMSA_PART_DEGREES
-        val navamsaDegree = (positionInNavamsa / NAVAMSA_PART_DEGREES) * 30.0
-
-        return (navamsaSignIndex * 30.0) + navamsaDegree
+    private fun isVargottama(planet: PlanetPosition): Boolean {
+        return DivisionalChartCalculator.isVargottama(planet.sign, planet.longitude)
     }
 
     private fun isCombust(planet: PlanetPosition, sunPosition: PlanetPosition?): Boolean {
@@ -279,7 +256,7 @@ class ChartRenderer {
                 ascendantSign = ascendantSign,
                 planetPositions = chart.planetPositions,
                 size = size,
-                chart = chart
+                sunPosition = chart.planetPositions.find { it.planet == Planet.SUN }
             )
         }
     }
@@ -305,7 +282,7 @@ class ChartRenderer {
                 ascendantSign = ascendantSign,
                 planetPositions = planetPositions,
                 size = size,
-                chart = originalChart
+                sunPosition = originalChart?.planetPositions?.find { it.planet == Planet.SUN }
             )
         }
     }
@@ -323,11 +300,10 @@ class ChartRenderer {
         ascendantSign: ZodiacSign,
         planetPositions: List<PlanetPosition>,
         size: Float,
-        chart: VedicChart? = null,
+        sunPosition: PlanetPosition? = null,
         showSignNumbers: Boolean = true
     ) {
         val planetsByHouse = planetPositions.groupBy { it.house }
-        val sunPosition = chart?.planetPositions?.find { it.planet == Planet.SUN }
 
         for (houseNum in 1..12) {
             val housePolygon = getHousePolygon(houseNum, left, top, chartSize, centerX, centerY)
@@ -342,7 +318,7 @@ class ChartRenderer {
             }
 
             val planets = planetsByHouse[houseNum] ?: emptyList()
-            val displayItems = buildDisplayItems(houseNum, planets, chart, sunPosition)
+            val displayItems = buildDisplayItems(houseNum, planets, sunPosition)
 
             val numberPosition = calculateOptimalNumberPosition(
                 houseNum = houseNum,
@@ -393,7 +369,6 @@ class ChartRenderer {
     private fun buildDisplayItems(
         houseNum: Int,
         planets: List<PlanetPosition>,
-        chart: VedicChart?,
         sunPosition: PlanetPosition?
     ): List<HouseDisplayItem> {
         val items = mutableListOf<HouseDisplayItem>()
@@ -419,12 +394,8 @@ class ChartRenderer {
 
             val statusIndicators = buildString {
                 if (planet.isRetrograde) append(SYMBOL_RETROGRADE)
-                if (chart != null && isCombust(planet, sunPosition)) {
-                    append(SYMBOL_COMBUST)
-                }
-                if (chart != null && isVargottama(planet, chart)) {
-                    append(SYMBOL_VARGOTTAMA)
-                }
+                if (isCombust(planet, sunPosition)) append(SYMBOL_COMBUST)
+                if (isVargottama(planet)) append(SYMBOL_VARGOTTAMA)
             }
 
             items.add(
@@ -927,7 +898,8 @@ class ChartRenderer {
         chartTitle: String,
         width: Int,
         height: Int,
-        density: Density
+        density: Density,
+        originalChart: VedicChart? = null
     ): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(bitmap)
@@ -939,7 +911,14 @@ class ChartRenderer {
             Canvas(canvas),
             Size(width.toFloat(), height.toFloat())
         ) {
-            drawDivisionalChart(this, planetPositions, ascendantLongitude, min(width, height).toFloat(), chartTitle)
+            drawDivisionalChart(
+                this,
+                planetPositions,
+                ascendantLongitude,
+                min(width, height).toFloat(),
+                chartTitle,
+                originalChart
+            )
         }
 
         return bitmap
