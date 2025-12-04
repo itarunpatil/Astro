@@ -90,13 +90,6 @@ fun MainScreen(
                     MainTab.HOME -> {
                         HomeTab(
                             chart = currentChart,
-                            onNavigateToInsights = { selectedTab = MainTab.INSIGHTS }
-                        )
-                    }
-                    MainTab.INSIGHTS -> {
-                        InsightsTab(
-                            chart = currentChart,
-                            onNavigateToChartAnalysis = { /* Navigate to full analysis */ },
                             onFeatureClick = { feature ->
                                 if (feature.isImplemented) {
                                     when (feature) {
@@ -111,6 +104,11 @@ fun MainScreen(
                                     }
                                 }
                             }
+                        )
+                    }
+                    MainTab.INSIGHTS -> {
+                        InsightsTab(
+                            chart = currentChart,
                         )
                     }
                     MainTab.SETTINGS -> {
