@@ -524,10 +524,6 @@ class ChartRenderer {
         val right = left + chartSize
         val bottom = top + chartSize
 
-        val cornerOffset = chartSize * 0.10f
-        val sideOffset = chartSize * 0.07f
-        val diamondOffset = chartSize * 0.12f
-
         return when (houseNum) {
             1 -> {
                 val baseY = top + chartSize * 0.15f
@@ -537,8 +533,7 @@ class ChartRenderer {
                     Offset(centerX, baseY)
                 }
             }
-            2 -> Offset(left + cornerOffset, top + cornerOffset)
-            3 -> Offset(left + sideOffset, centerY - chartSize * 0.20f)
+
             4 -> {
                 val baseX = left + chartSize * 0.15f
                 if (displayItems.isEmpty()) {
@@ -547,8 +542,7 @@ class ChartRenderer {
                     Offset(baseX, centerY)
                 }
             }
-            5 -> Offset(left + sideOffset, centerY + chartSize * 0.20f)
-            6 -> Offset(left + cornerOffset, bottom - cornerOffset)
+
             7 -> {
                 val baseY = bottom - chartSize * 0.15f
                 if (displayItems.isEmpty()) {
@@ -557,8 +551,7 @@ class ChartRenderer {
                     Offset(centerX, baseY)
                 }
             }
-            8 -> Offset(right - cornerOffset, bottom - cornerOffset)
-            9 -> Offset(right - sideOffset, centerY + chartSize * 0.20f)
+
             10 -> {
                 val baseX = right - chartSize * 0.15f
                 if (displayItems.isEmpty()) {
@@ -567,8 +560,55 @@ class ChartRenderer {
                     Offset(baseX, centerY)
                 }
             }
-            11 -> Offset(right - sideOffset, centerY - chartSize * 0.20f)
-            12 -> Offset(right - cornerOffset, top + cornerOffset)
+
+            2 -> {
+                val cornerInsetX = chartSize * 0.22f
+                val cornerInsetY = chartSize * 0.048f
+                Offset(left + cornerInsetX, top + cornerInsetY)
+            }
+
+            6 -> {
+                val cornerInsetX = chartSize * 0.22f
+                val cornerInsetY = chartSize * 0.048f
+                Offset(left + cornerInsetX, bottom - cornerInsetY)
+            }
+
+            8 -> {
+                val cornerInsetX = chartSize * 0.22f
+                val cornerInsetY = chartSize * 0.048f
+                Offset(right - cornerInsetX, bottom - cornerInsetY)
+            }
+
+            12 -> {
+                val cornerInsetX = chartSize * 0.22f
+                val cornerInsetY = chartSize * 0.048f
+                Offset(right - cornerInsetX, top + cornerInsetY)
+            }
+
+            3 -> {
+                val sideInsetX = chartSize * 0.055f
+                val sideOffsetY = chartSize * 0.22f
+                Offset(left + sideInsetX, centerY - sideOffsetY)
+            }
+
+            5 -> {
+                val sideInsetX = chartSize * 0.055f
+                val sideOffsetY = chartSize * 0.22f
+                Offset(left + sideInsetX, centerY + sideOffsetY)
+            }
+
+            9 -> {
+                val sideInsetX = chartSize * 0.055f
+                val sideOffsetY = chartSize * 0.22f
+                Offset(right - sideInsetX, centerY + sideOffsetY)
+            }
+
+            11 -> {
+                val sideInsetX = chartSize * 0.055f
+                val sideOffsetY = chartSize * 0.22f
+                Offset(right - sideInsetX, centerY - sideOffsetY)
+            }
+
             else -> houseCentroid
         }
     }
@@ -621,7 +661,6 @@ class ChartRenderer {
         val avgItemWidth = baseTextSize * 2.5f
 
         val maxColsByWidth = (houseBounds.effectiveWidth / avgItemWidth).toInt().coerceIn(1, 3)
-        val maxRowsByHeight = (houseBounds.effectiveHeight / baseLineHeight).toInt().coerceIn(1, 6)
 
         val (columns, rows) = when (houseType) {
             HouseType.CORNER -> {
