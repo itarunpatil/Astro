@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -30,15 +31,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Timeline
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -70,11 +73,11 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-private val DATE_FORMATTER_FULL: DateTimeFormatter = 
+private val DATE_FORMATTER_FULL: DateTimeFormatter =
     DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
-private val DATE_FORMATTER_MONTH_YEAR: DateTimeFormatter = 
+private val DATE_FORMATTER_MONTH_YEAR: DateTimeFormatter =
     DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)
-private val DATE_FORMATTER_YEAR: DateTimeFormatter = 
+private val DATE_FORMATTER_YEAR: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy", Locale.ENGLISH)
 
 private val VIMSHOTTARI_SEQUENCE: List<Pair<Planet, Int>> = listOf(
@@ -103,6 +106,11 @@ fun DashasTabContent(chart: VedicChart) {
     ) { mutableStateListOf<String>() }
 
     var isDashaInfoExpanded by rememberSaveable { mutableStateOf(false) }
+    var isSandhiSectionExpanded by rememberSaveable { mutableStateOf(true) }
+
+    val upcomingSandhis = remember(dashaTimeline) {
+        dashaTimeline.getUpcomingSandhisWithin(90)
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -111,6 +119,16 @@ fun DashasTabContent(chart: VedicChart) {
     ) {
         item(key = "current_period") {
             CurrentPeriodCard(dashaTimeline)
+        }
+
+        if (upcomingSandhis.isNotEmpty()) {
+            item(key = "sandhi_alerts") {
+                SandhiAlertsCard(
+                    sandhis = upcomingSandhis,
+                    isExpanded = isSandhiSectionExpanded,
+                    onToggleExpand = { isSandhiSectionExpanded = it }
+                )
+            }
         }
 
         item(key = "timeline") {
@@ -154,6 +172,7 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
     val currentMahadasha = timeline.currentMahadasha
     val currentAntardasha = timeline.currentAntardasha
     val currentPratyantardasha = timeline.currentPratyantardasha
+    val currentSookshmadasha = timeline.currentSookshmadasha
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -188,15 +207,18 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
                         fontWeight = FontWeight.Bold,
                         color = ChartDetailColors.TextPrimary
                     )
-                    if (currentMahadasha != null) {
-                        Text(
-                            text = buildCurrentPeriodSubtitle(currentMahadasha, currentAntardasha, currentPratyantardasha),
-                            fontSize = 12.sp,
-                            color = ChartDetailColors.TextMuted
-                        )
-                    }
+                    Text(
+                        text = timeline.getShortDescription(),
+                        fontSize = 12.sp,
+                        color = ChartDetailColors.TextMuted,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
+
+            BirthNakshatraInfo(timeline)
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (currentMahadasha != null) {
                 DashaPeriodRow(
@@ -204,6 +226,8 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
                     planet = currentMahadasha.planet,
                     startDate = currentMahadasha.startDate,
                     endDate = currentMahadasha.endDate,
+                    progress = currentMahadasha.getProgressPercent().toFloat() / 100f,
+                    remainingText = formatRemainingYears(currentMahadasha.getRemainingYears()),
                     level = DashaLevel.MAHADASHA
                 )
 
@@ -214,6 +238,8 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
                         planet = currentAntardasha.planet,
                         startDate = currentAntardasha.startDate,
                         endDate = currentAntardasha.endDate,
+                        progress = currentAntardasha.getProgressPercent().toFloat() / 100f,
+                        remainingText = formatRemainingDays(currentAntardasha.getRemainingDays()),
                         level = DashaLevel.ANTARDASHA
                     )
                 }
@@ -225,7 +251,34 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
                         planet = currentPratyantardasha.planet,
                         startDate = currentPratyantardasha.startDate,
                         endDate = currentPratyantardasha.endDate,
+                        progress = calculateProgress(
+                            currentPratyantardasha.startDate,
+                            currentPratyantardasha.endDate
+                        ),
+                        remainingText = formatRemainingTime(
+                            LocalDate.now(),
+                            currentPratyantardasha.endDate
+                        ),
                         level = DashaLevel.PRATYANTARDASHA
+                    )
+                }
+
+                if (currentSookshmadasha != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    DashaPeriodRow(
+                        label = "Sookshmadasha",
+                        planet = currentSookshmadasha.planet,
+                        startDate = currentSookshmadasha.startDate,
+                        endDate = currentSookshmadasha.endDate,
+                        progress = calculateProgress(
+                            currentSookshmadasha.startDate,
+                            currentSookshmadasha.endDate
+                        ),
+                        remainingText = formatRemainingTime(
+                            LocalDate.now(),
+                            currentSookshmadasha.endDate
+                        ),
+                        level = DashaLevel.SOOKSHMADASHA
                     )
                 }
 
@@ -245,10 +298,282 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
     }
 }
 
+@Composable
+private fun BirthNakshatraInfo(timeline: DashaCalculator.DashaTimeline) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = ChartDetailColors.CardBackgroundElevated
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val nakshatraLordColor = ChartDetailColors.getPlanetColor(timeline.birthNakshatraLord)
+
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(nakshatraLordColor.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = timeline.birthNakshatraLord.symbol,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = nakshatraLordColor
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Birth Nakshatra",
+                    fontSize = 11.sp,
+                    color = ChartDetailColors.TextMuted
+                )
+                Text(
+                    text = "${timeline.birthNakshatra.displayName} (Pada ${timeline.birthNakshatraPada})",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ChartDetailColors.TextPrimary
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Lord",
+                    fontSize = 11.sp,
+                    color = ChartDetailColors.TextMuted
+                )
+                Text(
+                    text = timeline.birthNakshatraLord.displayName,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = nakshatraLordColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SandhiAlertsCard(
+    sandhis: List<DashaCalculator.DashaSandhi>,
+    isExpanded: Boolean,
+    onToggleExpand: (Boolean) -> Unit
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "sandhi_rotation"
+    )
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple()
+            ) { onToggleExpand(!isExpanded) },
+        shape = RoundedCornerShape(16.dp),
+        color = ChartDetailColors.AccentOrange.copy(alpha = 0.08f),
+        tonalElevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .animateContentSize(animationSpec = tween(durationMillis = 300))
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = CircleShape,
+                        color = ChartDetailColors.AccentOrange.copy(alpha = 0.2f),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                            Icon(
+                                Icons.Outlined.NotificationsActive,
+                                contentDescription = null,
+                                tint = ChartDetailColors.AccentOrange,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Dasha Sandhi Alerts",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = ChartDetailColors.TextPrimary
+                        )
+                        Text(
+                            text = "${sandhis.size} upcoming transition${if (sandhis.size > 1) "s" else ""} within 90 days",
+                            fontSize = 12.sp,
+                            color = ChartDetailColors.TextMuted
+                        )
+                    }
+                }
+
+                Icon(
+                    Icons.Default.ExpandMore,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = ChartDetailColors.TextMuted,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .rotate(rotation)
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+                exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(200))
+            ) {
+                Column(modifier = Modifier.padding(top = 16.dp)) {
+                    Text(
+                        text = "Sandhi periods mark transitions between planetary periods. These are sensitive times requiring careful attention as the energy shifts from one planet to another.",
+                        fontSize = 12.sp,
+                        color = ChartDetailColors.TextSecondary,
+                        lineHeight = 18.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    sandhis.forEach { sandhi ->
+                        SandhiAlertRow(sandhi = sandhi)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SandhiAlertRow(sandhi: DashaCalculator.DashaSandhi) {
+    val fromColor = ChartDetailColors.getPlanetColor(sandhi.fromPlanet)
+    val toColor = ChartDetailColors.getPlanetColor(sandhi.toPlanet)
+    val today = LocalDate.now()
+    val daysUntil = ChronoUnit.DAYS.between(today, sandhi.transitionDate)
+    val isImminent = daysUntil <= 7
+    val isWithinSandhi = sandhi.isWithinSandhi(today)
+
+    val levelLabel = when (sandhi.level) {
+        DashaCalculator.DashaLevel.MAHADASHA -> "Mahadasha"
+        DashaCalculator.DashaLevel.ANTARDASHA -> "Antardasha"
+        DashaCalculator.DashaLevel.PRATYANTARDASHA -> "Pratyantardasha"
+        DashaCalculator.DashaLevel.SOOKSHMADASHA -> "Sookshmadasha"
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = if (isWithinSandhi || isImminent) {
+            ChartDetailColors.AccentOrange.copy(alpha = 0.12f)
+        } else {
+            ChartDetailColors.CardBackgroundElevated
+        }
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(fromColor.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = sandhi.fromPlanet.symbol,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = fromColor
+                )
+            }
+
+            Icon(
+                Icons.Outlined.SwapHoriz,
+                contentDescription = null,
+                tint = ChartDetailColors.TextMuted,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .size(20.dp)
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(toColor.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = sandhi.toPlanet.symbol,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = toColor
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${sandhi.fromPlanet.displayName} → ${sandhi.toPlanet.displayName}",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ChartDetailColors.TextPrimary
+                )
+                Text(
+                    text = "$levelLabel transition",
+                    fontSize = 11.sp,
+                    color = ChartDetailColors.TextMuted
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = when {
+                        isWithinSandhi -> "Active Now"
+                        isImminent -> "In $daysUntil days"
+                        else -> sandhi.transitionDate.format(DATE_FORMATTER_MONTH_YEAR)
+                    },
+                    fontSize = 12.sp,
+                    fontWeight = if (isWithinSandhi || isImminent) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isWithinSandhi || isImminent) {
+                        ChartDetailColors.AccentOrange
+                    } else {
+                        ChartDetailColors.TextMuted
+                    }
+                )
+                if (!isWithinSandhi && daysUntil > 0) {
+                    Text(
+                        text = "${sandhi.sandhiStartDate.format(DATE_FORMATTER_MONTH_YEAR)} – ${sandhi.sandhiEndDate.format(DATE_FORMATTER_MONTH_YEAR)}",
+                        fontSize = 10.sp,
+                        color = ChartDetailColors.TextMuted
+                    )
+                }
+            }
+        }
+    }
+}
+
 private fun buildCurrentPeriodSubtitle(
     mahadasha: DashaCalculator.Mahadasha,
     antardasha: DashaCalculator.Antardasha?,
-    pratyantardasha: DashaCalculator.Pratyantardasha?
+    pratyantardasha: DashaCalculator.Pratyantardasha?,
+    sookshmadasha: DashaCalculator.Sookshmadasha?
 ): String {
     return buildString {
         append(mahadasha.planet.displayName)
@@ -259,6 +584,10 @@ private fun buildCurrentPeriodSubtitle(
         if (pratyantardasha != null) {
             append(" → ")
             append(pratyantardasha.planet.displayName)
+        }
+        if (sookshmadasha != null) {
+            append(" → ")
+            append(sookshmadasha.planet.displayName)
         }
     }
 }
@@ -291,7 +620,7 @@ private fun EmptyDashaState() {
 }
 
 private enum class DashaLevel {
-    MAHADASHA, ANTARDASHA, PRATYANTARDASHA
+    MAHADASHA, ANTARDASHA, PRATYANTARDASHA, SOOKSHMADASHA
 }
 
 @Stable
@@ -307,6 +636,7 @@ private fun getDashaSizes(level: DashaLevel): DashaSizes = when (level) {
     DashaLevel.MAHADASHA -> DashaSizes(44.dp, 16.sp, 12.sp, 17.sp, 6.dp)
     DashaLevel.ANTARDASHA -> DashaSizes(36.dp, 14.sp, 11.sp, 14.sp, 5.dp)
     DashaLevel.PRATYANTARDASHA -> DashaSizes(28.dp, 12.sp, 10.sp, 11.sp, 4.dp)
+    DashaLevel.SOOKSHMADASHA -> DashaSizes(24.dp, 11.sp, 9.sp, 10.sp, 3.dp)
 }
 
 @Composable
@@ -315,24 +645,19 @@ private fun DashaPeriodRow(
     planet: Planet,
     startDate: LocalDate,
     endDate: LocalDate,
+    progress: Float,
+    remainingText: String,
     level: DashaLevel
 ) {
     val planetColor = ChartDetailColors.getPlanetColor(planet)
-    val today = LocalDate.now()
-
-    val totalDays = ChronoUnit.DAYS.between(startDate, endDate).coerceAtLeast(1L).toFloat()
-    val elapsedDays = ChronoUnit.DAYS.between(startDate, today)
-        .coerceIn(0L, totalDays.toLong())
-        .toFloat()
-    val progress = elapsedDays / totalDays
-
-    val remainingTimeText = formatRemainingTime(today, endDate)
     val sizes = getDashaSizes(level)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics { contentDescription = "$label: ${planet.displayName}, ${(progress * 100).toInt()} percent complete" },
+            .semantics {
+                contentDescription = "$label: ${planet.displayName}, ${(progress * 100).toInt()} percent complete"
+            },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -367,7 +692,8 @@ private fun DashaPeriodRow(
                         fontSize = sizes.mainFontSize,
                         fontWeight = when (level) {
                             DashaLevel.MAHADASHA -> FontWeight.Bold
-                            else -> FontWeight.SemiBold
+                            DashaLevel.ANTARDASHA -> FontWeight.SemiBold
+                            else -> FontWeight.Medium
                         },
                         color = planetColor
                     )
@@ -380,10 +706,10 @@ private fun DashaPeriodRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (remainingTimeText.isNotEmpty() && level != DashaLevel.PRATYANTARDASHA) {
+                if (remainingText.isNotEmpty() && level != DashaLevel.SOOKSHMADASHA) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = remainingTimeText,
+                        text = remainingText,
                         fontSize = (sizes.subFontSize.value - 1).sp,
                         color = ChartDetailColors.AccentTeal,
                         fontWeight = FontWeight.Medium
@@ -406,7 +732,7 @@ private fun DashaPeriodRow(
             )
             Spacer(modifier = Modifier.height(4.dp))
             LinearProgressIndicator(
-                progress = { progress },
+                progress = { progress.coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(sizes.progressHeight)
@@ -414,6 +740,45 @@ private fun DashaPeriodRow(
                 color = planetColor,
                 trackColor = ChartDetailColors.DividerColor
             )
+        }
+    }
+}
+
+private fun calculateProgress(startDate: LocalDate, endDate: LocalDate): Float {
+    val today = LocalDate.now()
+    val totalDays = ChronoUnit.DAYS.between(startDate, endDate).coerceAtLeast(1L).toFloat()
+    val elapsedDays = ChronoUnit.DAYS.between(startDate, today)
+        .coerceIn(0L, totalDays.toLong())
+        .toFloat()
+    return elapsedDays / totalDays
+}
+
+private fun formatRemainingYears(years: Double): String {
+    if (years <= 0) return ""
+
+    val wholeYears = years.toInt()
+    val remainingMonths = ((years - wholeYears) * 12).toInt()
+
+    return buildString {
+        when {
+            wholeYears > 0 && remainingMonths > 0 -> append("${wholeYears}y ${remainingMonths}m remaining")
+            wholeYears > 0 -> append("${wholeYears}y remaining")
+            remainingMonths > 0 -> append("${remainingMonths}m remaining")
+        }
+    }
+}
+
+private fun formatRemainingDays(days: Long): String {
+    if (days <= 0) return ""
+
+    val months = days / 30
+    val remainingDays = days % 30
+
+    return buildString {
+        when {
+            months > 0 && remainingDays > 0 -> append("${months}m ${remainingDays}d remaining")
+            months > 0 -> append("${months}m remaining")
+            else -> append("${remainingDays}d remaining")
         }
     }
 }
@@ -429,15 +794,9 @@ private fun formatRemainingTime(today: LocalDate, endDate: LocalDate): String {
 
     return buildString {
         when {
-            years > 0 -> {
-                append("${years}y ${months}m remaining")
-            }
-            months > 0 -> {
-                append("${months}m ${days}d remaining")
-            }
-            else -> {
-                append("${days}d remaining")
-            }
+            years > 0 -> append("${years}y ${months}m remaining")
+            months > 0 -> append("${months}m ${days}d remaining")
+            else -> append("${days}d remaining")
         }
     }
 }
@@ -531,7 +890,7 @@ private fun DashaTimelineCard(timeline: DashaCalculator.DashaTimeline) {
 
             timeline.mahadashas.forEachIndexed { index, dasha ->
                 val isPast = dasha.endDate.isBefore(today)
-                val isCurrent = !dasha.startDate.isAfter(today) && !dasha.endDate.isBefore(today)
+                val isCurrent = dasha.isActiveOn(today)
                 val planetColor = ChartDetailColors.getPlanetColor(dasha.planet)
                 val isLast = index == timeline.mahadashas.lastIndex
 
@@ -723,6 +1082,15 @@ private fun MahadashaCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        if (isCurrentMahadasha) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${String.format("%.1f", mahadasha.getProgressPercent())}% complete • ${formatRemainingYears(mahadasha.getRemainingYears())}",
+                                fontSize = 10.sp,
+                                color = ChartDetailColors.AccentTeal,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
 
@@ -792,7 +1160,7 @@ private fun AntardashaRow(
 ) {
     val planetColor = ChartDetailColors.getPlanetColor(antardasha.planet)
     val today = LocalDate.now()
-    val isCurrent = !antardasha.startDate.isAfter(today) && !antardasha.endDate.isBefore(today)
+    val isCurrent = antardasha.isActiveOn(today)
     val isPast = antardasha.endDate.isBefore(today)
 
     Row(
@@ -835,18 +1203,29 @@ private fun AntardashaRow(
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
-                Text(
-                    text = "${mahadashaPlanet.symbol}–${antardasha.planet.displayName}",
-                    fontSize = 13.sp,
-                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                    color = when {
-                        isCurrent -> planetColor
-                        isPast -> ChartDetailColors.TextMuted
-                        else -> ChartDetailColors.TextPrimary
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${mahadashaPlanet.symbol}–${antardasha.planet.displayName}",
+                        fontSize = 13.sp,
+                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                        color = when {
+                            isCurrent -> planetColor
+                            isPast -> ChartDetailColors.TextMuted
+                            else -> ChartDetailColors.TextPrimary
+                        }
+                    )
+                    if (isCurrent) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${String.format("%.0f", antardasha.getProgressPercent())}%",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = planetColor.copy(alpha = 0.8f)
+                        )
                     }
-                )
+                }
                 if (isCurrent) {
-                    val remaining = formatRemainingTime(today, antardasha.endDate)
+                    val remaining = formatRemainingDays(antardasha.getRemainingDays())
                     if (remaining.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
@@ -860,11 +1239,18 @@ private fun AntardashaRow(
             }
         }
 
-        Text(
-            text = "${antardasha.startDate.format(DATE_FORMATTER_MONTH_YEAR)} – ${antardasha.endDate.format(DATE_FORMATTER_MONTH_YEAR)}",
-            fontSize = 11.sp,
-            color = ChartDetailColors.TextMuted
-        )
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = "${antardasha.startDate.format(DATE_FORMATTER_MONTH_YEAR)} – ${antardasha.endDate.format(DATE_FORMATTER_MONTH_YEAR)}",
+                fontSize = 11.sp,
+                color = ChartDetailColors.TextMuted
+            )
+            Text(
+                text = formatDurationYears(antardasha.durationYears),
+                fontSize = 10.sp,
+                color = ChartDetailColors.TextMuted
+            )
+        }
     }
 }
 
@@ -1000,14 +1386,83 @@ private fun DashaInfoCard(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    DashaLevelsInfo()
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Each Mahadasha is subdivided into Antardashas (sub-periods), Pratyantardashas (sub-sub-periods), and further divisions for precise timing of events.",
+                        text = "Dasha Sandhi (junction periods) occur when transitioning between planetary periods and are considered sensitive times requiring careful attention.",
                         fontSize = 12.sp,
                         color = ChartDetailColors.TextMuted,
                         lineHeight = 18.sp
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashaLevelsInfo() {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = ChartDetailColors.CardBackgroundElevated
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Dasha Hierarchy",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = ChartDetailColors.TextSecondary,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+
+            val levels = listOf(
+                "Mahadasha" to "Major period (years)",
+                "Antardasha (Bhukti)" to "Sub-period (months)",
+                "Pratyantardasha" to "Sub-sub-period (weeks)",
+                "Sookshmadasha" to "Subtle period (days)"
+            )
+
+            levels.forEachIndexed { index, (name, description) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(
+                                ChartDetailColors.AccentPurple.copy(alpha = 0.15f),
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${index + 1}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ChartDetailColors.AccentPurple
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = name,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = ChartDetailColors.TextPrimary
+                        )
+                        Text(
+                            text = description,
+                            fontSize = 10.sp,
+                            color = ChartDetailColors.TextMuted
+                        )
+                    }
                 }
             }
         }
