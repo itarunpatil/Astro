@@ -2016,7 +2016,7 @@ private fun getPlanetColor(planet: Planet): Color {
         Planet.VENUS -> AppTheme.PlanetVenus
         Planet.SATURN -> AppTheme.PlanetSaturn
         Planet.RAHU -> AppTheme.PlanetRahu
-        Planet.KETU -> AppThem.PlanetKetu
+        Planet.KETU -> AppTheme.PlanetKetu
         else -> AppTheme.AccentPrimary
     }
 }
