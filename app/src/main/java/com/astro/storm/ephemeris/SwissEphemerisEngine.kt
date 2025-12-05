@@ -48,7 +48,7 @@ class SwissEphemerisEngine private constructor(
     private val swissEph: SwissEph,
     private val ephemerisPath: String,
     private val ayanamsaType: AyanamsaType,
-    private val hasJplEphemeris: Boolean
+    private val hasHighPrecisionEphemeris: Boolean
 ) : AutoCloseable {
 
     private val lock = ReentrantReadWriteLock()
@@ -60,7 +60,7 @@ class SwissEphemerisEngine private constructor(
     private val ascMcBuffer = DoubleArray(ASC_MC_ARRAY_SIZE)
     private val errorBuffer = StringBuffer(ERROR_BUFFER_SIZE)
 
-    private val calculationFlags: Int = if (hasJplEphemeris) {
+    private val calculationFlags: Int = if (hasHighPrecisionEphemeris) {
         BASE_CALC_FLAGS or SweConst.SEFLG_JPLEPH
     } else {
         BASE_CALC_FLAGS
@@ -114,11 +114,11 @@ class SwissEphemerisEngine private constructor(
 
             copyEphemerisFilesFromAssets(appContext, ephemerisDir)
 
-            val hasJpl = checkForJplEphemeris(ephemerisDir)
-            if (hasJpl) {
-                Log.i(TAG, "JPL ephemeris files detected - using high precision mode")
+            val hasHighPrecision = hasHighPrecisionEphemeris(ephemerisDir)
+            if (hasHighPrecision) {
+                Log.i(TAG, "High precision ephemeris files detected - using high precision mode")
             } else {
-                Log.i(TAG, "Using Swiss Ephemeris data files")
+                Log.i(TAG, "Using built-in ephemeris")
             }
 
             val swissEph = SwissEph()
@@ -131,7 +131,7 @@ class SwissEphemerisEngine private constructor(
                     swissEph = swissEph,
                     ephemerisPath = ephemerisDir.absolutePath,
                     ayanamsaType = ayanamsaType,
-                    hasJplEphemeris = hasJpl
+                    hasHighPrecisionEphemeris = hasHighPrecision
                 )
             } catch (e: Exception) {
                 try {
@@ -187,11 +187,11 @@ class SwissEphemerisEngine private constructor(
             Log.i(TAG, "Ephemeris files: $copiedCount copied, $skippedCount already present")
         }
 
-        private fun checkForJplEphemeris(ephemerisDir: File): Boolean {
+        private fun hasHighPrecisionEphemeris(ephemerisDir: File): Boolean {
             if (!ephemerisDir.exists() || !ephemerisDir.isDirectory) return false
 
             return ephemerisDir.listFiles()?.any { file ->
-                file.isFile && JPL_EPHEMERIS_PATTERN.matches(file.name)
+                file.isFile && (JPL_EPHEMERIS_PATTERN.matches(file.name) || SWISS_EPHEMERIS_PATTERN.matches(file.name))
             } == true
         }
 
@@ -210,8 +210,8 @@ class SwissEphemerisEngine private constructor(
     val currentAyanamsaType: AyanamsaType
         get() = ayanamsaType
 
-    val isUsingJplEphemeris: Boolean
-        get() = hasJplEphemeris
+    val isUsingHighPrecisionEphemeris: Boolean
+        get() = hasHighPrecisionEphemeris
 
     fun calculateVedicChart(
         birthData: BirthData,
@@ -527,7 +527,7 @@ class SwissEphemerisEngine private constructor(
     override fun toString(): String {
         return "SwissEphemerisEngine(" +
                 "ayanamsa=${ayanamsaType.displayName}, " +
-                "jplMode=$hasJplEphemeris, " +
+                "jplMode=$hasHighPrecisionEphemeris, " +
                 "closed=$isClosed)"
     }
 }

@@ -17,6 +17,7 @@ import com.astro.storm.util.ChartExporter
 import com.astro.storm.util.ExportUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import android.content.Context
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,6 +32,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: ChartRepository
     private val ephemerisEngine: SwissEphemerisEngine
     private val chartRenderer = ChartRenderer()
+    private val prefs = application.getSharedPreferences("chart_prefs", Context.MODE_PRIVATE)
     private val chartExporter: ChartExporter
 
     // Single-threaded dispatcher for sequential state updates
@@ -41,6 +43,8 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _savedCharts = MutableStateFlow<List<SavedChart>>(emptyList())
     val savedCharts: StateFlow<List<SavedChart>> = _savedCharts.asStateFlow()
+
+    val selectedChartId = MutableStateFlow<Long?>(null)
 
     init {
         val database = ChartDatabase.getInstance(application)
@@ -55,6 +59,14 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.getAllCharts().collect { charts ->
                 _savedCharts.value = charts
+                if (selectedChartId.value == null) {
+                    val lastSelectedId = prefs.getLong("last_selected_chart_id", -1)
+                    if (lastSelectedId != -1L && charts.any { it.id == lastSelectedId }) {
+                        loadChart(lastSelectedId)
+                    } else if (charts.isNotEmpty()) {
+                        loadChart(charts.first().id)
+                    }
+                }
             }
         }
     }
@@ -91,6 +103,8 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                 val chart = repository.getChartById(chartId)
                 if (chart != null) {
                     _uiState.value = ChartUiState.Success(chart)
+                    selectedChartId.value = chartId
+                    prefs.edit().putLong("last_selected_chart_id", chartId).apply()
                 } else {
                     _uiState.value = ChartUiState.Error("Chart not found")
                 }
@@ -121,6 +135,11 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(singleThreadContext) {
             try {
                 repository.deleteChart(chartId)
+                if (selectedChartId.value == chartId) {
+                    prefs.edit().remove("last_selected_chart_id").apply()
+                    selectedChartId.value = null
+                    _uiState.value = ChartUiState.Initial
+                }
             } catch (e: Exception) {
                 _uiState.value = ChartUiState.Error("Failed to delete chart: ${e.message}")
             }
