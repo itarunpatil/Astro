@@ -45,7 +45,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val database = ChartDatabase.getInstance(application)
         repository = ChartRepository(database.chartDao())
-        ephemerisEngine = SwissEphemerisEngine(application)
+        ephemerisEngine = SwissEphemerisEngine.create(application)
         chartExporter = ChartExporter(application)
 
         loadSavedCharts()

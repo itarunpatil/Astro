@@ -15,11 +15,12 @@ class AstroStormApplication : Application() {
         // Initialize the global exception handler
         GlobalExceptionHandler.initialize(this)
 
-        // Copy ephemeris files once on app startup
+        // Initialize the ephemeris engine on app startup
+        // This also handles copying the necessary ephemeris files
         try {
-            SwissEphemerisEngine(this).copyEphemerisFiles(this)
-        } catch (e: IOException) {
-            Log.e("AstroStormApplication", "Failed to copy ephemeris files", e)
+            SwissEphemerisEngine.create(this)
+        } catch (e: Exception) {
+            Log.e("AstroStormApplication", "Failed to initialize SwissEphemerisEngine", e)
         }
     }
 }

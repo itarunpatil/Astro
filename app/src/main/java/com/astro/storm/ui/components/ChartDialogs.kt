@@ -37,7 +37,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.astro.storm.data.model.*
-import com.astro.storm.ephemeris.*
+import com.astro.storm.ephemeris.DivisionalChartData
+import com.astro.storm.ephemeris.PlanetaryShadbala
+import com.astro.storm.ephemeris.RetrogradeCombustionCalculator
+import com.astro.storm.ephemeris.ShadbalaCalculator
 import com.astro.storm.ui.chart.ChartRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -524,7 +527,7 @@ private fun PlanetPositionCard(position: PlanetPosition) {
 }
 
 @Composable
-private fun ShadbalaCard(shadbala: ShadbalaCalculator.PlanetaryShadbala) {
+private fun ShadbalaCard(shadbala: PlanetaryShadbala) {
     DialogCard(title = "Strength Analysis (Shadbala)", icon = Icons.Outlined.TrendingUp) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // Overall strength bar
@@ -740,7 +743,7 @@ private fun PlanetStatusCard(position: PlanetPosition, chart: VedicChart) {
 @Composable
 private fun PredictionsCard(
     position: PlanetPosition,
-    shadbala: ShadbalaCalculator.PlanetaryShadbala,
+    shadbala: PlanetaryShadbala,
     chart: VedicChart
 ) {
     val predictions = getPlanetPredictions(position, shadbala, chart)
@@ -1261,7 +1264,7 @@ private fun SummaryBadge(label: String, value: String, color: Color) {
 }
 
 @Composable
-private fun PlanetStrengthCard(shadbala: ShadbalaCalculator.PlanetaryShadbala) {
+private fun PlanetStrengthCard(shadbala: PlanetaryShadbala) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -1576,7 +1579,7 @@ private fun getDignity(planet: Planet, sign: ZodiacSign): Dignity {
 
 private fun getPlanetPredictions(
     position: PlanetPosition,
-    shadbala: ShadbalaCalculator.PlanetaryShadbala,
+    shadbala: PlanetaryShadbala,
     chart: VedicChart
 ): List<Prediction> {
     val predictions = mutableListOf<Prediction>()

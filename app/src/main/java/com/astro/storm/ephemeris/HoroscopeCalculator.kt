@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class HoroscopeCalculator(private val context: Context) : AutoCloseable {
 
-    private val ephemerisEngine = SwissEphemerisEngine(context)
+    private val ephemerisEngine = SwissEphemerisEngine.create(context)
     private val transitCache = ConcurrentHashMap<TransitCacheKey, VedicChart>()
     private val dailyHoroscopeCache = ConcurrentHashMap<DailyHoroscopeCacheKey, DailyHoroscope>()
 

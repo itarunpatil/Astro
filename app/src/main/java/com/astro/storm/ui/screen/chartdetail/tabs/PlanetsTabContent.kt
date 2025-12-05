@@ -2,12 +2,13 @@ package com.astro.storm.ui.screen.chartdetail.tabs
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,25 +28,28 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.outlined.Analytics
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.TrendingUp
-import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.astro.storm.data.model.Nakshatra
@@ -53,18 +57,83 @@ import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.model.ZodiacSign
+import com.astro.storm.ephemeris.PlanetaryShadbala
 import com.astro.storm.ephemeris.RetrogradeCombustionCalculator
+import com.astro.storm.ephemeris.ShadbalaAnalysis
 import com.astro.storm.ephemeris.ShadbalaCalculator
 import com.astro.storm.ui.screen.chartdetail.ChartDetailColors
 import com.astro.storm.ui.screen.chartdetail.ChartDetailUtils
 import com.astro.storm.ui.screen.chartdetail.components.ConditionChip
-import com.astro.storm.ui.screen.chartdetail.components.SectionCard
 import com.astro.storm.ui.screen.chartdetail.components.StyledDivider
+import java.text.DecimalFormat
 
-/**
- * Planets tab content displaying detailed planetary information including
- * positions, conditions, and strength analysis.
- */
+@Immutable
+enum class DignityStatus(val displayName: String) {
+    EXALTED("Exalted"),
+    DEBILITATED("Debilitated"),
+    OWN_SIGN("Own Sign"),
+    NEUTRAL("Neutral");
+
+    val isSignificant: Boolean get() = this != NEUTRAL
+}
+
+private object PlanetaryDignityCalculator {
+
+    private val exaltationSigns: Map<Planet, ZodiacSign> = mapOf(
+        Planet.SUN to ZodiacSign.ARIES,
+        Planet.MOON to ZodiacSign.TAURUS,
+        Planet.MARS to ZodiacSign.CAPRICORN,
+        Planet.MERCURY to ZodiacSign.VIRGO,
+        Planet.JUPITER to ZodiacSign.CANCER,
+        Planet.VENUS to ZodiacSign.PISCES,
+        Planet.SATURN to ZodiacSign.LIBRA
+    )
+
+    private val debilitationSigns: Map<Planet, ZodiacSign> = mapOf(
+        Planet.SUN to ZodiacSign.LIBRA,
+        Planet.MOON to ZodiacSign.SCORPIO,
+        Planet.MARS to ZodiacSign.CANCER,
+        Planet.MERCURY to ZodiacSign.PISCES,
+        Planet.JUPITER to ZodiacSign.CAPRICORN,
+        Planet.VENUS to ZodiacSign.VIRGO,
+        Planet.SATURN to ZodiacSign.ARIES
+    )
+
+    fun calculate(planet: Planet, sign: ZodiacSign): DignityStatus = when {
+        exaltationSigns[planet] == sign -> DignityStatus.EXALTED
+        debilitationSigns[planet] == sign -> DignityStatus.DEBILITATED
+        sign.ruler == planet -> DignityStatus.OWN_SIGN
+        else -> DignityStatus.NEUTRAL
+    }
+
+    fun getColor(status: DignityStatus): Color = when (status) {
+        DignityStatus.EXALTED -> ChartDetailColors.SuccessColor
+        DignityStatus.DEBILITATED -> ChartDetailColors.ErrorColor
+        DignityStatus.OWN_SIGN -> ChartDetailColors.AccentGold
+        DignityStatus.NEUTRAL -> ChartDetailColors.TextSecondary
+    }
+}
+
+private object DecimalFormatters {
+    val oneDecimal: DecimalFormat by lazy { DecimalFormat("0.0") }
+    val twoDecimals: DecimalFormat by lazy { DecimalFormat("0.00") }
+}
+
+@Stable
+private data class PlanetCardState(
+    val position: PlanetPosition,
+    val shadbala: PlanetaryShadbala?,
+    val conditions: RetrogradeCombustionCalculator.PlanetCondition?,
+    val dignityStatus: DignityStatus
+) {
+    val hasConditions: Boolean
+        get() = shadbala != null ||
+                dignityStatus.isSignificant ||
+                position.isRetrograde ||
+                conditions?.combustionStatus != RetrogradeCombustionCalculator.CombustionStatus.NOT_COMBUST ||
+                conditions?.isInPlanetaryWar == true
+}
+
 @Composable
 fun PlanetsTabContent(
     chart: VedicChart,
@@ -80,32 +149,51 @@ fun PlanetsTabContent(
         ShadbalaCalculator.calculateShadbala(chart)
     }
 
+    val planetCardStates by remember(chart, planetConditions, shadbala) {
+        derivedStateOf {
+            chart.planetPositions.map { position ->
+                PlanetCardState(
+                    position = position,
+                    shadbala = shadbala.planetaryStrengths[position.planet],
+                    conditions = planetConditions.getCondition(position.planet),
+                    dignityStatus = PlanetaryDignityCalculator.calculate(
+                        position.planet,
+                        position.sign
+                    )
+                )
+            }
+        }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            PlanetaryConditionsSummary(planetConditions)
+        item(key = "conditions_summary") {
+            PlanetaryConditionsSummary(conditions = planetConditions)
         }
 
-        item {
+        item(key = "shadbala_overview") {
             ShadbalaOverviewCard(
                 shadbala = shadbala,
                 onClick = onShadbalaClick
             )
         }
 
-        items(chart.planetPositions) { position ->
-            val planetShadbala = shadbala.planetaryStrengths[position.planet]
-            val conditions = planetConditions.getCondition(position.planet)
-
+        items(
+            items = planetCardStates,
+            key = { it.position.planet.name }
+        ) { cardState ->
             PlanetDetailCard(
-                position = position,
-                shadbala = planetShadbala,
-                conditions = conditions,
-                onClick = { onPlanetClick(position) },
-                onNakshatraClick = { onNakshatraClick(position.nakshatra, position.nakshatraPada) }
+                state = cardState,
+                onClick = { onPlanetClick(cardState.position) },
+                onNakshatraClick = {
+                    onNakshatraClick(
+                        cardState.position.nakshatra,
+                        cardState.position.nakshatraPada
+                    )
+                }
             )
         }
     }
@@ -115,51 +203,36 @@ fun PlanetsTabContent(
 private fun PlanetaryConditionsSummary(
     conditions: RetrogradeCombustionCalculator.PlanetaryConditionAnalysis
 ) {
-    val retrogradeCount = conditions.retrogradePlanets.size
-    val combustCount = conditions.combustPlanets.size
-    val warCount = conditions.planetaryWars.size
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = ChartDetailColors.CardBackground
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 12.dp)
-            ) {
-                Icon(
-                    Icons.Outlined.Info,
-                    contentDescription = null,
-                    tint = ChartDetailColors.AccentPurple,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Planetary Conditions",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ChartDetailColors.TextPrimary
-                )
-            }
+            SectionHeader(
+                icon = Icons.Outlined.Info,
+                title = "Planetary Conditions",
+                iconTint = ChartDetailColors.AccentPurple
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                ConditionStatCard(
-                    count = retrogradeCount,
+                ConditionStatBadge(
+                    count = conditions.retrogradePlanets.size,
                     label = "Retrograde",
                     color = ChartDetailColors.WarningColor
                 )
-                ConditionStatCard(
-                    count = combustCount,
+                ConditionStatBadge(
+                    count = conditions.combustPlanets.size,
                     label = "Combust",
                     color = ChartDetailColors.ErrorColor
                 )
-                ConditionStatCard(
-                    count = warCount,
+                ConditionStatBadge(
+                    count = conditions.planetaryWars.size,
                     label = "At War",
                     color = ChartDetailColors.AccentPurple
                 )
@@ -169,16 +242,51 @@ private fun PlanetaryConditionsSummary(
 }
 
 @Composable
-private fun ConditionStatCard(
+private fun SectionHeader(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    iconTint: Color,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconTint,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = ChartDetailColors.TextPrimary
+        )
+    }
+}
+
+@Composable
+private fun ConditionStatBadge(
     count: Int,
     label: String,
     color: Color
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = "$count planets $label"
+        }
+    ) {
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .background(color.copy(alpha = 0.15f), CircleShape),
+                .background(
+                    color = color.copy(alpha = 0.15f),
+                    shape = CircleShape
+                ),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -199,13 +307,21 @@ private fun ConditionStatCard(
 
 @Composable
 private fun ShadbalaOverviewCard(
-    shadbala: ShadbalaCalculator.ShadbalaAnalysis,
+    shadbala: ShadbalaAnalysis,
     onClick: () -> Unit
 ) {
+    val formattedScore = remember(shadbala.overallStrengthScore) {
+        DecimalFormatters.oneDecimal.format(shadbala.overallStrengthScore)
+    }
+
     Surface(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .semantics {
+                role = Role.Button
+                contentDescription = "Shadbala Summary. Overall strength $formattedScore percent. Tap to view details."
+            },
         shape = RoundedCornerShape(16.dp),
         color = ChartDetailColors.CardBackground
     ) {
@@ -215,34 +331,12 @@ private fun ShadbalaOverviewCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.TrendingUp,
-                        contentDescription = null,
-                        tint = ChartDetailColors.AccentGold,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Shadbala Summary",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = ChartDetailColors.TextPrimary
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "View Details",
-                        fontSize = 12.sp,
-                        color = ChartDetailColors.AccentGold
-                    )
-                    Icon(
-                        Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = ChartDetailColors.AccentGold,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                SectionHeader(
+                    icon = Icons.Outlined.TrendingUp,
+                    title = "Shadbala Summary",
+                    iconTint = ChartDetailColors.AccentGold
+                )
+                ViewDetailsIndicator()
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -251,289 +345,362 @@ private fun ShadbalaOverviewCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${String.format("%.1f", shadbala.overallStrengthScore)}%",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ChartDetailColors.getStrengthColor(shadbala.overallStrengthScore)
-                    )
-                    Text(
-                        text = "Overall",
-                        fontSize = 11.sp,
-                        color = ChartDetailColors.TextMuted
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = shadbala.strongestPlanet.symbol,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ChartDetailColors.SuccessColor
-                    )
-                    Text(
-                        text = "Strongest",
-                        fontSize = 11.sp,
-                        color = ChartDetailColors.TextMuted
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = shadbala.weakestPlanet.symbol,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ChartDetailColors.ErrorColor
-                    )
-                    Text(
-                        text = "Weakest",
-                        fontSize = 11.sp,
-                        color = ChartDetailColors.TextMuted
-                    )
-                }
+                StatColumn(
+                    value = "$formattedScore%",
+                    label = "Overall",
+                    valueColor = ChartDetailColors.getStrengthColor(shadbala.overallStrengthScore)
+                )
+                StatColumn(
+                    value = shadbala.strongestPlanet.symbol,
+                    label = "Strongest",
+                    valueColor = ChartDetailColors.SuccessColor
+                )
+                StatColumn(
+                    value = shadbala.weakestPlanet.symbol,
+                    label = "Weakest",
+                    valueColor = ChartDetailColors.ErrorColor
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ViewDetailsIndicator(
+    text: String = "View Details",
+    color: Color = ChartDetailColors.AccentGold
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            color = color
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+@Composable
+private fun StatColumn(
+    value: String,
+    label: String,
+    valueColor: Color
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = valueColor
+        )
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = ChartDetailColors.TextMuted
+        )
+    }
+}
+
 @Composable
 private fun PlanetDetailCard(
-    position: PlanetPosition,
-    shadbala: ShadbalaCalculator.PlanetaryShadbala?,
-    conditions: RetrogradeCombustionCalculator.PlanetCondition?,
+    state: PlanetCardState,
     onClick: () -> Unit,
     onNakshatraClick: () -> Unit
 ) {
+    val position = state.position
     val planetColor = ChartDetailColors.getPlanetColor(position.planet)
 
     Surface(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .semantics {
+                role = Role.Button
+                contentDescription = buildString {
+                    append("${position.planet.displayName} in ${position.sign.displayName}")
+                    append(", House ${position.house}")
+                    append(", ${position.nakshatra.displayName} pada ${position.nakshatraPada}")
+                    if (position.isRetrograde) append(", Retrograde")
+                    if (state.dignityStatus.isSignificant) append(", ${state.dignityStatus.displayName}")
+                }
+            },
         shape = RoundedCornerShape(16.dp),
         color = ChartDetailColors.CardBackground
     ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .animateContentSize()
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                )
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            PlanetCardHeader(
+                position = position,
+                planetColor = planetColor,
+                onNakshatraClick = onNakshatraClick
+            )
+
+            AnimatedVisibility(
+                visible = state.hasConditions,
+                enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .background(planetColor, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = position.planet.symbol,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                Column {
+                    StyledDivider(verticalPadding = 12.dp)
+
+                    state.shadbala?.let { shadbala ->
+                        ShadbalaProgressSection(shadbala = shadbala)
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = position.planet.displayName,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ChartDetailColors.TextPrimary
-                        )
-                        Text(
-                            text = "${position.sign.displayName} • House ${position.house}",
-                            fontSize = 12.sp,
-                            color = ChartDetailColors.TextSecondary
-                        )
-                    }
-                }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = ChartDetailUtils.formatDegreeInSign(position.longitude),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = ChartDetailColors.AccentTeal
-                    )
-                    // Nakshatra clickable
-                    Surface(
-                        modifier = Modifier.clickable { onNakshatraClick() },
-                        shape = RoundedCornerShape(4.dp),
-                        color = ChartDetailColors.CardBackgroundElevated
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "${position.nakshatra.displayName} ${position.nakshatraPada}",
-                                fontSize = 11.sp,
-                                color = ChartDetailColors.AccentPurple
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Icon(
-                                Icons.Default.ChevronRight,
-                                contentDescription = "View nakshatra details",
-                                tint = ChartDetailColors.AccentPurple,
-                                modifier = Modifier.size(12.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            if (shadbala != null || conditions != null) {
-                StyledDivider(verticalPadding = 12.dp)
-            }
-
-            if (shadbala != null) {
-                ShadbalaRow(shadbala = shadbala)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                val dignity = getDignityStatus(position.planet, position.sign)
-                if (dignity != "Neutral") {
-                    ConditionChip(
-                        label = dignity,
-                        color = getDignityColor(dignity)
+                    ConditionChipsSection(
+                        dignityStatus = state.dignityStatus,
+                        isRetrograde = position.isRetrograde,
+                        conditions = state.conditions
                     )
                 }
-
-                if (position.isRetrograde) {
-                    ConditionChip(
-                        label = "Retrograde",
-                        color = ChartDetailColors.WarningColor
-                    )
-                }
-
-                conditions?.let { cond ->
-                    if (cond.combustionStatus != RetrogradeCombustionCalculator.CombustionStatus.NOT_COMBUST) {
-                        ConditionChip(
-                            label = cond.combustionStatus.displayName,
-                            color = ChartDetailColors.ErrorColor
-                        )
-                    }
-
-                    if (cond.isInPlanetaryWar) {
-                        ConditionChip(
-                            label = "Planetary War",
-                            color = ChartDetailColors.AccentPurple
-                        )
-                    }
-                }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Tap for full details",
-                    fontSize = 11.sp,
-                    color = ChartDetailColors.TextMuted
-                )
-                Icon(
-                    Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    tint = ChartDetailColors.TextMuted,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+            TapForDetailsHint()
         }
     }
 }
 
 @Composable
-private fun ShadbalaRow(shadbala: ShadbalaCalculator.PlanetaryShadbala) {
-    val progress = (shadbala.percentageOfRequired / 150.0).coerceIn(0.0, 1.0).toFloat()
-    val color = ChartDetailColors.getStrengthColor(shadbala.percentageOfRequired)
-
+private fun PlanetCardHeader(
+    position: PlanetPosition,
+    planetColor: Color,
+    onNakshatraClick: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PlanetSymbolBadge(
+                symbol = position.planet.symbol,
+                color = planetColor
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
                 Text(
-                    text = "Shadbala",
+                    text = position.planet.displayName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ChartDetailColors.TextPrimary
+                )
+                Text(
+                    text = "${position.sign.displayName} • House ${position.house}",
                     fontSize = 12.sp,
                     color = ChartDetailColors.TextSecondary
                 )
-                Text(
-                    text = shadbala.strengthRating.displayName,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = color
-                )
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = color,
-                trackColor = ChartDetailColors.DividerColor
-            )
-            Spacer(modifier = Modifier.height(2.dp))
+        }
+
+        Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = "${String.format("%.2f", shadbala.totalRupas)} / ${String.format("%.2f", shadbala.requiredRupas)} rupas (${String.format("%.1f", shadbala.percentageOfRequired)}%)",
-                fontSize = 10.sp,
-                color = ChartDetailColors.TextMuted
+                text = ChartDetailUtils.formatDegreeInSign(position.longitude),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = ChartDetailColors.AccentTeal
+            )
+            NakshatraChip(
+                nakshatra = position.nakshatra,
+                pada = position.nakshatraPada,
+                onClick = onNakshatraClick
             )
         }
     }
 }
 
-private fun getDignityStatus(planet: Planet, sign: ZodiacSign): String {
-    val exalted = mapOf(
-        Planet.SUN to ZodiacSign.ARIES,
-        Planet.MOON to ZodiacSign.TAURUS,
-        Planet.MARS to ZodiacSign.CAPRICORN,
-        Planet.MERCURY to ZodiacSign.VIRGO,
-        Planet.JUPITER to ZodiacSign.CANCER,
-        Planet.VENUS to ZodiacSign.PISCES,
-        Planet.SATURN to ZodiacSign.LIBRA
-    )
-
-    val debilitated = mapOf(
-        Planet.SUN to ZodiacSign.LIBRA,
-        Planet.MOON to ZodiacSign.SCORPIO,
-        Planet.MARS to ZodiacSign.CANCER,
-        Planet.MERCURY to ZodiacSign.PISCES,
-        Planet.JUPITER to ZodiacSign.CAPRICORN,
-        Planet.VENUS to ZodiacSign.VIRGO,
-        Planet.SATURN to ZodiacSign.ARIES
-    )
-
-    return when {
-        exalted[planet] == sign -> "Exalted"
-        debilitated[planet] == sign -> "Debilitated"
-        sign.ruler == planet -> "Own Sign"
-        else -> "Neutral"
+@Composable
+private fun PlanetSymbolBadge(
+    symbol: String,
+    color: Color,
+    size: Int = 42
+) {
+    Box(
+        modifier = Modifier
+            .size(size.dp)
+            .background(color = color, shape = CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = symbol,
+            fontSize = (size * 0.43).sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
     }
 }
 
-private fun getDignityColor(dignity: String): Color = when (dignity) {
-    "Exalted" -> ChartDetailColors.SuccessColor
-    "Debilitated" -> ChartDetailColors.ErrorColor
-    "Own Sign" -> ChartDetailColors.AccentGold
-    else -> ChartDetailColors.TextSecondary
+@Composable
+private fun NakshatraChip(
+    nakshatra: Nakshatra,
+    pada: Int,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(4.dp),
+        color = ChartDetailColors.CardBackgroundElevated
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${nakshatra.displayName} $pada",
+                fontSize = 11.sp,
+                color = ChartDetailColors.AccentPurple
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "View nakshatra details",
+                tint = ChartDetailColors.AccentPurple,
+                modifier = Modifier.size(12.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShadbalaProgressSection(shadbala: PlanetaryShadbala) {
+    val progress = remember(shadbala.percentageOfRequired) {
+        (shadbala.percentageOfRequired / 150.0).coerceIn(0.0, 1.0).toFloat()
+    }
+    val strengthColor = ChartDetailColors.getStrengthColor(shadbala.percentageOfRequired)
+
+    val formattedTotal = remember(shadbala.totalRupas) {
+        DecimalFormatters.twoDecimals.format(shadbala.totalRupas)
+    }
+    val formattedRequired = remember(shadbala.requiredRupas) {
+        DecimalFormatters.twoDecimals.format(shadbala.requiredRupas)
+    }
+    val formattedPercentage = remember(shadbala.percentageOfRequired) {
+        DecimalFormatters.oneDecimal.format(shadbala.percentageOfRequired)
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Shadbala",
+                fontSize = 12.sp,
+                color = ChartDetailColors.TextSecondary
+            )
+            Text(
+                text = shadbala.strengthRating.displayName,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = strengthColor
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp)),
+            color = strengthColor,
+            trackColor = ChartDetailColors.DividerColor
+        )
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        Text(
+            text = "$formattedTotal / $formattedRequired rupas ($formattedPercentage%)",
+            fontSize = 10.sp,
+            color = ChartDetailColors.TextMuted
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ConditionChipsSection(
+    dignityStatus: DignityStatus,
+    isRetrograde: Boolean,
+    conditions: RetrogradeCombustionCalculator.PlanetCondition?
+) {
+    val showDignity = dignityStatus.isSignificant
+    val showRetrograde = isRetrograde
+    val showCombust = conditions?.combustionStatus != null &&
+            conditions.combustionStatus != RetrogradeCombustionCalculator.CombustionStatus.NOT_COMBUST
+    val showWar = conditions?.isInPlanetaryWar == true
+
+    val hasAnyChip = showDignity || showRetrograde || showCombust || showWar
+
+    if (!hasAnyChip) return
+
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (showDignity) {
+            ConditionChip(
+                label = dignityStatus.displayName,
+                color = PlanetaryDignityCalculator.getColor(dignityStatus)
+            )
+        }
+
+        if (showRetrograde) {
+            ConditionChip(
+                label = "Retrograde",
+                color = ChartDetailColors.WarningColor
+            )
+        }
+
+        if (showCombust && conditions != null) {
+            ConditionChip(
+                label = conditions.combustionStatus.displayName,
+                color = ChartDetailColors.ErrorColor
+            )
+        }
+
+        if (showWar) {
+            ConditionChip(
+                label = "Planetary War",
+                color = ChartDetailColors.AccentPurple
+            )
+        }
+    }
+}
+
+@Composable
+private fun TapForDetailsHint() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Tap for details",
+            fontSize = 11.sp,
+            color = ChartDetailColors.TextMuted
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = ChartDetailColors.TextMuted,
+            modifier = Modifier.size(16.dp)
+        )
+    }
 }
