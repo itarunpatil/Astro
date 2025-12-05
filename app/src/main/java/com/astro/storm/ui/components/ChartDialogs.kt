@@ -1264,7 +1264,7 @@ private fun SummaryBadge(label: String, value: String, color: Color) {
 }
 
 @Composable
-private fun PlanetStrengthCard(shadbala: ShadbalaCalculator.PlanetaryShadbala) {
+private fun PlanetStrengthCard(shadbala: PlanetaryShadbala) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -1579,7 +1579,7 @@ private fun getDignity(planet: Planet, sign: ZodiacSign): Dignity {
 
 private fun getPlanetPredictions(
     position: PlanetPosition,
-    shadbala: ShadbalaCalculator.PlanetaryShadbala,
+    shadbala: PlanetaryShadbala,
     chart: VedicChart
 ): List<Prediction> {
     val predictions = mutableListOf<Prediction>()

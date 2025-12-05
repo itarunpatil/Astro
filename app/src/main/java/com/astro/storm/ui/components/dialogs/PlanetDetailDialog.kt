@@ -92,7 +92,7 @@ fun PlanetDetailDialog(
                     item { SignificationsCard(planetPosition.planet) }
                     item { HousePlacementCard(planetPosition) }
                     item { PlanetStatusCard(planetPosition, chart) }
-                    item { PredictionsCard(planetPosition, shadbala, chart) }
+                    item { PredictionsCard(planetPosition, shadbala) }
                 }
             }
         }
@@ -331,8 +331,7 @@ private fun PlanetStatusCard(position: PlanetPosition, chart: VedicChart) {
 @Composable
 private fun PredictionsCard(
     position: PlanetPosition,
-    shadbala: PlanetaryShadbala,
-    chart: VedicChart
+    shadbala: PlanetaryShadbala
 ) {
     val predictions = getPlanetPredictions(position, shadbala)
 
@@ -535,7 +534,7 @@ private fun getDignity(planet: Planet, sign: ZodiacSign): Dignity {
 
 private fun getPlanetPredictions(
     position: PlanetPosition,
-    shadbala: ShadbalaCalculator.PlanetaryShadbala
+    shadbala: PlanetaryShadbala
 ): List<Prediction> {
     val predictions = mutableListOf<Prediction>()
     val planet = position.planet
