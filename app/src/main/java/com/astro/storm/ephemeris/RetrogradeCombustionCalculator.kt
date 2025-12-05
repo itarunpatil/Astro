@@ -232,7 +232,7 @@ object RetrogradeCombustionCalculator {
         val maleficPressure = calculateMaleficPressure(finalConditions.values.toList())
 
         return PlanetaryConditionAnalysis(
-            analysisDateTime = chart.dateTime,
+            analysisDateTime = chart.birthData.dateTime,
             planetConditions = finalConditions,
             retrogradePlanets = finalConditions.values
                 .filter { it.retrogradeStatus in listOf(RetrogradeStatus.RETROGRADE, RetrogradeStatus.STATIONARY_RETROGRADE) }

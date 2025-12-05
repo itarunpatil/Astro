@@ -693,7 +693,7 @@ private fun PlanetStatusCard(position: PlanetPosition, chart: VedicChart) {
     val conditions = remember(chart) {
         RetrogradeCombustionCalculator.analyzePlanetaryConditions(chart)
     }
-    val planetCondition = conditions.planetConditions.find { it.planet == position.planet }
+    val planetCondition = conditions.getCondition(position.planet)
 
     DialogCard(title = "Status & Conditions", icon = Icons.Outlined.FactCheck) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -728,7 +728,7 @@ private fun PlanetStatusCard(position: PlanetPosition, chart: VedicChart) {
                 if (cond.isInPlanetaryWar) {
                     StatusChip(
                         label = "Planetary War",
-                        value = "At war with ${cond.warOpponent?.displayName}",
+                        value = "At war with ${cond.warData?.loser?.displayName}",
                         color = AccentPurple
                     )
                 }

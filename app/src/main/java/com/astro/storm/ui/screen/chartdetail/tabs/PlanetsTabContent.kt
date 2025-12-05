@@ -98,7 +98,7 @@ fun PlanetsTabContent(
 
         items(chart.planetPositions) { position ->
             val planetShadbala = shadbala.planetaryStrengths[position.planet]
-            val conditions = planetConditions.planetConditions.find { it.planet == position.planet }
+            val conditions = planetConditions.getCondition(position.planet)
 
             PlanetDetailCard(
                 position = position,
@@ -115,14 +115,9 @@ fun PlanetsTabContent(
 private fun PlanetaryConditionsSummary(
     conditions: RetrogradeCombustionCalculator.PlanetaryConditionAnalysis
 ) {
-    val retrogradeCount = conditions.planetConditions.count {
-        it.retrogradeStatus == RetrogradeCombustionCalculator.RetrogradeStatus.RETROGRADE ||
-        it.retrogradeStatus == RetrogradeCombustionCalculator.RetrogradeStatus.STATIONARY_RETROGRADE
-    }
-    val combustCount = conditions.planetConditions.count {
-        it.combustionStatus != RetrogradeCombustionCalculator.CombustionStatus.NOT_COMBUST
-    }
-    val warCount = conditions.planetConditions.count { it.isInPlanetaryWar }
+    val retrogradeCount = conditions.retrogradePlanets.size
+    val combustCount = conditions.combustPlanets.size
+    val warCount = conditions.planetaryWars.size
 
     Surface(
         modifier = Modifier.fillMaxWidth(),

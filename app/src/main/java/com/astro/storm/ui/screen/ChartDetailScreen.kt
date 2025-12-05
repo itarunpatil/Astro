@@ -100,6 +100,7 @@ enum class ChartTab(val title: String, val icon: ImageVector) {
     PLANETS("Planets", Icons.Outlined.Star),
     YOGAS("Yogas", Icons.Outlined.AutoAwesome),
     ASHTAKAVARGA("Ashtakavarga", Icons.Outlined.GridOn),
+    ASPECTS("Aspects", Icons.Outlined.Hub),
     TRANSITS("Transits", Icons.Outlined.Schedule),
     DASHAS("Dashas", Icons.Outlined.Timeline),
     PANCHANGA("Panchanga", Icons.Outlined.WbSunny)
@@ -348,6 +349,7 @@ fun ChartDetailScreen(
                         )
                         ChartTab.YOGAS -> YogasTabContent(displayChart)
                         ChartTab.ASHTAKAVARGA -> AshtakavargaTabContent(displayChart)
+                        ChartTab.ASPECTS -> AspectsTabContent(displayChart)
                         ChartTab.TRANSITS -> TransitsTabContent(displayChart, context)
                         ChartTab.DASHAS -> DashasTabContent(displayChart)
                         ChartTab.PANCHANGA -> PanchangaTabContent(displayChart, context)
@@ -1346,7 +1348,7 @@ private fun PlanetsTabContent(
 
         // Individual planet cards - CLICKABLE
         items(chart.planetPositions) { position ->
-            val condition = conditionAnalysis.planetConditions.find { it.planet == position.planet }
+            val condition = conditionAnalysis.getCondition(position.planet)
             PlanetDetailCard(
                 position = position,
                 condition = condition,
@@ -1371,12 +1373,12 @@ private fun PlanetaryStatusSummary(analysis: RetrogradeCombustionCalculator.Plan
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             StatusBadge(
-                count = analysis.currentRetrogrades.size,
+                count = analysis.retrogradePlanets.size,
                 label = "Retrograde",
                 color = WarningColor
             )
             StatusBadge(
-                count = analysis.currentCombustions.size,
+                count = analysis.combustPlanets.size,
                 label = "Combust",
                 color = ErrorColor
             )
@@ -1555,7 +1557,7 @@ private fun PlanetDetailCard(
                         }
                         if (cond.isInPlanetaryWar) {
                             ConditionChip(
-                                label = "War with ${cond.warOpponent?.displayName}",
+                                label = "War with ${cond.warData?.loser?.displayName}",
                                 color = AccentPurple
                             )
                         }
@@ -3472,9 +3474,9 @@ private fun AspectSummaryCard(matrix: AspectCalculator.AspectMatrix) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             AspectCountBadge("Conjunctions", matrix.conjunctions.size, AccentGold)
-            AspectCountBadge("Trines", matrix.trines.size, SuccessColor)
-            AspectCountBadge("Squares", matrix.squares.size, ErrorColor)
-            AspectCountBadge("Special", matrix.vedicSpecialAspects.size, AccentPurple)
+            AspectCountBadge("Harmonious", matrix.aspects.filter { it.aspectType.nature == AspectCalculator.AspectNature.HARMONIOUS }.size, SuccessColor)
+            AspectCountBadge("Challenging", matrix.aspects.filter { it.aspectType.nature == AspectCalculator.AspectNature.CHALLENGING }.size, ErrorColor)
+            AspectCountBadge("Special", matrix.specialAspects.size, AccentPurple)
         }
     }
 }
@@ -3519,7 +3521,7 @@ private fun AspectCard(aspect: AspectCalculator.AspectData) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${aspect.planet1.symbol} ${aspect.aspectType.symbol} ${aspect.planet2.symbol}",
+                    text = "${aspect.aspectingPlanet.symbol} ${aspect.aspectType.symbol} ${aspect.aspectedPlanet.symbol}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = natureColor
@@ -3527,7 +3529,7 @@ private fun AspectCard(aspect: AspectCalculator.AspectData) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "${aspect.planet1.displayName} - ${aspect.planet2.displayName}",
+                        text = "${aspect.aspectingPlanet.displayName} - ${aspect.aspectedPlanet.displayName}",
                         fontSize = 13.sp,
                         color = TextPrimary
                     )
@@ -3546,7 +3548,7 @@ private fun AspectCard(aspect: AspectCalculator.AspectData) {
                     color = natureColor
                 )
                 Text(
-                    text = "Orb: ${String.format("%.1f", aspect.orb)}°",
+                    text = "Orb: ${String.format("%.1f", aspect.exactOrb)}°",
                     fontSize = 11.sp,
                     color = TextMuted
                 )
