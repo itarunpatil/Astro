@@ -503,14 +503,14 @@ class ChartExporter(private val context: Context) {
 
             // Show significant aspects
             val significantAspects = aspectMatrix.aspects
-                .filter { it.strength > 0.5 }
-                .sortedByDescending { it.strength }
+                .filter { it.drishtiBala > 0.5 }
+                .sortedByDescending { it.drishtiBala }
                 .take(15)
 
             significantAspects.forEach { aspect ->
                 val applying = if (aspect.isApplying) "Applying" else "Separating"
-                val text = "${aspect.planet1.displayName} ${aspect.aspectType.displayName} ${aspect.planet2.displayName} " +
-                        "(Orb: ${String.format("%.1f", aspect.orb)}°, $applying)"
+                val text = "${aspect.aspectingPlanet.displayName} ${aspect.aspectType.displayName} ${aspect.aspectedPlanet.displayName} " +
+                        "(Orb: ${String.format("%.1f", aspect.exactOrb)}°, $applying)"
                 canvas.drawText(text, PDF_MARGIN.toFloat(), yPos + 10f, paint)
                 yPos += 14f
 

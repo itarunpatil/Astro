@@ -4,527 +4,526 @@ import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
 import kotlin.math.abs
-import kotlin.math.min
+import kotlin.math.floor
 
-/**
- * Precise Vedic Aspect (Drishti) Calculator
- *
- * In Vedic astrology, aspects work differently than Western astrology:
- * - All planets aspect the 7th house (180°) from their position - FULL ASPECT
- * - Mars additionally aspects 4th (90°) and 8th (210°) houses - SPECIAL ASPECTS
- * - Jupiter additionally aspects 5th (120°) and 9th (240°) houses - SPECIAL ASPECTS
- * - Saturn additionally aspects 3rd (60°) and 10th (270°) houses - SPECIAL ASPECTS
- * - Rahu/Ketu aspect 5th, 7th, and 9th houses (like Jupiter + 7th)
- *
- * This calculator provides:
- * - Precise angular separation calculations
- * - Configurable orbs per planet class
- * - Yoga detection (conjunction, opposition, trine, square, sextile)
- * - Aspect strength calculations based on orb tightness
- */
 object AspectCalculator {
 
-    /**
-     * Aspect types in Vedic astrology
-     */
+    private const val DEGREES_PER_SIGN = 30.0
+    private const val TOTAL_DEGREES = 360.0
+    private const val TOTAL_SIGNS = 12
+
     enum class AspectType(
         val displayName: String,
-        val angle: Double,
+        val houseDistance: Int,
+        val degreeAngle: Double,
         val nature: AspectNature,
-        val symbol: String
+        val symbol: String,
+        val classicalStrength: Double
     ) {
-        CONJUNCTION("Conjunction", 0.0, AspectNature.VARIABLE, "☌"),
-        OPPOSITION("Opposition", 180.0, AspectNature.CHALLENGING, "☍"),
-        TRINE("Trine", 120.0, AspectNature.HARMONIOUS, "△"),
-        SQUARE("Square", 90.0, AspectNature.CHALLENGING, "□"),
-        SEXTILE("Sextile", 60.0, AspectNature.HARMONIOUS, "⚹"),
+        CONJUNCTION("Conjunction", 1, 0.0, AspectNature.VARIABLE, "☌", 1.0),
 
-        // Vedic special aspects
-        MARS_4TH("Mars 4th Aspect", 90.0, AspectNature.CHALLENGING, "♂4"),
-        MARS_8TH("Mars 8th Aspect", 210.0, AspectNature.CHALLENGING, "♂8"),
-        JUPITER_5TH("Jupiter 5th Aspect", 120.0, AspectNature.HARMONIOUS, "♃5"),
-        JUPITER_9TH("Jupiter 9th Aspect", 240.0, AspectNature.HARMONIOUS, "♃9"),
-        SATURN_3RD("Saturn 3rd Aspect", 60.0, AspectNature.CHALLENGING, "♄3"),
-        SATURN_10TH("Saturn 10th Aspect", 270.0, AspectNature.CHALLENGING, "♄10"),
+        SEVENTH_HOUSE("7th Aspect", 7, 180.0, AspectNature.SIGNIFICANT, "☍", 1.0),
 
-        // Rahu/Ketu special aspects
-        RAHU_KETU_5TH("Rahu/Ketu 5th Aspect", 120.0, AspectNature.SIGNIFICANT, "☊☋5"),
-        RAHU_KETU_9TH("Rahu/Ketu 9th Aspect", 240.0, AspectNature.SIGNIFICANT, "☊☋9"),
+        MARS_4TH("Mars 4th Aspect", 4, 90.0, AspectNature.CHALLENGING, "♂₄", 0.75),
+        MARS_8TH("Mars 8th Aspect", 8, 210.0, AspectNature.CHALLENGING, "♂₈", 1.0),
 
-        // 7th house aspect (all planets)
-        FULL_ASPECT("7th House Aspect", 180.0, AspectNature.SIGNIFICANT, "⦻");
+        JUPITER_5TH("Jupiter 5th Aspect", 5, 120.0, AspectNature.HARMONIOUS, "♃₅", 0.5),
+        JUPITER_9TH("Jupiter 9th Aspect", 9, 240.0, AspectNature.HARMONIOUS, "♃₉", 1.0),
+
+        SATURN_3RD("Saturn 3rd Aspect", 3, 60.0, AspectNature.CHALLENGING, "♄₃", 0.75),
+        SATURN_10TH("Saturn 10th Aspect", 10, 270.0, AspectNature.CHALLENGING, "♄₁₀", 1.0);
 
         companion object {
-            fun fromAngle(angle: Double, orb: Double = 8.0): AspectType? {
-                val normalizedAngle = normalizeAngle(angle)
-                return entries.firstOrNull { aspect ->
-                    val diff = abs(normalizedAngle - aspect.angle)
-                    diff <= orb || abs(360.0 - diff) <= orb
+            fun getSpecialAspects(planet: Planet): List<AspectType> {
+                return when (planet) {
+                    Planet.MARS -> listOf(MARS_4TH, MARS_8TH)
+                    Planet.JUPITER -> listOf(JUPITER_5TH, JUPITER_9TH)
+                    Planet.SATURN -> listOf(SATURN_3RD, SATURN_10TH)
+                    else -> emptyList()
                 }
             }
         }
     }
 
-    enum class AspectNature(val displayName: String) {
-        HARMONIOUS("Harmonious"),
-        CHALLENGING("Challenging"),
-        VARIABLE("Variable"),
-        SIGNIFICANT("Significant")
+    enum class AspectNature(val displayName: String, val isPositive: Boolean?) {
+        HARMONIOUS("Harmonious", true),
+        CHALLENGING("Challenging", false),
+        VARIABLE("Variable", null),
+        SIGNIFICANT("Significant", null)
     }
 
-    /**
-     * Planet classification for orb settings
-     */
-    enum class PlanetClass(val defaultOrb: Double) {
-        LUMINARY(10.0),        // Sun, Moon - wider orbs
-        PERSONAL(8.0),         // Mercury, Venus, Mars
-        SOCIAL(7.0),           // Jupiter, Saturn
-        TRANSCENDENTAL(6.0),   // Rahu, Ketu (mean nodes)
-        OUTER(5.0)             // Uranus, Neptune, Pluto (if used)
+    enum class AspectMode {
+        SIGN_BASED,
+        DEGREE_BASED,
+        HYBRID
     }
 
-    /**
-     * Configurable orb settings
-     */
-    data class OrbConfiguration(
-        val luminaryOrb: Double = 10.0,
-        val personalOrb: Double = 8.0,
-        val socialOrb: Double = 7.0,
-        val transcendentalOrb: Double = 6.0,
-        val outerOrb: Double = 5.0,
-        val conjunctionBonus: Double = 2.0,  // Extra orb for conjunctions
-        val oppositionBonus: Double = 1.0    // Extra orb for oppositions
-    ) {
-        fun getOrbForPlanet(planet: Planet): Double {
-            return when (planet) {
-                Planet.SUN, Planet.MOON -> luminaryOrb
-                Planet.MERCURY, Planet.VENUS, Planet.MARS -> personalOrb
-                Planet.JUPITER, Planet.SATURN -> socialOrb
-                Planet.RAHU, Planet.KETU -> transcendentalOrb
-                Planet.URANUS, Planet.NEPTUNE, Planet.PLUTO -> outerOrb
-            }
-        }
+    data class AspectConfiguration(
+        val mode: AspectMode = AspectMode.HYBRID,
+        val degreeOrb: Double = 12.0,
+        val conjunctionOrb: Double = 10.0,
+        val includeOuterPlanets: Boolean = false,
+        val includeRahuKetuAspects: Boolean = false
+    )
 
-        fun getEffectiveOrb(planet1: Planet, planet2: Planet, aspectType: AspectType): Double {
-            val baseOrb = (getOrbForPlanet(planet1) + getOrbForPlanet(planet2)) / 2.0
-            return when (aspectType) {
-                AspectType.CONJUNCTION -> baseOrb + conjunctionBonus
-                AspectType.OPPOSITION, AspectType.FULL_ASPECT -> baseOrb + oppositionBonus
-                else -> baseOrb
-            }
-        }
-    }
-
-    /**
-     * Result of an aspect calculation
-     */
     data class AspectData(
-        val planet1: Planet,
-        val planet2: Planet,
+        val aspectingPlanet: Planet,
+        val aspectedPlanet: Planet,
         val aspectType: AspectType,
-        val exactAngle: Double,           // Precise angular separation
-        val orb: Double,                  // How far from exact
-        val isApplying: Boolean,          // Is the aspect becoming exact?
-        val strength: Double,             // 0.0 - 1.0 based on orb tightness
-        val isVedicSpecialAspect: Boolean // Is this a Mars/Jupiter/Saturn special aspect?
+        val forwardAngle: Double,
+        val exactOrb: Double,
+        val isApplying: Boolean,
+        val drishtiBala: Double,
+        val signBasedAspect: Boolean,
+        val aspectingSign: Int,
+        val aspectedSign: Int
     ) {
         val strengthDescription: String
             get() = when {
-                strength >= 0.9 -> "Exact"
-                strength >= 0.7 -> "Very Strong"
-                strength >= 0.5 -> "Strong"
-                strength >= 0.3 -> "Moderate"
-                else -> "Weak"
+                drishtiBala >= 0.95 -> "Exact (Purna)"
+                drishtiBala >= 0.75 -> "Strong (Adhika)"
+                drishtiBala >= 0.50 -> "Medium (Madhya)"
+                drishtiBala >= 0.25 -> "Weak (Alpa)"
+                else -> "Negligible (Sunya)"
             }
+
+        val isFullAspect: Boolean
+            get() = aspectType.classicalStrength >= 1.0
+
+        val isSpecialAspect: Boolean
+            get() = aspectType != AspectType.SEVENTH_HOUSE && aspectType != AspectType.CONJUNCTION
     }
 
-    /**
-     * Complete aspect matrix for a chart
-     */
     data class AspectMatrix(
         val aspects: List<AspectData>,
+        val aspectsByAspectingPlanet: Map<Planet, List<AspectData>>,
+        val aspectsByAspectedPlanet: Map<Planet, List<AspectData>>,
         val conjunctions: List<AspectData>,
-        val oppositions: List<AspectData>,
-        val trines: List<AspectData>,
-        val squares: List<AspectData>,
-        val sextiles: List<AspectData>,
-        val vedicSpecialAspects: List<AspectData>
+        val seventhHouseAspects: List<AspectData>,
+        val specialAspects: List<AspectData>,
+        val mutualAspects: List<Pair<AspectData, AspectData>>
     ) {
-        val totalAspectCount: Int get() = aspects.size
+        fun getAspectsCastBy(planet: Planet): List<AspectData> =
+            aspectsByAspectingPlanet[planet] ?: emptyList()
 
-        fun getAspectsForPlanet(planet: Planet): List<AspectData> {
-            return aspects.filter { it.planet1 == planet || it.planet2 == planet }
-        }
+        fun getAspectsReceivedBy(planet: Planet): List<AspectData> =
+            aspectsByAspectedPlanet[planet] ?: emptyList()
 
-        fun getAspectBetween(planet1: Planet, planet2: Planet): AspectData? {
-            return aspects.find {
-                (it.planet1 == planet1 && it.planet2 == planet2) ||
-                        (it.planet1 == planet2 && it.planet2 == planet1)
+        fun getAspectBetween(planet1: Planet, planet2: Planet): AspectData? =
+            aspects.find { it.aspectingPlanet == planet1 && it.aspectedPlanet == planet2 }
+
+        fun hasMutualAspect(planet1: Planet, planet2: Planet): Boolean =
+            mutualAspects.any {
+                (it.first.aspectingPlanet == planet1 && it.first.aspectedPlanet == planet2) ||
+                        (it.first.aspectingPlanet == planet2 && it.first.aspectedPlanet == planet1)
             }
-        }
+
+        fun getTotalDrishtiBalaOn(planet: Planet): Double =
+            getAspectsReceivedBy(planet).sumOf { it.drishtiBala }
     }
 
-    /**
-     * Calculate complete aspect matrix for a Vedic chart
-     */
     fun calculateAspectMatrix(
         chart: VedicChart,
-        orbConfig: OrbConfiguration = OrbConfiguration()
+        config: AspectConfiguration = AspectConfiguration()
     ): AspectMatrix {
         val allAspects = mutableListOf<AspectData>()
-        val positions = chart.planetPositions
-
-        // Calculate aspects between each pair of planets
-        for (i in positions.indices) {
-            for (j in i + 1 until positions.size) {
-                val planet1 = positions[i]
-                val planet2 = positions[j]
-
-                // Calculate all possible aspects between these two planets
-                val aspects = calculateAspectsBetween(planet1, planet2, orbConfig)
-                allAspects.addAll(aspects)
-            }
+        val positions = chart.planetPositions.filter { position ->
+            if (!config.includeOuterPlanets) {
+                position.planet !in listOf(Planet.URANUS, Planet.NEPTUNE, Planet.PLUTO)
+            } else true
         }
 
-        // Calculate Vedic special aspects (one-way aspects)
-        val vedicSpecialAspects = calculateVedicSpecialAspects(positions, orbConfig)
-        allAspects.addAll(vedicSpecialAspects)
+        for (aspectingPosition in positions) {
+            if (!canCastAspect(aspectingPosition.planet)) continue
 
-        // Sort by strength (strongest first)
-        val sortedAspects = allAspects.sortedByDescending { it.strength }
+            for (aspectedPosition in positions) {
+                if (aspectingPosition.planet == aspectedPosition.planet) continue
 
-        return AspectMatrix(
-            aspects = sortedAspects,
-            conjunctions = sortedAspects.filter { it.aspectType == AspectType.CONJUNCTION },
-            oppositions = sortedAspects.filter {
-                it.aspectType == AspectType.OPPOSITION || it.aspectType == AspectType.FULL_ASPECT
-            },
-            trines = sortedAspects.filter {
-                it.aspectType == AspectType.TRINE ||
-                        it.aspectType == AspectType.JUPITER_5TH ||
-                        it.aspectType == AspectType.JUPITER_9TH
-            },
-            squares = sortedAspects.filter {
-                it.aspectType == AspectType.SQUARE || it.aspectType == AspectType.MARS_4TH
-            },
-            sextiles = sortedAspects.filter {
-                it.aspectType == AspectType.SEXTILE || it.aspectType == AspectType.SATURN_3RD
-            },
-            vedicSpecialAspects = sortedAspects.filter { it.isVedicSpecialAspect }
-        )
-    }
+                val aspectsToCheck = getAllApplicableAspects(aspectingPosition.planet, config)
 
-    /**
-     * Calculate standard Western-style aspects between two planets
-     */
-    private fun calculateAspectsBetween(
-        pos1: PlanetPosition,
-        pos2: PlanetPosition,
-        orbConfig: OrbConfiguration
-    ): List<AspectData> {
-        val aspects = mutableListOf<AspectData>()
-        val angularSeparation = calculateAngularSeparation(pos1.longitude, pos2.longitude)
-
-        // Check each standard aspect type
-        val standardAspects = listOf(
-            AspectType.CONJUNCTION,
-            AspectType.OPPOSITION,
-            AspectType.TRINE,
-            AspectType.SQUARE,
-            AspectType.SEXTILE
-        )
-
-        for (aspectType in standardAspects) {
-            val effectiveOrb = orbConfig.getEffectiveOrb(pos1.planet, pos2.planet, aspectType)
-            val orb = calculateOrb(angularSeparation, aspectType.angle)
-
-            if (orb <= effectiveOrb) {
-                val strength = calculateStrength(orb, effectiveOrb)
-                val isApplying = isAspectApplying(pos1, pos2, aspectType.angle)
-
-                aspects.add(
-                    AspectData(
-                        planet1 = pos1.planet,
-                        planet2 = pos2.planet,
-                        aspectType = aspectType,
-                        exactAngle = angularSeparation,
-                        orb = orb,
-                        isApplying = isApplying,
-                        strength = strength,
-                        isVedicSpecialAspect = false
+                for (aspectType in aspectsToCheck) {
+                    val aspectData = calculateSingleAspect(
+                        aspectingPosition,
+                        aspectedPosition,
+                        aspectType,
+                        config
                     )
-                )
-            }
-        }
-
-        return aspects
-    }
-
-    /**
-     * Calculate Vedic special aspects (Drishti)
-     *
-     * In Vedic astrology:
-     * - Mars aspects 4th and 8th houses from its position
-     * - Jupiter aspects 5th and 9th houses
-     * - Saturn aspects 3rd and 10th houses
-     * - Rahu/Ketu aspect 5th, 7th, 9th houses
-     */
-    private fun calculateVedicSpecialAspects(
-        positions: List<PlanetPosition>,
-        orbConfig: OrbConfiguration
-    ): List<AspectData> {
-        val aspects = mutableListOf<AspectData>()
-
-        for (aspectingPlanet in positions) {
-            val specialAspectAngles = getSpecialAspectAngles(aspectingPlanet.planet)
-
-            for ((angle, aspectType) in specialAspectAngles) {
-                // Find planets that receive this special aspect
-                for (receivingPlanet in positions) {
-                    if (receivingPlanet.planet == aspectingPlanet.planet) continue
-
-                    val angularSeparation = calculateAngularSeparation(
-                        aspectingPlanet.longitude,
-                        receivingPlanet.longitude
-                    )
-
-                    val effectiveOrb = orbConfig.getEffectiveOrb(
-                        aspectingPlanet.planet,
-                        receivingPlanet.planet,
-                        aspectType
-                    )
-                    val orb = calculateOrb(angularSeparation, angle)
-
-                    if (orb <= effectiveOrb) {
-                        val strength = calculateStrength(orb, effectiveOrb)
-                        val isApplying = isAspectApplying(aspectingPlanet, receivingPlanet, angle)
-
-                        aspects.add(
-                            AspectData(
-                                planet1 = aspectingPlanet.planet,
-                                planet2 = receivingPlanet.planet,
-                                aspectType = aspectType,
-                                exactAngle = angularSeparation,
-                                orb = orb,
-                                isApplying = isApplying,
-                                strength = strength,
-                                isVedicSpecialAspect = true
-                            )
-                        )
+                    if (aspectData != null) {
+                        allAspects.add(aspectData)
                     }
                 }
             }
         }
 
+        val sortedAspects = allAspects.sortedByDescending { it.drishtiBala }
+        val mutualAspects = findMutualAspects(sortedAspects)
+
+        return AspectMatrix(
+            aspects = sortedAspects,
+            aspectsByAspectingPlanet = sortedAspects.groupBy { it.aspectingPlanet },
+            aspectsByAspectedPlanet = sortedAspects.groupBy { it.aspectedPlanet },
+            conjunctions = sortedAspects.filter { it.aspectType == AspectType.CONJUNCTION },
+            seventhHouseAspects = sortedAspects.filter { it.aspectType == AspectType.SEVENTH_HOUSE },
+            specialAspects = sortedAspects.filter { it.isSpecialAspect },
+            mutualAspects = mutualAspects
+        )
+    }
+
+    private fun canCastAspect(planet: Planet): Boolean {
+        return planet !in listOf(Planet.URANUS, Planet.NEPTUNE, Planet.PLUTO)
+    }
+
+    private fun getAllApplicableAspects(planet: Planet, config: AspectConfiguration): List<AspectType> {
+        val aspects = mutableListOf<AspectType>()
+        aspects.add(AspectType.CONJUNCTION)
+        aspects.add(AspectType.SEVENTH_HOUSE)
+        aspects.addAll(AspectType.getSpecialAspects(planet))
+
+        if (config.includeRahuKetuAspects && planet in listOf(Planet.RAHU, Planet.KETU)) {
+            aspects.add(AspectType.JUPITER_5TH)
+            aspects.add(AspectType.JUPITER_9TH)
+        }
+
         return aspects
     }
 
-    /**
-     * Get special aspect angles for each planet
-     */
-    private fun getSpecialAspectAngles(planet: Planet): List<Pair<Double, AspectType>> {
-        return when (planet) {
-            Planet.MARS -> listOf(
-                90.0 to AspectType.MARS_4TH,   // 4th house
-                210.0 to AspectType.MARS_8TH   // 8th house
-            )
+    private fun calculateSingleAspect(
+        aspecting: PlanetPosition,
+        aspected: PlanetPosition,
+        aspectType: AspectType,
+        config: AspectConfiguration
+    ): AspectData? {
+        val aspectingSign = getSignNumber(aspecting.longitude)
+        val aspectedSign = getSignNumber(aspected.longitude)
 
-            Planet.JUPITER -> listOf(
-                120.0 to AspectType.JUPITER_5TH,  // 5th house
-                240.0 to AspectType.JUPITER_9TH   // 9th house
-            )
+        val signDistance = calculateSignDistance(aspectingSign, aspectedSign)
+        val forwardAngle = calculateForwardAngle(aspecting.longitude, aspected.longitude)
 
-            Planet.SATURN -> listOf(
-                60.0 to AspectType.SATURN_3RD,    // 3rd house
-                270.0 to AspectType.SATURN_10TH   // 10th house
-            )
+        val isSignBasedMatch = signDistance == aspectType.houseDistance
+        val orb = calculateOrb(forwardAngle, aspectType.degreeAngle)
+        val effectiveOrb = if (aspectType == AspectType.CONJUNCTION) config.conjunctionOrb else config.degreeOrb
+        val isDegreeBasedMatch = orb <= effectiveOrb
 
-            Planet.RAHU, Planet.KETU -> listOf(
-                120.0 to AspectType.RAHU_KETU_5TH,
-                240.0 to AspectType.RAHU_KETU_9TH
-            )
-
-            else -> emptyList()
+        val isValidAspect = when (config.mode) {
+            AspectMode.SIGN_BASED -> isSignBasedMatch
+            AspectMode.DEGREE_BASED -> isDegreeBasedMatch
+            AspectMode.HYBRID -> isSignBasedMatch || (isDegreeBasedMatch && isWithinAdjacentSign(signDistance, aspectType.houseDistance))
         }
+
+        if (!isValidAspect) return null
+
+        val drishtiBala = calculateDrishtiBala(
+            aspectType = aspectType,
+            orb = orb,
+            effectiveOrb = effectiveOrb,
+            isSignBased = isSignBasedMatch,
+            config = config
+        )
+
+        val isApplying = calculateIsApplying(aspecting, aspected, aspectType.degreeAngle)
+
+        return AspectData(
+            aspectingPlanet = aspecting.planet,
+            aspectedPlanet = aspected.planet,
+            aspectType = aspectType,
+            forwardAngle = forwardAngle,
+            exactOrb = orb,
+            isApplying = isApplying,
+            drishtiBala = drishtiBala,
+            signBasedAspect = isSignBasedMatch,
+            aspectingSign = aspectingSign,
+            aspectedSign = aspectedSign
+        )
     }
 
-    /**
-     * Calculate angular separation between two longitudes
-     */
-    private fun calculateAngularSeparation(long1: Double, long2: Double): Double {
-        val diff = abs(long1 - long2)
-        return if (diff > 180.0) 360.0 - diff else diff
+    private fun getSignNumber(longitude: Double): Int {
+        return (floor(normalizeAngle(longitude) / DEGREES_PER_SIGN).toInt() % TOTAL_SIGNS) + 1
     }
 
-    /**
-     * Calculate orb (distance from exact aspect)
-     */
-    private fun calculateOrb(actualAngle: Double, aspectAngle: Double): Double {
-        val diff = abs(actualAngle - aspectAngle)
-        return min(diff, 360.0 - diff)
+    private fun calculateSignDistance(fromSign: Int, toSign: Int): Int {
+        val distance = ((toSign - fromSign + TOTAL_SIGNS) % TOTAL_SIGNS)
+        return if (distance == 0) 1 else distance + 1
     }
 
-    /**
-     * Calculate aspect strength based on orb tightness
-     * Returns value from 0.0 (at edge of orb) to 1.0 (exact)
-     */
-    private fun calculateStrength(orb: Double, maxOrb: Double): Double {
-        if (orb >= maxOrb) return 0.0
-        return 1.0 - (orb / maxOrb)
+    private fun calculateForwardAngle(fromLongitude: Double, toLongitude: Double): Double {
+        val from = normalizeAngle(fromLongitude)
+        val to = normalizeAngle(toLongitude)
+        return normalizeAngle(to - from)
     }
 
-    /**
-     * Determine if aspect is applying (getting tighter) or separating
-     */
-    private fun isAspectApplying(
-        pos1: PlanetPosition,
-        pos2: PlanetPosition,
-        aspectAngle: Double
+    private fun calculateOrb(actualAngle: Double, targetAngle: Double): Double {
+        val diff = abs(actualAngle - targetAngle)
+        return minOf(diff, TOTAL_DEGREES - diff)
+    }
+
+    private fun isWithinAdjacentSign(actualSignDistance: Int, targetHouseDistance: Int): Boolean {
+        return abs(actualSignDistance - targetHouseDistance) <= 1 ||
+                abs(actualSignDistance - targetHouseDistance) == 11
+    }
+
+    private fun calculateDrishtiBala(
+        aspectType: AspectType,
+        orb: Double,
+        effectiveOrb: Double,
+        isSignBased: Boolean,
+        config: AspectConfiguration
+    ): Double {
+        val classicalStrength = aspectType.classicalStrength
+
+        val orbFactor = when (config.mode) {
+            AspectMode.SIGN_BASED -> 1.0
+            AspectMode.DEGREE_BASED -> if (orb <= effectiveOrb) 1.0 - (orb / effectiveOrb) * 0.5 else 0.0
+            AspectMode.HYBRID -> {
+                if (isSignBased) {
+                    if (orb <= effectiveOrb) 1.0 else 0.9
+                } else {
+                    if (orb <= effectiveOrb) 0.8 - (orb / effectiveOrb) * 0.3 else 0.0
+                }
+            }
+        }
+
+        return classicalStrength * orbFactor
+    }
+
+    private fun calculateIsApplying(
+        aspecting: PlanetPosition,
+        aspected: PlanetPosition,
+        targetAngle: Double
     ): Boolean {
-        // Use planetary speeds to determine if aspect is forming or separating
-        // Positive speed = direct motion, Negative = retrograde
+        val currentForwardAngle = calculateForwardAngle(aspecting.longitude, aspected.longitude)
+        val currentOrb = calculateOrb(currentForwardAngle, targetAngle)
 
-        val speed1 = pos1.speed
-        val speed2 = pos2.speed
-
-        // Calculate relative speed (how fast planets are moving toward/away from each other)
-        val relativeSpeed = speed1 - speed2
-
-        // Current angular distance
-        val currentDistance = calculateAngularSeparation(pos1.longitude, pos2.longitude)
-
-        // Predicted distance in 1 day
-        val futureLong1 = normalizeAngle(pos1.longitude + speed1)
-        val futureLong2 = normalizeAngle(pos2.longitude + speed2)
-        val futureDistance = calculateAngularSeparation(futureLong1, futureLong2)
-
-        // If future distance is closer to aspect angle, it's applying
-        val currentOrb = calculateOrb(currentDistance, aspectAngle)
-        val futureOrb = calculateOrb(futureDistance, aspectAngle)
+        val futureAspecting = normalizeAngle(aspecting.longitude + aspecting.speed)
+        val futureAspected = normalizeAngle(aspected.longitude + aspected.speed)
+        val futureForwardAngle = calculateForwardAngle(futureAspecting, futureAspected)
+        val futureOrb = calculateOrb(futureForwardAngle, targetAngle)
 
         return futureOrb < currentOrb
     }
 
-    /**
-     * Normalize angle to 0-360 range
-     */
-    private fun normalizeAngle(angle: Double): Double {
-        return ((angle % 360.0) + 360.0) % 360.0
-    }
+    private fun findMutualAspects(aspects: List<AspectData>): List<Pair<AspectData, AspectData>> {
+        val mutualAspects = mutableListOf<Pair<AspectData, AspectData>>()
+        val processed = mutableSetOf<Pair<Planet, Planet>>()
 
-    /**
-     * Detect specific Yogas (planetary combinations)
-     */
-    fun detectYogas(chart: VedicChart): List<Yoga> {
-        val yogas = mutableListOf<Yoga>()
-        val aspectMatrix = calculateAspectMatrix(chart)
+        for (aspect1 in aspects) {
+            val key = if (aspect1.aspectingPlanet.ordinal < aspect1.aspectedPlanet.ordinal) {
+                aspect1.aspectingPlanet to aspect1.aspectedPlanet
+            } else {
+                aspect1.aspectedPlanet to aspect1.aspectingPlanet
+            }
 
-        // Budha-Aditya Yoga: Sun-Mercury conjunction
-        val sunMercuryConjunction = aspectMatrix.getAspectBetween(Planet.SUN, Planet.MERCURY)
-        if (sunMercuryConjunction != null && sunMercuryConjunction.aspectType == AspectType.CONJUNCTION) {
-            yogas.add(
-                Yoga(
-                    name = "Budha-Aditya Yoga",
-                    planets = listOf(Planet.SUN, Planet.MERCURY),
-                    description = "Intelligence, communication skills, sharp intellect",
-                    strength = sunMercuryConjunction.strength,
-                    isAuspicious = true
-                )
-            )
+            if (key in processed) continue
+
+            val reverseAspect = aspects.find {
+                it.aspectingPlanet == aspect1.aspectedPlanet &&
+                        it.aspectedPlanet == aspect1.aspectingPlanet
+            }
+
+            if (reverseAspect != null) {
+                mutualAspects.add(aspect1 to reverseAspect)
+                processed.add(key)
+            }
         }
 
-        // Gaja-Kesari Yoga: Jupiter in Kendra from Moon
-        val moonPos = chart.planetPositions.find { it.planet == Planet.MOON }
-        val jupiterPos = chart.planetPositions.find { it.planet == Planet.JUPITER }
-        if (moonPos != null && jupiterPos != null) {
-            val angularDist = calculateAngularSeparation(moonPos.longitude, jupiterPos.longitude)
-            // Check if Jupiter is in 1st, 4th, 7th, or 10th from Moon (Kendra positions)
-            val isKendra = listOf(0.0, 90.0, 180.0, 270.0).any { kendraAngle ->
-                calculateOrb(angularDist, kendraAngle) <= 15.0
+        return mutualAspects
+    }
+
+    private fun normalizeAngle(angle: Double): Double {
+        return ((angle % TOTAL_DEGREES) + TOTAL_DEGREES) % TOTAL_DEGREES
+    }
+
+    fun getAspectDescription(aspectData: AspectData): String {
+        val aspecting = aspectData.aspectingPlanet.displayName
+        val aspected = aspectData.aspectedPlanet.displayName
+        val aspectName = aspectData.aspectType.displayName
+        val strength = aspectData.strengthDescription
+
+        return buildString {
+            append("$aspecting casts $aspectName on $aspected")
+            if (aspectData.isApplying) append(" (Applying)")
+            else append(" (Separating)")
+            append(" - $strength")
+            append(" [${String.format("%.2f", aspectData.drishtiBala * 100)}% Drishti Bala]")
+        }
+    }
+
+    fun calculatePlanetaryStrength(
+        planet: Planet,
+        chart: VedicChart,
+        config: AspectConfiguration = AspectConfiguration()
+    ): PlanetaryAspectStrength {
+        val matrix = calculateAspectMatrix(chart, config)
+
+        val aspectsCast = matrix.getAspectsCastBy(planet)
+        val aspectsReceived = matrix.getAspectsReceivedBy(planet)
+
+        val beneficAspects = aspectsReceived.filter { isBeneficAspect(it) }
+        val maleficAspects = aspectsReceived.filter { isMaleficAspect(it) }
+
+        val totalBeneficInfluence = beneficAspects.sumOf { it.drishtiBala }
+        val totalMaleficInfluence = maleficAspects.sumOf { it.drishtiBala }
+
+        val netInfluence = totalBeneficInfluence - totalMaleficInfluence
+
+        return PlanetaryAspectStrength(
+            planet = planet,
+            aspectsCast = aspectsCast,
+            aspectsReceived = aspectsReceived,
+            beneficAspects = beneficAspects,
+            maleficAspects = maleficAspects,
+            totalDrishtiBalaReceived = matrix.getTotalDrishtiBalaOn(planet),
+            netBeneficMaleficInfluence = netInfluence,
+            isUnderBeneficInfluence = netInfluence > 0,
+            strongestAspectReceived = aspectsReceived.maxByOrNull { it.drishtiBala }
+        )
+    }
+
+    private fun isBeneficAspect(aspectData: AspectData): Boolean {
+        val benefics = listOf(Planet.JUPITER, Planet.VENUS, Planet.MERCURY, Planet.MOON)
+        return aspectData.aspectingPlanet in benefics &&
+                aspectData.aspectType.nature == AspectNature.HARMONIOUS
+    }
+
+    private fun isMaleficAspect(aspectData: AspectData): Boolean {
+        val malefics = listOf(Planet.SATURN, Planet.MARS, Planet.RAHU, Planet.KETU, Planet.SUN)
+        return aspectData.aspectingPlanet in malefics &&
+                aspectData.aspectType.nature == AspectNature.CHALLENGING
+    }
+
+    data class PlanetaryAspectStrength(
+        val planet: Planet,
+        val aspectsCast: List<AspectData>,
+        val aspectsReceived: List<AspectData>,
+        val beneficAspects: List<AspectData>,
+        val maleficAspects: List<AspectData>,
+        val totalDrishtiBalaReceived: Double,
+        val netBeneficMaleficInfluence: Double,
+        val isUnderBeneficInfluence: Boolean,
+        val strongestAspectReceived: AspectData?
+    )
+
+    fun getHouseAspects(
+        houseNumber: Int,
+        houseCusp: Double,
+        chart: VedicChart,
+        config: AspectConfiguration = AspectConfiguration()
+    ): List<AspectData> {
+        val houseSign = getSignNumber(houseCusp)
+        val aspects = mutableListOf<AspectData>()
+
+        for (position in chart.planetPositions) {
+            if (!canCastAspect(position.planet)) continue
+
+            val planetSign = getSignNumber(position.longitude)
+            val signDistance = calculateSignDistance(planetSign, houseSign)
+
+            val applicableAspects = getAllApplicableAspects(position.planet, config)
+
+            for (aspectType in applicableAspects) {
+                if (signDistance == aspectType.houseDistance) {
+                    val forwardAngle = calculateForwardAngle(position.longitude, houseCusp)
+                    val orb = calculateOrb(forwardAngle, aspectType.degreeAngle)
+
+                    aspects.add(
+                        AspectData(
+                            aspectingPlanet = position.planet,
+                            aspectedPlanet = position.planet,
+                            aspectType = aspectType,
+                            forwardAngle = forwardAngle,
+                            exactOrb = orb,
+                            isApplying = false,
+                            drishtiBala = aspectType.classicalStrength,
+                            signBasedAspect = true,
+                            aspectingSign = planetSign,
+                            aspectedSign = houseSign
+                        )
+                    )
+                }
             }
-            if (isKendra) {
-                yogas.add(
-                    Yoga(
-                        name = "Gaja-Kesari Yoga",
-                        planets = listOf(Planet.MOON, Planet.JUPITER),
-                        description = "Fame, wisdom, wealth, and noble character",
-                        strength = 0.8,
-                        isAuspicious = true
+        }
+
+        return aspects.sortedByDescending { it.drishtiBala }
+    }
+
+    fun calculateArgala(
+        planet: Planet,
+        chart: VedicChart
+    ): ArgalaAnalysis {
+        val position = chart.planetPositions.find { it.planet == planet }
+            ?: return ArgalaAnalysis(planet, emptyList(), emptyList(), emptyList())
+
+        val planetSign = getSignNumber(position.longitude)
+
+        val primaryArgalaHouses = listOf(2, 4, 11)
+        val secondaryArgalaHouses = listOf(5)
+        val obstructionHouses = mapOf(2 to 12, 4 to 10, 11 to 3, 5 to 9)
+
+        val primaryArgalas = mutableListOf<ArgalaData>()
+        val secondaryArgalas = mutableListOf<ArgalaData>()
+        val obstructions = mutableListOf<ArgalaData>()
+
+        for (otherPosition in chart.planetPositions) {
+            if (otherPosition.planet == planet) continue
+
+            val otherSign = getSignNumber(otherPosition.longitude)
+            val signDistance = calculateSignDistance(planetSign, otherSign)
+
+            if (signDistance in primaryArgalaHouses) {
+                primaryArgalas.add(
+                    ArgalaData(
+                        planet = otherPosition.planet,
+                        houseFrom = signDistance,
+                        isPrimary = true,
+                        isObstructed = false
+                    )
+                )
+            }
+
+            if (signDistance in secondaryArgalas.map { it.houseFrom }) {
+                secondaryArgalas.add(
+                    ArgalaData(
+                        planet = otherPosition.planet,
+                        houseFrom = signDistance,
+                        isPrimary = false,
+                        isObstructed = false
+                    )
+                )
+            }
+
+            obstructionHouses.values.find { it == signDistance }?.let { obstHouse ->
+                obstructions.add(
+                    ArgalaData(
+                        planet = otherPosition.planet,
+                        houseFrom = signDistance,
+                        isPrimary = false,
+                        isObstructed = true
                     )
                 )
             }
         }
 
-        // Chandra-Mangala Yoga: Moon-Mars conjunction or mutual aspect
-        val moonMarsAspect = aspectMatrix.getAspectBetween(Planet.MOON, Planet.MARS)
-        if (moonMarsAspect != null && moonMarsAspect.aspectType == AspectType.CONJUNCTION) {
-            yogas.add(
-                Yoga(
-                    name = "Chandra-Mangala Yoga",
-                    planets = listOf(Planet.MOON, Planet.MARS),
-                    description = "Wealth through enterprise, business acumen",
-                    strength = moonMarsAspect.strength,
-                    isAuspicious = true
-                )
-            )
-        }
-
-        // Guru-Chandal Yoga: Jupiter-Rahu conjunction
-        val jupiterRahuAspect = aspectMatrix.getAspectBetween(Planet.JUPITER, Planet.RAHU)
-        if (jupiterRahuAspect != null && jupiterRahuAspect.aspectType == AspectType.CONJUNCTION) {
-            yogas.add(
-                Yoga(
-                    name = "Guru-Chandal Yoga",
-                    planets = listOf(Planet.JUPITER, Planet.RAHU),
-                    description = "Challenges to traditional wisdom, unconventional beliefs",
-                    strength = jupiterRahuAspect.strength,
-                    isAuspicious = false
-                )
-            )
-        }
-
-        // Shani-Rahu Conjunction (Shrapit Yoga indicators)
-        val saturnRahuAspect = aspectMatrix.getAspectBetween(Planet.SATURN, Planet.RAHU)
-        if (saturnRahuAspect != null && saturnRahuAspect.aspectType == AspectType.CONJUNCTION) {
-            yogas.add(
-                Yoga(
-                    name = "Shani-Rahu Yoga",
-                    planets = listOf(Planet.SATURN, Planet.RAHU),
-                    description = "Karmic challenges, need for patience and discipline",
-                    strength = saturnRahuAspect.strength,
-                    isAuspicious = false
-                )
-            )
-        }
-
-        // Neecha Bhanga Raja Yoga detection (simplified)
-        // When a debilitated planet gets cancellation
-
-        // Venus-Jupiter conjunction (Lakshmi Yoga elements)
-        val venusJupiterAspect = aspectMatrix.getAspectBetween(Planet.VENUS, Planet.JUPITER)
-        if (venusJupiterAspect != null && venusJupiterAspect.aspectType == AspectType.CONJUNCTION) {
-            yogas.add(
-                Yoga(
-                    name = "Venus-Jupiter Conjunction",
-                    planets = listOf(Planet.VENUS, Planet.JUPITER),
-                    description = "Prosperity, luxury, spiritual inclinations, marital happiness",
-                    strength = venusJupiterAspect.strength,
-                    isAuspicious = true
-                )
-            )
-        }
-
-        return yogas.sortedByDescending { it.strength }
+        return ArgalaAnalysis(
+            planet = planet,
+            primaryArgalas = primaryArgalas,
+            secondaryArgalas = secondaryArgalas,
+            obstructions = obstructions
+        )
     }
 
-    /**
-     * Yoga data class
-     */
-    data class Yoga(
-        val name: String,
-        val planets: List<Planet>,
-        val description: String,
-        val strength: Double,
-        val isAuspicious: Boolean
+    data class ArgalaData(
+        val planet: Planet,
+        val houseFrom: Int,
+        val isPrimary: Boolean,
+        val isObstructed: Boolean
     )
+
+    data class ArgalaAnalysis(
+        val planet: Planet,
+        val primaryArgalas: List<ArgalaData>,
+        val secondaryArgalas: List<ArgalaData>,
+        val obstructions: List<ArgalaData>
+    ) {
+        val netArgalaStrength: Int
+            get() = primaryArgalas.size + secondaryArgalas.size - obstructions.size
+    }
 }
