@@ -6,6 +6,7 @@ import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.ZodiacSign
 import kotlin.math.abs
+import kotlin.math.min
 
 /**
  * Comprehensive Yoga Calculator for Vedic Astrology
@@ -528,7 +529,7 @@ object YogaCalculator {
         val marsPos = chart.planetPositions.find { it.planet == Planet.MARS }
         if (marsPos != null && marsPos.house in kendraHouses) {
             if (marsPos.sign in listOf(ZodiacSign.ARIES, ZodiacSign.SCORPIO, ZodiacSign.CAPRICORN)) {
-                val strength = calculateMahapurushaStrength(marsPos, chart)
+                val (strength, cancellations) = calculateMahapurushaStrengthWithReasons(marsPos, chart)
                 yogas.add(
                     Yoga(
                         name = "Ruchaka Yoga",
@@ -543,7 +544,7 @@ object YogaCalculator {
                         strengthPercentage = strength,
                         isAuspicious = true,
                         activationPeriod = "Mars Mahadasha and related Antardashas",
-                        cancellationFactors = listOf("Combustion", "Aspect from Saturn")
+                        cancellationFactors = cancellations.ifEmpty { listOf("None - yoga is unafflicted") }
                     )
                 )
             }
@@ -553,7 +554,7 @@ object YogaCalculator {
         val mercuryPos = chart.planetPositions.find { it.planet == Planet.MERCURY }
         if (mercuryPos != null && mercuryPos.house in kendraHouses) {
             if (mercuryPos.sign in listOf(ZodiacSign.GEMINI, ZodiacSign.VIRGO)) {
-                val strength = calculateMahapurushaStrength(mercuryPos, chart)
+                val (strength, cancellations) = calculateMahapurushaStrengthWithReasons(mercuryPos, chart)
                 yogas.add(
                     Yoga(
                         name = "Bhadra Yoga",
@@ -568,7 +569,7 @@ object YogaCalculator {
                         strengthPercentage = strength,
                         isAuspicious = true,
                         activationPeriod = "Mercury Mahadasha and related Antardashas",
-                        cancellationFactors = listOf("Combustion (common for Mercury)", "Conjunction with malefics")
+                        cancellationFactors = cancellations.ifEmpty { listOf("None - yoga is unafflicted") }
                     )
                 )
             }
@@ -578,7 +579,7 @@ object YogaCalculator {
         val jupiterPos = chart.planetPositions.find { it.planet == Planet.JUPITER }
         if (jupiterPos != null && jupiterPos.house in kendraHouses) {
             if (jupiterPos.sign in listOf(ZodiacSign.SAGITTARIUS, ZodiacSign.PISCES, ZodiacSign.CANCER)) {
-                val strength = calculateMahapurushaStrength(jupiterPos, chart)
+                val (strength, cancellations) = calculateMahapurushaStrengthWithReasons(jupiterPos, chart)
                 yogas.add(
                     Yoga(
                         name = "Hamsa Yoga",
@@ -593,7 +594,7 @@ object YogaCalculator {
                         strengthPercentage = strength,
                         isAuspicious = true,
                         activationPeriod = "Jupiter Mahadasha and related Antardashas",
-                        cancellationFactors = listOf("Conjunction with Rahu (Guru-Chandal)", "Aspect from Mars")
+                        cancellationFactors = cancellations.ifEmpty { listOf("None - yoga is unafflicted") }
                     )
                 )
             }
@@ -603,7 +604,7 @@ object YogaCalculator {
         val venusPos = chart.planetPositions.find { it.planet == Planet.VENUS }
         if (venusPos != null && venusPos.house in kendraHouses) {
             if (venusPos.sign in listOf(ZodiacSign.TAURUS, ZodiacSign.LIBRA, ZodiacSign.PISCES)) {
-                val strength = calculateMahapurushaStrength(venusPos, chart)
+                val (strength, cancellations) = calculateMahapurushaStrengthWithReasons(venusPos, chart)
                 yogas.add(
                     Yoga(
                         name = "Malavya Yoga",
@@ -618,7 +619,7 @@ object YogaCalculator {
                         strengthPercentage = strength,
                         isAuspicious = true,
                         activationPeriod = "Venus Mahadasha and related Antardashas",
-                        cancellationFactors = listOf("Combustion", "Conjunction with Saturn or Mars")
+                        cancellationFactors = cancellations.ifEmpty { listOf("None - yoga is unafflicted") }
                     )
                 )
             }
@@ -628,7 +629,7 @@ object YogaCalculator {
         val saturnPos = chart.planetPositions.find { it.planet == Planet.SATURN }
         if (saturnPos != null && saturnPos.house in kendraHouses) {
             if (saturnPos.sign in listOf(ZodiacSign.CAPRICORN, ZodiacSign.AQUARIUS, ZodiacSign.LIBRA)) {
-                val strength = calculateMahapurushaStrength(saturnPos, chart)
+                val (strength, cancellations) = calculateMahapurushaStrengthWithReasons(saturnPos, chart)
                 yogas.add(
                     Yoga(
                         name = "Sasa Yoga",
@@ -643,7 +644,7 @@ object YogaCalculator {
                         strengthPercentage = strength,
                         isAuspicious = true,
                         activationPeriod = "Saturn Mahadasha and related Antardashas",
-                        cancellationFactors = listOf("Aspect from Mars", "Conjunction with Rahu")
+                        cancellationFactors = cancellations.ifEmpty { listOf("None - yoga is unafflicted") }
                     )
                 )
             }
@@ -1387,6 +1388,338 @@ object YogaCalculator {
         return yogas
     }
 
+    // ==================== COMBUSTION & AFFLICTION DETECTION ====================
+
+    /**
+     * Combustion orbs based on BPHS and Saravali:
+     * - Moon: 12° (but considers phase - dark moon is stronger)
+     * - Mars: 17°
+     * - Mercury: 14° (direct) / 12° (retrograde - considered less combust)
+     * - Jupiter: 11°
+     * - Venus: 10° (direct) / 8° (retrograde)
+     * - Saturn: 15°
+     *
+     * Planets within these orbs from Sun are considered combust (Asta).
+     * Combustion significantly weakens a planet's ability to deliver yoga results.
+     */
+    private fun getCombustionOrb(planet: Planet, isRetrograde: Boolean): Double {
+        return when (planet) {
+            Planet.MOON -> 12.0
+            Planet.MARS -> 17.0
+            Planet.MERCURY -> if (isRetrograde) 12.0 else 14.0
+            Planet.JUPITER -> 11.0
+            Planet.VENUS -> if (isRetrograde) 8.0 else 10.0
+            Planet.SATURN -> 15.0
+            else -> 0.0 // Rahu/Ketu cannot be combust
+        }
+    }
+
+    /**
+     * Check if a planet is combust (Asta) based on Vedic combustion rules.
+     * Returns a combustion factor between 0.0 (fully combust) and 1.0 (not combust)
+     * that can be used to reduce yoga strength.
+     */
+    private fun getCombustionFactor(pos: PlanetPosition, chart: VedicChart): Double {
+        if (pos.planet == Planet.SUN || pos.planet in listOf(Planet.RAHU, Planet.KETU)) {
+            return 1.0 // Sun, Rahu, Ketu cannot be combust
+        }
+
+        val sunPos = chart.planetPositions.find { it.planet == Planet.SUN } ?: return 1.0
+
+        val distance = abs(pos.longitude - sunPos.longitude)
+        val normalizedDistance = if (distance > 180) 360 - distance else distance
+
+        val combustionOrb = getCombustionOrb(pos.planet, pos.isRetrograde)
+
+        if (normalizedDistance >= combustionOrb) {
+            return 1.0 // Not combust
+        }
+
+        // Deep combustion (within 3°) - severely weakens the planet
+        if (normalizedDistance <= 3.0) {
+            return 0.2 // 80% reduction
+        }
+
+        // Calculate gradual combustion factor
+        // Closer to Sun = more combust = lower factor
+        val combustionDepth = 1.0 - (normalizedDistance / combustionOrb)
+        return 1.0 - (combustionDepth * 0.6) // Max 60% reduction at orb edge
+    }
+
+    /**
+     * Check if a planet is under Papakartari Yoga (hemmed between malefics).
+     * This severely restricts a planet's positive effects.
+     */
+    private fun isPapakartari(pos: PlanetPosition, chart: VedicChart): Boolean {
+        val malefics = listOf(Planet.SATURN, Planet.MARS, Planet.RAHU, Planet.KETU, Planet.SUN)
+
+        val house = pos.house
+        val prevHouse = if (house == 1) 12 else house - 1
+        val nextHouse = if (house == 12) 1 else house + 1
+
+        val hasMaleficBefore = chart.planetPositions.any {
+            it.planet in malefics && it.house == prevHouse
+        }
+        val hasMaleficAfter = chart.planetPositions.any {
+            it.planet in malefics && it.house == nextHouse
+        }
+
+        return hasMaleficBefore && hasMaleficAfter
+    }
+
+    /**
+     * Check if planet is afflicted by malefic aspects using proper Vedic aspects.
+     * Returns affliction factor between 0.0 (severely afflicted) and 1.0 (not afflicted)
+     *
+     * Vedic Aspect Rules:
+     * - All planets aspect the 7th house from their position (opposition)
+     * - Mars additionally aspects 4th and 8th houses
+     * - Jupiter additionally aspects 5th and 9th houses
+     * - Saturn additionally aspects 3rd and 10th houses
+     * - Rahu/Ketu aspect like Saturn according to some authorities
+     */
+    private fun getMaleficAfflictionFactor(pos: PlanetPosition, chart: VedicChart): Double {
+        val malefics = mapOf(
+            Planet.SATURN to 0.25,  // Saturn aspect is most restrictive
+            Planet.MARS to 0.20,    // Mars aspect causes aggression/conflicts
+            Planet.RAHU to 0.18,    // Rahu creates illusion/obsession
+            Planet.KETU to 0.12,    // Ketu creates detachment/confusion
+            Planet.SUN to 0.08      // Sun's malefic aspect is milder (ego clashes)
+        )
+
+        var totalAffliction = 0.0
+
+        malefics.forEach { (malefic, strength) ->
+            if (malefic == pos.planet) return@forEach // Planet can't afflict itself
+
+            val maleficPos = chart.planetPositions.find { it.planet == malefic } ?: return@forEach
+
+            if (isAspecting(maleficPos, pos)) {
+                totalAffliction += strength
+            }
+        }
+
+        // Cap total affliction at 60% reduction
+        return (1.0 - min(totalAffliction, 0.6))
+    }
+
+    /**
+     * Check if aspectingPlanet aspects targetPlanet using Vedic aspect rules.
+     * Uses 5° orb for aspect calculations.
+     */
+    private fun isAspecting(aspectingPlanet: PlanetPosition, targetPlanet: PlanetPosition): Boolean {
+        val aspectOrb = 5.0 // Degrees of orb for aspects
+
+        // Calculate house distance (1-12)
+        val houseDistance = getHouseFrom(targetPlanet.sign, aspectingPlanet.sign)
+
+        // All planets have 7th house (opposition) aspect
+        if (houseDistance == 7) {
+            return isWithinAspectOrb(aspectingPlanet.longitude, targetPlanet.longitude, 180.0, aspectOrb)
+        }
+
+        // Mars special aspects: 4th and 8th houses
+        if (aspectingPlanet.planet == Planet.MARS) {
+            if (houseDistance == 4 || houseDistance == 8) {
+                val expectedAngle = if (houseDistance == 4) 90.0 else 210.0
+                return isWithinAspectOrb(aspectingPlanet.longitude, targetPlanet.longitude, expectedAngle, aspectOrb)
+            }
+        }
+
+        // Jupiter special aspects: 5th and 9th houses
+        if (aspectingPlanet.planet == Planet.JUPITER) {
+            if (houseDistance == 5 || houseDistance == 9) {
+                val expectedAngle = if (houseDistance == 5) 120.0 else 240.0
+                return isWithinAspectOrb(aspectingPlanet.longitude, targetPlanet.longitude, expectedAngle, aspectOrb)
+            }
+        }
+
+        // Saturn special aspects: 3rd and 10th houses
+        if (aspectingPlanet.planet == Planet.SATURN) {
+            if (houseDistance == 3 || houseDistance == 10) {
+                val expectedAngle = if (houseDistance == 3) 60.0 else 270.0
+                return isWithinAspectOrb(aspectingPlanet.longitude, targetPlanet.longitude, expectedAngle, aspectOrb)
+            }
+        }
+
+        // Rahu/Ketu aspects like Saturn (some traditions)
+        if (aspectingPlanet.planet in listOf(Planet.RAHU, Planet.KETU)) {
+            if (houseDistance == 3 || houseDistance == 10) {
+                return true // Using sign-based aspect for nodes
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * Check if two longitudes are within orb of an expected aspect angle.
+     */
+    private fun isWithinAspectOrb(
+        long1: Double,
+        long2: Double,
+        expectedAngle: Double,
+        orb: Double
+    ): Boolean {
+        val actualAngle = abs(long1 - long2)
+        val normalizedAngle = if (actualAngle > 180) 360 - actualAngle else actualAngle
+        return abs(normalizedAngle - expectedAngle) <= orb
+    }
+
+    /**
+     * Check if planet receives benefic aspect (Shubha Drishti).
+     * Returns a boost factor between 1.0 (no benefic aspect) and 1.3 (strong benefic aspects)
+     */
+    private fun getBeneficAspectBoost(pos: PlanetPosition, chart: VedicChart): Double {
+        val benefics = mapOf(
+            Planet.JUPITER to 0.15,  // Jupiter aspect is most beneficial
+            Planet.VENUS to 0.10,    // Venus aspect adds comfort/harmony
+            Planet.MERCURY to 0.08,  // Mercury aspect adds intelligence (if not afflicted)
+            Planet.MOON to 0.05      // Moon aspect adds emotional support (if waxing)
+        )
+
+        var totalBoost = 0.0
+
+        benefics.forEach { (benefic, strength) ->
+            if (benefic == pos.planet) return@forEach
+
+            val beneficPos = chart.planetPositions.find { it.planet == benefic } ?: return@forEach
+
+            // Skip Moon if waning (weak)
+            if (benefic == Planet.MOON) {
+                val moonStrength = getMoonPhaseStrength(beneficPos, chart)
+                if (moonStrength < 0.5) return@forEach
+            }
+
+            // Skip Mercury if combust
+            if (benefic == Planet.MERCURY) {
+                val combustionFactor = getCombustionFactor(beneficPos, chart)
+                if (combustionFactor < 0.6) return@forEach
+            }
+
+            if (isAspecting(beneficPos, pos)) {
+                totalBoost += strength
+            }
+        }
+
+        return 1.0 + min(totalBoost, 0.3) // Max 30% boost
+    }
+
+    /**
+     * Calculate Moon phase strength (Paksha Bala).
+     * Returns 0.0-1.0 where 1.0 is full moon and 0.0 is new moon.
+     */
+    private fun getMoonPhaseStrength(moonPos: PlanetPosition, chart: VedicChart): Double {
+        val sunPos = chart.planetPositions.find { it.planet == Planet.SUN } ?: return 0.5
+
+        val distance = (moonPos.longitude - sunPos.longitude + 360) % 360
+
+        // 0° = New Moon, 180° = Full Moon
+        return if (distance <= 180) {
+            distance / 180.0 // Waxing: 0 to 1
+        } else {
+            (360 - distance) / 180.0 // Waning: 1 to 0
+        }
+    }
+
+    /**
+     * Calculate the net strength modification factor for a yoga considering all cancellation factors.
+     * This is the core function that applies cancellation logic to yoga strength.
+     *
+     * Factors considered:
+     * 1. Combustion (Asta) - proximity to Sun
+     * 2. Papakartari - hemmed between malefics
+     * 3. Malefic aspects - Saturn, Mars, Rahu aspects
+     * 4. Debilitation - planet in fall
+     * 5. Enemy sign placement
+     * 6. Benefic aspects (positive boost)
+     * 7. Strength of yoga-forming planets
+     */
+    private fun calculateCancellationFactor(
+        positions: List<PlanetPosition>,
+        chart: VedicChart
+    ): Pair<Double, List<String>> {
+        val cancellationFactors = mutableListOf<String>()
+        var netFactor = 1.0
+
+        positions.forEach { pos ->
+            // 1. Check combustion
+            val combustionFactor = getCombustionFactor(pos, chart)
+            if (combustionFactor < 0.9) {
+                netFactor *= combustionFactor
+                if (combustionFactor < 0.5) {
+                    cancellationFactors.add("${pos.planet.displayName} is deeply combust")
+                } else if (combustionFactor < 0.8) {
+                    cancellationFactors.add("${pos.planet.displayName} is combust")
+                }
+            }
+
+            // 2. Check Papakartari
+            if (isPapakartari(pos, chart)) {
+                netFactor *= 0.7 // 30% reduction
+                cancellationFactors.add("${pos.planet.displayName} hemmed between malefics")
+            }
+
+            // 3. Check malefic aspects
+            val afflictionFactor = getMaleficAfflictionFactor(pos, chart)
+            if (afflictionFactor < 0.9) {
+                netFactor *= afflictionFactor
+                if (afflictionFactor < 0.7) {
+                    cancellationFactors.add("${pos.planet.displayName} severely afflicted by malefics")
+                }
+            }
+
+            // 4. Check debilitation (extra reduction if in enemy sign after debilitation)
+            if (isDebilitated(pos)) {
+                if (!hasNeechaBhanga(pos, chart)) {
+                    netFactor *= 0.5 // 50% reduction for uncancelled debilitation
+                    cancellationFactors.add("${pos.planet.displayName} debilitated without cancellation")
+                }
+            }
+
+            // 5. Check enemy sign (Shatru Kshetra)
+            if (isInEnemySign(pos)) {
+                netFactor *= 0.85 // 15% reduction
+                cancellationFactors.add("${pos.planet.displayName} in enemy sign")
+            }
+
+            // 6. Benefic aspect boost (positive factor)
+            val beneficBoost = getBeneficAspectBoost(pos, chart)
+            if (beneficBoost > 1.0) {
+                netFactor *= beneficBoost
+            }
+        }
+
+        return Pair(netFactor.coerceIn(0.1, 1.5), cancellationFactors)
+    }
+
+    /**
+     * Check if planet is in enemy sign based on natural friendship.
+     * Vedic planetary friendships (Naisargika Maitri):
+     */
+    private fun isInEnemySign(pos: PlanetPosition): Boolean {
+        val enemies = getEnemies(pos.planet)
+        return pos.sign.ruler in enemies
+    }
+
+    /**
+     * Get natural enemies of a planet based on BPHS.
+     */
+    private fun getEnemies(planet: Planet): List<Planet> {
+        return when (planet) {
+            Planet.SUN -> listOf(Planet.SATURN, Planet.VENUS)
+            Planet.MOON -> emptyList() // Moon has no natural enemies
+            Planet.MARS -> listOf(Planet.MERCURY)
+            Planet.MERCURY -> listOf(Planet.MOON)
+            Planet.JUPITER -> listOf(Planet.MERCURY, Planet.VENUS)
+            Planet.VENUS -> listOf(Planet.SUN, Planet.MOON)
+            Planet.SATURN -> listOf(Planet.SUN, Planet.MOON, Planet.MARS)
+            Planet.RAHU -> listOf(Planet.SUN, Planet.MOON)
+            Planet.KETU -> listOf(Planet.SUN, Planet.MOON)
+            else -> emptyList()
+        }
+    }
+
     // ==================== HELPER FUNCTIONS ====================
 
     private fun getHouseLords(ascendantSign: ZodiacSign): Map<Int, Planet> {
@@ -1479,56 +1812,266 @@ object YogaCalculator {
         return false
     }
 
+    /**
+     * Calculate yoga strength with comprehensive cancellation logic applied.
+     * This is the main strength calculation that integrates all Vedic factors.
+     *
+     * Base strength factors:
+     * - Exaltation: +15%
+     * - Own sign (Swakshetra): +12%
+     * - Friend's sign (Mitra Kshetra): +6%
+     * - Kendra/Trikona placement: +8%
+     * - Debilitation: -15% (before cancellation check)
+     * - Dusthana placement (6,8,12): -10%
+     * - Retrograde benefics: +5% (considered stronger)
+     *
+     * Then applies cancellation factors from calculateCancellationFactor()
+     */
     private fun calculateYogaStrength(chart: VedicChart, positions: List<PlanetPosition>): Double {
-        var strength = 50.0
+        var baseStrength = 50.0
 
         positions.forEach { pos ->
             // Add strength for exaltation
-            if (isExalted(pos)) strength += 15.0
+            if (isExalted(pos)) baseStrength += 15.0
 
             // Add strength for own sign
-            if (isInOwnSign(pos)) strength += 12.0
+            if (isInOwnSign(pos)) baseStrength += 12.0
 
-            // Add strength for good houses
-            if (pos.house in listOf(1, 4, 5, 7, 9, 10)) strength += 8.0
+            // Add strength for friend's sign
+            if (isInFriendSign(pos)) baseStrength += 6.0
+
+            // Add strength for good houses (Kendra/Trikona)
+            if (pos.house in listOf(1, 4, 5, 7, 9, 10)) baseStrength += 8.0
+
+            // Add for 2nd and 11th (wealth houses)
+            if (pos.house in listOf(2, 11)) baseStrength += 4.0
 
             // Reduce for debilitation
-            if (isDebilitated(pos)) strength -= 15.0
+            if (isDebilitated(pos)) baseStrength -= 15.0
 
-            // Reduce for 6, 8, 12 placement
-            if (pos.house in listOf(6, 8, 12)) strength -= 10.0
+            // Reduce for 6, 8, 12 placement (Dusthanas)
+            if (pos.house in listOf(6, 8, 12)) baseStrength -= 10.0
 
-            // Check for retrograde (adds strength in some cases)
-            if (pos.isRetrograde && pos.planet in listOf(Planet.JUPITER, Planet.SATURN)) strength += 5.0
+            // Check for retrograde - benefics gain strength, malefics more intense
+            if (pos.isRetrograde) {
+                when (pos.planet) {
+                    Planet.JUPITER, Planet.VENUS, Planet.MERCURY -> baseStrength += 5.0
+                    Planet.SATURN -> baseStrength += 3.0 // Saturn gains focus when retrograde
+                    Planet.MARS -> baseStrength -= 2.0 // Mars becomes more erratic
+                    else -> {}
+                }
+            }
+
+            // Dig Bala (directional strength) - planet in its preferred direction
+            if (hasDigBala(pos)) baseStrength += 7.0
         }
 
-        return strength.coerceIn(10.0, 100.0)
+        // Apply comprehensive cancellation factors
+        val (cancellationFactor, _) = calculateCancellationFactor(positions, chart)
+        val adjustedStrength = baseStrength * cancellationFactor
+
+        return adjustedStrength.coerceIn(10.0, 100.0)
     }
 
+    /**
+     * Calculate yoga strength and return both strength and cancellation reasons.
+     * Used when creating Yoga objects to populate cancellationFactors list.
+     */
+    private fun calculateYogaStrengthWithReasons(
+        chart: VedicChart,
+        positions: List<PlanetPosition>
+    ): Pair<Double, List<String>> {
+        var baseStrength = 50.0
+
+        positions.forEach { pos ->
+            if (isExalted(pos)) baseStrength += 15.0
+            if (isInOwnSign(pos)) baseStrength += 12.0
+            if (isInFriendSign(pos)) baseStrength += 6.0
+            if (pos.house in listOf(1, 4, 5, 7, 9, 10)) baseStrength += 8.0
+            if (pos.house in listOf(2, 11)) baseStrength += 4.0
+            if (isDebilitated(pos)) baseStrength -= 15.0
+            if (pos.house in listOf(6, 8, 12)) baseStrength -= 10.0
+
+            if (pos.isRetrograde) {
+                when (pos.planet) {
+                    Planet.JUPITER, Planet.VENUS, Planet.MERCURY -> baseStrength += 5.0
+                    Planet.SATURN -> baseStrength += 3.0
+                    Planet.MARS -> baseStrength -= 2.0
+                    else -> {}
+                }
+            }
+
+            if (hasDigBala(pos)) baseStrength += 7.0
+        }
+
+        val (cancellationFactor, cancellationReasons) = calculateCancellationFactor(positions, chart)
+        val adjustedStrength = (baseStrength * cancellationFactor).coerceIn(10.0, 100.0)
+
+        return Pair(adjustedStrength, cancellationReasons)
+    }
+
+    /**
+     * Check if planet has Dig Bala (directional strength).
+     * Based on BPHS:
+     * - Sun/Mars: Strong in 10th house (South)
+     * - Moon/Venus: Strong in 4th house (North)
+     * - Mercury/Jupiter: Strong in 1st house (East)
+     * - Saturn: Strong in 7th house (West)
+     */
+    private fun hasDigBala(pos: PlanetPosition): Boolean {
+        return when (pos.planet) {
+            Planet.SUN, Planet.MARS -> pos.house == 10
+            Planet.MOON, Planet.VENUS -> pos.house == 4
+            Planet.MERCURY, Planet.JUPITER -> pos.house == 1
+            Planet.SATURN -> pos.house == 7
+            else -> false
+        }
+    }
+
+    /**
+     * Check if planet is in a friend's sign based on natural friendship.
+     */
+    private fun isInFriendSign(pos: PlanetPosition): Boolean {
+        val friends = getFriends(pos.planet)
+        return pos.sign.ruler in friends
+    }
+
+    /**
+     * Get natural friends of a planet based on BPHS.
+     */
+    private fun getFriends(planet: Planet): List<Planet> {
+        return when (planet) {
+            Planet.SUN -> listOf(Planet.MOON, Planet.MARS, Planet.JUPITER)
+            Planet.MOON -> listOf(Planet.SUN, Planet.MERCURY)
+            Planet.MARS -> listOf(Planet.SUN, Planet.MOON, Planet.JUPITER)
+            Planet.MERCURY -> listOf(Planet.SUN, Planet.VENUS)
+            Planet.JUPITER -> listOf(Planet.SUN, Planet.MOON, Planet.MARS)
+            Planet.VENUS -> listOf(Planet.MERCURY, Planet.SATURN)
+            Planet.SATURN -> listOf(Planet.MERCURY, Planet.VENUS)
+            Planet.RAHU -> listOf(Planet.VENUS, Planet.SATURN)
+            Planet.KETU -> listOf(Planet.MARS, Planet.JUPITER)
+            else -> emptyList()
+        }
+    }
+
+    /**
+     * Calculate Pancha Mahapurusha Yoga strength with proper cancellation logic.
+     * These yogas have specific requirements and cancellation factors per BPHS/Phaladeepika:
+     *
+     * Full strength conditions:
+     * - Planet in Lagna or 10th house (highest strength)
+     * - Planet in 7th or 4th house (good strength)
+     * - Free from combustion
+     * - Not afflicted by malefics
+     * - Aspected by benefics (bonus)
+     *
+     * Cancellation factors (as per classical texts):
+     * - Combustion severely reduces Mahapurusha yoga
+     * - Malefic aspects reduce results
+     * - Placement in Dusthana from Moon weakens it
+     */
     private fun calculateMahapurushaStrength(pos: PlanetPosition, chart: VedicChart): Double {
         var strength = 70.0 // Base strength for Mahapurusha
 
-        // Boost for specific house placements
+        // Boost for specific house placements (Dig Bala alignment)
         when (pos.house) {
             1 -> strength += 15.0 // In Lagna - strongest
-            10 -> strength += 12.0 // In 10th - very strong
-            7 -> strength += 10.0 // In 7th - strong
-            4 -> strength += 8.0 // In 4th - good
+            10 -> strength += 12.0 // In 10th - very strong (especially for Sun/Mars)
+            7 -> strength += 10.0 // In 7th - strong (especially for Saturn)
+            4 -> strength += 8.0 // In 4th - good (especially for Moon/Venus)
         }
 
-        // Check if aspected by benefics
-        val benefics = chart.planetPositions.filter { it.planet in listOf(Planet.JUPITER, Planet.VENUS) }
-        benefics.forEach { benefic ->
-            if (areMutuallyAspecting(pos, benefic)) strength += 5.0
+        // Extra boost if planet has Dig Bala
+        if (hasDigBala(pos)) strength += 5.0
+
+        // Apply combustion check (critical for Mahapurusha yogas)
+        val combustionFactor = getCombustionFactor(pos, chart)
+        if (combustionFactor < 1.0) {
+            strength *= combustionFactor
         }
 
-        // Reduce if aspected by malefics
-        val malefics = chart.planetPositions.filter { it.planet in listOf(Planet.SATURN, Planet.MARS, Planet.RAHU) }
-        malefics.forEach { malefic ->
-            if (malefic.planet != pos.planet && areMutuallyAspecting(pos, malefic)) strength -= 5.0
+        // Check benefic aspects using proper Vedic aspect rules
+        val beneficBoost = getBeneficAspectBoost(pos, chart)
+        strength *= beneficBoost
+
+        // Check malefic affliction
+        val afflictionFactor = getMaleficAfflictionFactor(pos, chart)
+        strength *= afflictionFactor
+
+        // Check Papakartari (hemmed between malefics)
+        if (isPapakartari(pos, chart)) {
+            strength *= 0.75 // 25% reduction
         }
 
-        return strength.coerceIn(50.0, 100.0)
+        // Check placement from Moon (Chandra Lagna strength)
+        val moonPos = chart.planetPositions.find { it.planet == Planet.MOON }
+        if (moonPos != null) {
+            val houseFromMoon = getHouseFrom(pos.sign, moonPos.sign)
+            // Weak if in Dusthana from Moon
+            if (houseFromMoon in listOf(6, 8, 12)) {
+                strength *= 0.85
+            }
+            // Strong if in Kendra from Moon
+            if (houseFromMoon in listOf(1, 4, 7, 10)) {
+                strength *= 1.1
+            }
+        }
+
+        return strength.coerceIn(30.0, 100.0)
+    }
+
+    /**
+     * Calculate Mahapurusha strength with cancellation reasons for UI display.
+     */
+    private fun calculateMahapurushaStrengthWithReasons(
+        pos: PlanetPosition,
+        chart: VedicChart
+    ): Pair<Double, List<String>> {
+        val cancellations = mutableListOf<String>()
+        var strength = 70.0
+
+        when (pos.house) {
+            1 -> strength += 15.0
+            10 -> strength += 12.0
+            7 -> strength += 10.0
+            4 -> strength += 8.0
+        }
+
+        if (hasDigBala(pos)) strength += 5.0
+
+        val combustionFactor = getCombustionFactor(pos, chart)
+        if (combustionFactor < 1.0) {
+            strength *= combustionFactor
+            if (combustionFactor < 0.6) {
+                cancellations.add("${pos.planet.displayName} is combust - yoga significantly weakened")
+            }
+        }
+
+        strength *= getBeneficAspectBoost(pos, chart)
+
+        val afflictionFactor = getMaleficAfflictionFactor(pos, chart)
+        if (afflictionFactor < 0.85) {
+            strength *= afflictionFactor
+            cancellations.add("Malefic aspects reduce yoga results")
+        }
+
+        if (isPapakartari(pos, chart)) {
+            strength *= 0.75
+            cancellations.add("Planet hemmed between malefics")
+        }
+
+        val moonPos = chart.planetPositions.find { it.planet == Planet.MOON }
+        if (moonPos != null) {
+            val houseFromMoon = getHouseFrom(pos.sign, moonPos.sign)
+            if (houseFromMoon in listOf(6, 8, 12)) {
+                strength *= 0.85
+                cancellations.add("Weak position from Moon")
+            } else if (houseFromMoon in listOf(1, 4, 7, 10)) {
+                strength *= 1.1
+            }
+        }
+
+        return Pair(strength.coerceIn(30.0, 100.0), cancellations)
     }
 
     private fun strengthFromPercentage(percentage: Double): YogaStrength {
@@ -1545,11 +2088,16 @@ object YogaCalculator {
         kendraLord: Planet,
         trikonaLord: Planet,
         type: String,
-        strength: Double,
+        baseStrength: Double,
         chart: VedicChart
     ): Yoga {
         val kendraPos = chart.planetPositions.find { it.planet == kendraLord }
         val trikonaPos = chart.planetPositions.find { it.planet == trikonaLord }
+        val positions = listOfNotNull(kendraPos, trikonaPos)
+
+        // Apply comprehensive cancellation logic
+        val (cancellationFactor, cancellationReasons) = calculateCancellationFactor(positions, chart)
+        val adjustedStrength = (baseStrength * cancellationFactor).coerceIn(10.0, 100.0)
 
         return Yoga(
             name = "Kendra-Trikona Raja Yoga",
@@ -1559,22 +2107,27 @@ object YogaCalculator {
             houses = listOfNotNull(kendraPos?.house, trikonaPos?.house),
             description = "${kendraLord.displayName} (Kendra lord) and ${trikonaLord.displayName} (Trikona lord) in $type",
             effects = "Rise to power and authority, leadership position, recognition from government",
-            strength = strengthFromPercentage(strength),
-            strengthPercentage = strength,
+            strength = strengthFromPercentage(adjustedStrength),
+            strengthPercentage = adjustedStrength,
             isAuspicious = true,
             activationPeriod = "${kendraLord.displayName}-${trikonaLord.displayName} Dasha/Antardasha",
-            cancellationFactors = listOf("Planets combust or debilitated")
+            cancellationFactors = cancellationReasons.ifEmpty { listOf("None - yoga is unafflicted") }
         )
     }
 
     private fun createParivartanaRajaYoga(
         planet1: Planet,
         planet2: Planet,
-        strength: Double,
+        baseStrength: Double,
         chart: VedicChart
     ): Yoga {
         val pos1 = chart.planetPositions.find { it.planet == planet1 }
         val pos2 = chart.planetPositions.find { it.planet == planet2 }
+        val positions = listOfNotNull(pos1, pos2)
+
+        // Apply comprehensive cancellation logic
+        val (cancellationFactor, cancellationReasons) = calculateCancellationFactor(positions, chart)
+        val adjustedStrength = (baseStrength * cancellationFactor).coerceIn(10.0, 100.0)
 
         return Yoga(
             name = "Parivartana Raja Yoga",
@@ -1584,42 +2137,106 @@ object YogaCalculator {
             houses = listOfNotNull(pos1?.house, pos2?.house),
             description = "Exchange between ${planet1.displayName} and ${planet2.displayName}",
             effects = "Strong Raja Yoga through mutual exchange, stable rise to power, lasting authority",
-            strength = strengthFromPercentage(strength),
-            strengthPercentage = strength,
+            strength = strengthFromPercentage(adjustedStrength),
+            strengthPercentage = adjustedStrength,
             isAuspicious = true,
             activationPeriod = "${planet1.displayName} and ${planet2.displayName} Dashas",
-            cancellationFactors = emptyList()
+            cancellationFactors = cancellationReasons.ifEmpty { listOf("None - yoga is unafflicted") }
         )
     }
 
     private fun createViparitaRajaYoga(
         planet1: Planet,
         planet2: Planet,
-        strength: Double,
+        baseStrength: Double,
         chart: VedicChart
     ): Yoga {
+        val pos1 = chart.planetPositions.find { it.planet == planet1 }
+        val pos2 = chart.planetPositions.find { it.planet == planet2 }
+        val positions = listOfNotNull(pos1, pos2)
+
+        // Apply comprehensive cancellation logic
+        val (cancellationFactor, cancellationReasons) = calculateCancellationFactor(positions, chart)
+        val adjustedStrength = (baseStrength * cancellationFactor).coerceIn(10.0, 100.0)
+
+        // Add Viparita-specific consideration
+        val specificReasons = cancellationReasons.toMutableList()
+        // Viparita Raja works best when Dusthana lords are weak; strong lords may not give classical results
+        positions.forEach { pos ->
+            if (isExalted(pos) || isInOwnSign(pos)) {
+                specificReasons.add("${pos.planet.displayName} is strong - Viparita results may be modified")
+            }
+        }
+
         return Yoga(
             name = "Viparita Raja Yoga",
             sanskritName = "Viparita Raja Yoga",
             category = YogaCategory.RAJA_YOGA,
             planets = listOf(planet1, planet2),
-            houses = emptyList(),
+            houses = positions.map { it.house },
             description = "Lords of Dusthanas (6,8,12) connected",
             effects = "Rise through fall of enemies, sudden fortune from unexpected sources, gains through others' losses",
-            strength = strengthFromPercentage(strength),
-            strengthPercentage = strength,
+            strength = strengthFromPercentage(adjustedStrength),
+            strengthPercentage = adjustedStrength,
             isAuspicious = true,
             activationPeriod = "${planet1.displayName}-${planet2.displayName} periods",
-            cancellationFactors = listOf("If planets also own good houses")
+            cancellationFactors = specificReasons.ifEmpty { listOf("None - yoga is unafflicted") }
         )
     }
 
     private fun createNeechaBhangaRajaYoga(
         planet: Planet,
-        strength: Double,
+        baseStrength: Double,
         chart: VedicChart
     ): Yoga {
         val pos = chart.planetPositions.find { it.planet == planet }
+        val positions = listOfNotNull(pos)
+
+        // For Neecha Bhanga, we apply different cancellation rules
+        // The debilitation is already cancelled, so we only check other factors
+        val cancellationReasons = mutableListOf<String>()
+        var adjustedStrength = baseStrength
+
+        if (pos != null) {
+            // Check combustion (still affects the planet)
+            val combustionFactor = getCombustionFactor(pos, chart)
+            if (combustionFactor < 0.9) {
+                adjustedStrength *= combustionFactor
+                if (combustionFactor < 0.6) {
+                    cancellationReasons.add("${planet.displayName} is combust - Neecha Bhanga weakened")
+                }
+            }
+
+            // Check malefic aspects
+            val afflictionFactor = getMaleficAfflictionFactor(pos, chart)
+            if (afflictionFactor < 0.85) {
+                adjustedStrength *= afflictionFactor
+                cancellationReasons.add("Malefic aspects reduce yoga effectiveness")
+            }
+
+            // Check Papakartari
+            if (isPapakartari(pos, chart)) {
+                adjustedStrength *= 0.8
+                cancellationReasons.add("Planet hemmed between malefics")
+            }
+
+            // Benefic aspects boost Neecha Bhanga
+            val beneficBoost = getBeneficAspectBoost(pos, chart)
+            if (beneficBoost > 1.0) {
+                adjustedStrength *= beneficBoost
+            }
+
+            // Identify the cancellation type for informational purposes
+            if (pos.house in listOf(1, 4, 7, 10)) {
+                cancellationReasons.add(0, "Neecha Bhanga via Kendra placement")
+            } else {
+                val debilitatedSignLord = pos.sign.ruler
+                val lordPos = chart.planetPositions.find { it.planet == debilitatedSignLord }
+                if (lordPos != null && lordPos.house in listOf(1, 4, 7, 10)) {
+                    cancellationReasons.add(0, "Neecha Bhanga via sign lord in Kendra")
+                }
+            }
+        }
 
         return Yoga(
             name = "Neecha Bhanga Raja Yoga",
@@ -1629,11 +2246,11 @@ object YogaCalculator {
             houses = listOfNotNull(pos?.house),
             description = "${planet.displayName} debilitated but with cancellation",
             effects = "Rise from humble beginnings, success after initial struggles, respected leader",
-            strength = strengthFromPercentage(strength),
-            strengthPercentage = strength,
+            strength = strengthFromPercentage(adjustedStrength.coerceIn(10.0, 100.0)),
+            strengthPercentage = adjustedStrength.coerceIn(10.0, 100.0),
             isAuspicious = true,
             activationPeriod = "${planet.displayName} Dasha",
-            cancellationFactors = emptyList()
+            cancellationFactors = cancellationReasons.ifEmpty { listOf("Clean Neecha Bhanga - yoga operates fully") }
         )
     }
 

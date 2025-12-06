@@ -173,6 +173,8 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
     val currentAntardasha = timeline.currentAntardasha
     val currentPratyantardasha = timeline.currentPratyantardasha
     val currentSookshmadasha = timeline.currentSookshmadasha
+    val currentPranadasha = timeline.currentPranadasha
+    val currentDehadasha = timeline.currentDehadasha
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -279,6 +281,38 @@ private fun CurrentPeriodCard(timeline: DashaCalculator.DashaTimeline) {
                             currentSookshmadasha.endDate
                         ),
                         level = DashaLevel.SOOKSHMADASHA
+                    )
+                }
+
+                if (currentPranadasha != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    DashaPeriodRow(
+                        label = "Pranadasha",
+                        planet = currentPranadasha.planet,
+                        startDate = currentPranadasha.startDate,
+                        endDate = currentPranadasha.endDate,
+                        progress = calculateProgress(
+                            currentPranadasha.startDate,
+                            currentPranadasha.endDate
+                        ),
+                        remainingText = formatPranadashaDuration(currentPranadasha.durationMinutes),
+                        level = DashaLevel.PRANADASHA
+                    )
+                }
+
+                if (currentDehadasha != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    DashaPeriodRow(
+                        label = "Dehadasha",
+                        planet = currentDehadasha.planet,
+                        startDate = currentDehadasha.startDate,
+                        endDate = currentDehadasha.endDate,
+                        progress = calculateProgress(
+                            currentDehadasha.startDate,
+                            currentDehadasha.endDate
+                        ),
+                        remainingText = formatDehadashaDuration(currentDehadasha.durationMinutes),
+                        level = DashaLevel.DEHADASHA
                     )
                 }
 
@@ -472,6 +506,8 @@ private fun SandhiAlertRow(sandhi: DashaCalculator.DashaSandhi) {
         DashaCalculator.DashaLevel.ANTARDASHA -> "Antardasha"
         DashaCalculator.DashaLevel.PRATYANTARDASHA -> "Pratyantardasha"
         DashaCalculator.DashaLevel.SOOKSHMADASHA -> "Sookshmadasha"
+        DashaCalculator.DashaLevel.PRANADASHA -> "Pranadasha"
+        DashaCalculator.DashaLevel.DEHADASHA -> "Dehadasha"
     }
 
     Surface(
@@ -620,7 +656,7 @@ private fun EmptyDashaState() {
 }
 
 private enum class DashaLevel {
-    MAHADASHA, ANTARDASHA, PRATYANTARDASHA, SOOKSHMADASHA
+    MAHADASHA, ANTARDASHA, PRATYANTARDASHA, SOOKSHMADASHA, PRANADASHA, DEHADASHA
 }
 
 @Stable
@@ -637,6 +673,8 @@ private fun getDashaSizes(level: DashaLevel): DashaSizes = when (level) {
     DashaLevel.ANTARDASHA -> DashaSizes(36.dp, 14.sp, 11.sp, 14.sp, 5.dp)
     DashaLevel.PRATYANTARDASHA -> DashaSizes(28.dp, 12.sp, 10.sp, 11.sp, 4.dp)
     DashaLevel.SOOKSHMADASHA -> DashaSizes(24.dp, 11.sp, 9.sp, 10.sp, 3.dp)
+    DashaLevel.PRANADASHA -> DashaSizes(20.dp, 10.sp, 8.sp, 9.sp, 2.dp)
+    DashaLevel.DEHADASHA -> DashaSizes(18.dp, 9.sp, 7.sp, 8.sp, 2.dp)
 }
 
 @Composable
@@ -706,7 +744,7 @@ private fun DashaPeriodRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (remainingText.isNotEmpty() && level != DashaLevel.SOOKSHMADASHA) {
+                if (remainingText.isNotEmpty() && level !in listOf(DashaLevel.SOOKSHMADASHA, DashaLevel.PRANADASHA, DashaLevel.DEHADASHA)) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = remainingText,
@@ -798,6 +836,37 @@ private fun formatRemainingTime(today: LocalDate, endDate: LocalDate): String {
             months > 0 -> append("${months}m ${days}d remaining")
             else -> append("${days}d remaining")
         }
+    }
+}
+
+private fun formatPranadashaDuration(durationMinutes: Long): String {
+    if (durationMinutes <= 0) return ""
+
+    val hours = durationMinutes / 60
+    val mins = durationMinutes % 60
+
+    return when {
+        hours >= 24 -> {
+            val days = hours / 24
+            val remainingHours = hours % 24
+            if (remainingHours > 0) "${days}d ${remainingHours}h" else "${days}d"
+        }
+        hours > 0 && mins > 0 -> "${hours}h ${mins}m"
+        hours > 0 -> "${hours}h"
+        else -> "${mins}m"
+    }
+}
+
+private fun formatDehadashaDuration(durationMinutes: Long): String {
+    if (durationMinutes <= 0) return ""
+
+    val hours = durationMinutes / 60
+    val mins = durationMinutes % 60
+
+    return when {
+        hours > 0 && mins > 0 -> "${hours}h ${mins}m"
+        hours > 0 -> "${hours}h"
+        else -> "${mins}m"
     }
 }
 
@@ -1329,7 +1398,7 @@ private fun DashaInfoCard(
             ) {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
                     Text(
-                        text = "The Vimshottari Dasha is the most widely used planetary period system in Vedic astrology (Jyotish). Derived from the Moon's nakshatra (lunar mansion) at birth, it divides the 120-year human lifespan into major planetary periods (Mahadashas), each ruled by one of the nine Grahas.",
+                        text = "The Vimshottari Dasha is the most widely used planetary period system in Vedic astrology (Jyotish). Derived from the Moon's nakshatra (lunar mansion) at birth, it divides the 120-year human lifespan into six levels of planetary periods. Starting from Mahadashas (major periods spanning years), it subdivides into Antardasha (months), Pratyantardasha (weeks), Sookshmadasha (days), Pranadasha (hours), and finally Dehadasha (minutes) — each governed by one of the nine Grahas.",
                         fontSize = 13.sp,
                         color = ChartDetailColors.TextSecondary,
                         lineHeight = 20.sp
@@ -1423,7 +1492,9 @@ private fun DashaLevelsInfo() {
                 "Mahadasha" to "Major period (years)",
                 "Antardasha (Bhukti)" to "Sub-period (months)",
                 "Pratyantardasha" to "Sub-sub-period (weeks)",
-                "Sookshmadasha" to "Subtle period (days)"
+                "Sookshmadasha" to "Subtle period (days)",
+                "Pranadasha" to "Breath period (hours)",
+                "Dehadasha" to "Body period (minutes)"
             )
 
             levels.forEachIndexed { index, (name, description) ->

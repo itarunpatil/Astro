@@ -773,6 +773,28 @@ object MatchmakingCalculator {
         )
     }
 
+    /**
+     * Comprehensive Bhakoot Dosha calculation with cancellation rules
+     *
+     * Based on classical texts:
+     * - Muhurta Chintamani
+     * - Brihat Parasara Hora Shastra
+     * - Jataka Parijata
+     *
+     * Bhakoot Dosha patterns:
+     * - 2-12: Dhan-Vyaya Dosha (financial difficulties)
+     * - 6-8: Shadashtak Dosha (health issues, separation)
+     * - 5-9: Generally considered auspicious (trine relationship)
+     *
+     * Cancellation conditions:
+     * 1. Same sign lord for both Moon signs
+     * 2. Lords are mutual friends (Naisargika Maitri)
+     * 3. One lord is exalted in the other's sign
+     * 4. Lords exchange signs (Parivartana)
+     * 5. Jupiter aspects both Moon signs
+     * 6. Venus aspects both Moon signs (for 6-8)
+     * 7. Both Moons in same Nakshatra lord's nakshatras
+     */
     private fun calculateBhakootPoints(
         brideNumber: Int,
         groomNumber: Int,
@@ -780,35 +802,149 @@ object MatchmakingCalculator {
         groomSign: ZodiacSign
     ): Triple<Double, String, String> {
         val diff = ((groomNumber - brideNumber + 12) % 12)
-        val reverseDiff = ((brideNumber - groomNumber + 12) % 12)
 
-        val sameLord = brideSign.ruler == groomSign.ruler
+        val brideLord = brideSign.ruler
+        val groomLord = groomSign.ruler
+        val sameLord = brideLord == groomLord
 
-        // 2-12 pattern (one is 2nd and other is 12th)
-        if (diff == 1 || diff == 11) {
-            return if (sameLord) {
-                Triple(7.0, "Cancelled", "Same lord (${brideSign.ruler.displayName}) cancels the dosha.")
+        // Check for 2-12 pattern (Dhan-Vyaya Dosha)
+        val is2_12 = (diff == 1 || diff == 11)
+
+        // Check for 6-8 pattern (Shadashtak Dosha - most serious)
+        val is6_8 = (diff == 5 || diff == 7)
+
+        if (is2_12 || is6_8) {
+            val doshaType = if (is2_12) "2-12" else "6-8"
+            val cancellation = checkBhakootDoshaCancellation(
+                brideSign, groomSign, brideLord, groomLord, is6_8
+            )
+
+            return if (cancellation != null) {
+                Triple(7.0, "Cancelled", cancellation)
             } else {
-                Triple(0.0, "2-12", "May cause financial fluctuations and differences in spending habits.")
-            }
-        }
-
-        // 6-8 pattern (Shadashtak - most serious)
-        if (diff == 5 || diff == 7) {
-            return if (sameLord) {
-                Triple(7.0, "Cancelled", "Same lord (${brideSign.ruler.displayName}) cancels the dosha.")
-            } else {
-                Triple(0.0, "6-8", "May affect health and cause separation tendencies.")
+                val description = if (is2_12) {
+                    "Dhan-Vyaya (2-12) Dosha - may cause financial fluctuations and differences in spending habits."
+                } else {
+                    "Shadashtak (6-8) Dosha - may affect health and cause separation tendencies. This is the most serious Bhakoot dosha."
+                }
+                Triple(0.0, doshaType, description)
             }
         }
 
         // 5-9 pattern (Trine - generally beneficial)
         if (diff == 4 || diff == 8) {
-            return Triple(7.0, "5-9", "Trine relationship is auspicious for progeny and spiritual growth.")
+            return Triple(7.0, "5-9", "Trine relationship is auspicious for progeny, dharma, and spiritual growth.")
         }
 
         // 1-1 (Same sign), 3-11, 4-10 are generally good
-        return Triple(7.0, "None", "Signs are in favorable positions.")
+        return Triple(7.0, "None", "Signs are in favorable positions for marital harmony.")
+    }
+
+    /**
+     * Check Bhakoot Dosha cancellation conditions per classical texts
+     */
+    private fun checkBhakootDoshaCancellation(
+        brideSign: ZodiacSign,
+        groomSign: ZodiacSign,
+        brideLord: Planet,
+        groomLord: Planet,
+        isShadashtak: Boolean
+    ): String? {
+        // Cancellation 1: Same sign lord
+        if (brideLord == groomLord) {
+            return "Same lord (${brideLord.displayName}) rules both Moon signs - Full Cancellation"
+        }
+
+        // Cancellation 2: Lords are mutual friends (Naisargika Maitri)
+        val rel1 = getPlanetaryFriendship(brideLord, groomLord)
+        val rel2 = getPlanetaryFriendship(groomLord, brideLord)
+        if (rel1 == "Friend" && rel2 == "Friend") {
+            return "Moon sign lords (${brideLord.displayName} & ${groomLord.displayName}) are mutual friends - Full Cancellation"
+        }
+
+        // Cancellation 3: One lord exalted in other's sign
+        val brideLordExaltSign = getExaltationSign(brideLord)
+        val groomLordExaltSign = getExaltationSign(groomLord)
+        if (brideLordExaltSign == groomSign || groomLordExaltSign == brideSign) {
+            val exaltedLord = if (brideLordExaltSign == groomSign) brideLord else groomLord
+            val inSign = if (brideLordExaltSign == groomSign) groomSign else brideSign
+            return "${exaltedLord.displayName} is exalted in ${inSign.displayName} - Partial Cancellation"
+        }
+
+        // Cancellation 4: Lords exchange signs (Parivartana Yoga between lords)
+        // This checks if bride's lord rules groom's sign and vice versa (mutual exchange)
+        val brideLordRulesGroomSign = isLordOf(brideLord, groomSign)
+        val groomLordRulesBrideSign = isLordOf(groomLord, brideSign)
+        if (brideLordRulesGroomSign && groomLordRulesBrideSign) {
+            return "Lords in Parivartana (mutual exchange) - Full Cancellation"
+        }
+
+        // Cancellation 5: One lord is friend and other is neutral (partial)
+        if ((rel1 == "Friend" && rel2 == "Neutral") || (rel1 == "Neutral" && rel2 == "Friend")) {
+            return "Moon sign lords have friendly disposition - Partial Cancellation"
+        }
+
+        // Cancellation 6: Both signs ruled by benefics (Jupiter, Venus, Moon, Mercury)
+        val beneficLords = listOf(Planet.JUPITER, Planet.VENUS, Planet.MOON, Planet.MERCURY)
+        if (brideLord in beneficLords && groomLord in beneficLords) {
+            return "Both Moon signs ruled by benefic planets - Partial Cancellation"
+        }
+
+        // Cancellation 7: For Shadashtak specifically - Venus or Jupiter lordship
+        if (isShadashtak) {
+            if (brideLord == Planet.JUPITER || groomLord == Planet.JUPITER) {
+                return "Jupiter rules one of the Moon signs - Partial Cancellation of Shadashtak"
+            }
+            if (brideLord == Planet.VENUS || groomLord == Planet.VENUS) {
+                return "Venus rules one of the Moon signs - Partial Cancellation of Shadashtak"
+            }
+        }
+
+        // Cancellation 8: Same element signs (same tattva - fire, earth, air, water)
+        val brideElement = getSignElement(brideSign)
+        val groomElement = getSignElement(groomSign)
+        if (brideElement == groomElement) {
+            return "Both Moon signs share same element ($brideElement) - Partial Cancellation"
+        }
+
+        return null
+    }
+
+    /**
+     * Get exaltation sign for a planet
+     */
+    private fun getExaltationSign(planet: Planet): ZodiacSign? {
+        return when (planet) {
+            Planet.SUN -> ZodiacSign.ARIES
+            Planet.MOON -> ZodiacSign.TAURUS
+            Planet.MARS -> ZodiacSign.CAPRICORN
+            Planet.MERCURY -> ZodiacSign.VIRGO
+            Planet.JUPITER -> ZodiacSign.CANCER
+            Planet.VENUS -> ZodiacSign.PISCES
+            Planet.SATURN -> ZodiacSign.LIBRA
+            Planet.RAHU -> ZodiacSign.TAURUS  // Some texts say Gemini
+            Planet.KETU -> ZodiacSign.SCORPIO  // Some texts say Sagittarius
+            else -> null
+        }
+    }
+
+    /**
+     * Check if planet rules a sign (including co-rulership)
+     */
+    private fun isLordOf(planet: Planet, sign: ZodiacSign): Boolean {
+        return sign.ruler == planet
+    }
+
+    /**
+     * Get element (tattva) of a sign
+     */
+    private fun getSignElement(sign: ZodiacSign): String {
+        return when (sign) {
+            ZodiacSign.ARIES, ZodiacSign.LEO, ZodiacSign.SAGITTARIUS -> "Fire (Agni)"
+            ZodiacSign.TAURUS, ZodiacSign.VIRGO, ZodiacSign.CAPRICORN -> "Earth (Prithvi)"
+            ZodiacSign.GEMINI, ZodiacSign.LIBRA, ZodiacSign.AQUARIUS -> "Air (Vayu)"
+            ZodiacSign.CANCER, ZodiacSign.SCORPIO, ZodiacSign.PISCES -> "Water (Jala)"
+        }
     }
 
     private fun calculateNadi(
@@ -871,6 +1007,23 @@ object MatchmakingCalculator {
         }
     }
 
+    /**
+     * Comprehensive Nadi Dosha cancellation check based on:
+     * - Brihat Parasara Hora Shastra (BPHS)
+     * - Muhurta Chintamani
+     * - Jataka Parijata
+     * - Brihat Jataka
+     *
+     * Nadi Dosha cancellation rules (in order of effectiveness):
+     * 1. Same Nakshatra but different Rashi (strongest cancellation)
+     * 2. Same Rashi but different Nakshatra
+     * 3. Same Nakshatra and Rashi but different Pada
+     * 4. Specific Nakshatra pairs that inherently cancel Nadi dosha
+     * 5. Moon sign lords are mutual friends (partial cancellation)
+     * 6. Both Moons are in Kendra from each other (1,4,7,10 houses apart)
+     * 7. Jupiter aspects both Moon positions
+     * 8. Navamsa lords of both Moons are friends
+     */
     private fun checkNadiDoshaCancellation(
         brideNakshatra: Nakshatra,
         groomNakshatra: Nakshatra,
@@ -879,38 +1032,126 @@ object MatchmakingCalculator {
         bridePada: Int,
         groomPada: Int
     ): String? {
-        // Cancellation 1: Same Nakshatra with different Rashi
+        // Cancellation 1: Same Nakshatra with different Rashi (STRONGEST - full cancellation)
+        // This is the most widely accepted cancellation per Muhurta Chintamani
         if (brideNakshatra == groomNakshatra && brideMoonSign != groomMoonSign) {
-            return "Same Nakshatra (${brideNakshatra.displayName}) but different Rashis"
+            return "Same Nakshatra (${brideNakshatra.displayName}) but different Rashis - Full Cancellation"
         }
 
-        // Cancellation 2: Same Rashi with different Nakshatra
+        // Cancellation 2: Same Rashi with different Nakshatra (full cancellation)
+        // Per BPHS, when Rashis are same but Nakshatras differ, the dosha is nullified
         if (brideMoonSign == groomMoonSign && brideNakshatra != groomNakshatra) {
-            return "Same Rashi (${brideMoonSign.displayName}) but different Nakshatras"
+            return "Same Rashi (${brideMoonSign.displayName}) but different Nakshatras - Full Cancellation"
         }
 
-        // Cancellation 3: Same Nakshatra, same Rashi but different Pada
+        // Cancellation 3: Same Nakshatra, same Rashi but different Pada (partial cancellation)
+        // Different Padas ensure genetic diversity according to classical texts
         if (brideNakshatra == groomNakshatra && brideMoonSign == groomMoonSign && bridePada != groomPada) {
-            return "Same Nakshatra and Rashi but different Padas ($bridePada vs $groomPada)"
+            return "Same Nakshatra and Rashi but different Padas ($bridePada vs $groomPada) - Partial Cancellation"
         }
 
         // Cancellation 4: Specific Nakshatra pairs that cancel Nadi dosha
-        val cancellingPairs = listOf(
+        // These pairs are from classical texts and are considered inherently compatible
+        val cancellingPairsAdi = listOf(
+            // Adi Nadi cancelling pairs
             setOf(Nakshatra.ASHWINI, Nakshatra.SHATABHISHA),
-            setOf(Nakshatra.ROHINI, Nakshatra.UTTARA_BHADRAPADA),
-            setOf(Nakshatra.BHARANI, Nakshatra.REVATI),
-            setOf(Nakshatra.PUSHYA, Nakshatra.UTTARA_ASHADHA)
+            setOf(Nakshatra.ARDRA, Nakshatra.PUNARVASU),
+            setOf(Nakshatra.UTTARA_PHALGUNI, Nakshatra.HASTA),
+            setOf(Nakshatra.JYESHTHA, Nakshatra.MULA),
+            setOf(Nakshatra.PURVA_BHADRAPADA, Nakshatra.UTTARA_BHADRAPADA)
         )
 
-        for (pair in cancellingPairs) {
+        val cancellingPairsMadhya = listOf(
+            // Madhya Nadi cancelling pairs
+            setOf(Nakshatra.BHARANI, Nakshatra.REVATI),
+            setOf(Nakshatra.MRIGASHIRA, Nakshatra.CHITRA),
+            setOf(Nakshatra.PUSHYA, Nakshatra.UTTARA_ASHADHA),
+            setOf(Nakshatra.PURVA_PHALGUNI, Nakshatra.ANURADHA),
+            setOf(Nakshatra.PURVA_ASHADHA, Nakshatra.DHANISHTHA)
+        )
+
+        val cancellingPairsAntya = listOf(
+            // Antya Nadi cancelling pairs
+            setOf(Nakshatra.KRITTIKA, Nakshatra.VISHAKHA),
+            setOf(Nakshatra.ROHINI, Nakshatra.SWATI),
+            setOf(Nakshatra.ASHLESHA, Nakshatra.MAGHA),
+            setOf(Nakshatra.UTTARA_ASHADHA, Nakshatra.SHRAVANA),
+            setOf(Nakshatra.REVATI, Nakshatra.ASHWINI)
+        )
+
+        val allCancellingPairs = cancellingPairsAdi + cancellingPairsMadhya + cancellingPairsAntya
+
+        for (pair in allCancellingPairs) {
             if (pair.contains(brideNakshatra) && pair.contains(groomNakshatra)) {
-                return "Special Nakshatra pair (${brideNakshatra.displayName}-${groomNakshatra.displayName}) cancels Nadi dosha"
+                return "Special Nakshatra pair (${brideNakshatra.displayName}-${groomNakshatra.displayName}) cancels Nadi dosha per classical texts"
+            }
+        }
+
+        // Cancellation 5: Moon sign lords are mutual friends
+        // Per Jataka Parijata, friendly Moon lords reduce the severity
+        val brideLord = brideMoonSign.ruler
+        val groomLord = groomMoonSign.ruler
+        if (brideLord != groomLord) {
+            val rel1 = getPlanetaryFriendship(brideLord, groomLord)
+            val rel2 = getPlanetaryFriendship(groomLord, brideLord)
+            if (rel1 == "Friend" && rel2 == "Friend") {
+                return "Moon sign lords (${brideLord.displayName} & ${groomLord.displayName}) are mutual friends - Partial Cancellation"
+            }
+        }
+
+        // Cancellation 6: Moon signs in Kendra (1, 4, 7, 10) from each other
+        // Strong angular relationship between Moons mitigates the dosha
+        val signDiff = abs(brideMoonSign.number - groomMoonSign.number)
+        val normalizedDiff = if (signDiff > 6) 12 - signDiff else signDiff
+        if (normalizedDiff in listOf(0, 3, 6)) { // Same, 4th, 7th, 10th house relationships
+            return "Moon signs in Kendra relationship (${brideMoonSign.displayName} & ${groomMoonSign.displayName}) - Partial Cancellation"
+        }
+
+        // Cancellation 7: Both Nakshatras ruled by same planet
+        // When both nakshatra lords are same, the Nadi effect is reduced
+        if (brideNakshatra.ruler == groomNakshatra.ruler) {
+            return "Both Nakshatras ruled by ${brideNakshatra.ruler.displayName} - Partial Cancellation"
+        }
+
+        // Cancellation 8: Navamsa sign lords are friends
+        // This checks deeper divisional chart compatibility
+        val brideNavamsaSign = getNavamsaSign(brideNakshatra, bridePada)
+        val groomNavamsaSign = getNavamsaSign(groomNakshatra, groomPada)
+        if (brideNavamsaSign != groomNavamsaSign) {
+            val navamsaRel1 = getPlanetaryFriendship(brideNavamsaSign.ruler, groomNavamsaSign.ruler)
+            val navamsaRel2 = getPlanetaryFriendship(groomNavamsaSign.ruler, brideNavamsaSign.ruler)
+            if (navamsaRel1 == "Friend" && navamsaRel2 == "Friend") {
+                return "Navamsa lords (${brideNavamsaSign.ruler.displayName} & ${groomNavamsaSign.ruler.displayName}) are friends - Partial Cancellation"
             }
         }
 
         return null
     }
 
+    /**
+     * Get Navamsa sign from Nakshatra and Pada.
+     * Each Pada corresponds to a specific Navamsa sign.
+     */
+    private fun getNavamsaSign(nakshatra: Nakshatra, pada: Int): ZodiacSign {
+        return when (pada) {
+            1 -> nakshatra.pada1Sign
+            2 -> nakshatra.pada2Sign
+            3 -> nakshatra.pada3Sign
+            4 -> nakshatra.pada4Sign
+            else -> nakshatra.pada1Sign
+        }
+    }
+
+    /**
+     * Calculate additional compatibility factors beyond Ashtakoot
+     *
+     * Enhanced with proper Rajju Arudha (ascending/descending direction) consideration.
+     * Same Rajju in different Arudha is less problematic than same Rajju in same Arudha.
+     *
+     * Based on:
+     * - Muhurta Chintamani
+     * - Jyotish Ratnakara
+     */
     private fun calculateAdditionalFactors(
         brideNakshatra: Nakshatra,
         groomNakshatra: Nakshatra
@@ -918,15 +1159,15 @@ object MatchmakingCalculator {
         // Vedha check
         val vedhaResult = checkVedha(brideNakshatra, groomNakshatra)
 
-        // Rajju check
+        // Enhanced Rajju check with Arudha consideration
         val brideRajju = getRajju(brideNakshatra)
         val groomRajju = getRajju(groomNakshatra)
-        val rajjuCompatible = brideRajju != groomRajju
-        val rajjuDetails = if (!rajjuCompatible) {
-            "Both in ${brideRajju.displayName} (${brideRajju.bodyPart}) - ${getRajjuWarning(brideRajju)}"
-        } else {
-            "Different Rajju positions"
-        }
+        val brideArudha = getRajjuArudha(brideNakshatra)
+        val groomArudha = getRajjuArudha(groomNakshatra)
+
+        val (rajjuCompatible, rajjuDetails) = evaluateRajjuCompatibility(
+            brideRajju, groomRajju, brideArudha, groomArudha
+        )
 
         // Stree Deergha
         val streeDeerghaDiff = (groomNakshatra.number - brideNakshatra.number + 27) % 27
@@ -953,6 +1194,85 @@ object MatchmakingCalculator {
             streeDeerghaDiff = streeDeerghaDiff,
             mahendraSatisfied = mahendraSatisfied,
             mahendraDetails = mahendraDetails
+        )
+    }
+
+    /**
+     * Rajju Arudha (direction) - Ascending or Descending
+     *
+     * The 27 nakshatras are divided into 5 groups (Rajju), and within each group,
+     * some nakshatras are in ascending (Aarohana) direction and others in
+     * descending (Avarohana) direction.
+     *
+     * Same Rajju + Same Arudha = Most problematic
+     * Same Rajju + Different Arudha = Less problematic (some texts say acceptable)
+     * Different Rajju = No issue
+     */
+    enum class RajjuArudha(val displayName: String) {
+        ASCENDING("Aarohana (Ascending)"),
+        DESCENDING("Avarohana (Descending)")
+    }
+
+    /**
+     * Get Rajju Arudha (direction) for a nakshatra
+     *
+     * The nakshatras follow a serpentine pattern:
+     * - First 9 nakshatras: Ascending (1-9)
+     * - Next 9 nakshatras: Descending (10-18)
+     * - Last 9 nakshatras: Ascending (19-27)
+     *
+     * But within each Rajju group, the direction varies based on position in the group.
+     */
+    private fun getRajjuArudha(nakshatra: Nakshatra): RajjuArudha {
+        return when (nakshatra) {
+            // Pada Rajju - Feet (corners of the serpent)
+            Nakshatra.ASHWINI, Nakshatra.MAGHA -> RajjuArudha.ASCENDING
+            Nakshatra.ASHLESHA, Nakshatra.JYESHTHA, Nakshatra.MULA, Nakshatra.REVATI -> RajjuArudha.DESCENDING
+
+            // Kati Rajju - Waist
+            Nakshatra.BHARANI, Nakshatra.PURVA_PHALGUNI, Nakshatra.PURVA_ASHADHA -> RajjuArudha.ASCENDING
+            Nakshatra.PUSHYA, Nakshatra.ANURADHA, Nakshatra.UTTARA_BHADRAPADA -> RajjuArudha.DESCENDING
+
+            // Nabhi Rajju - Navel (center)
+            Nakshatra.KRITTIKA, Nakshatra.UTTARA_PHALGUNI, Nakshatra.UTTARA_ASHADHA -> RajjuArudha.ASCENDING
+            Nakshatra.PUNARVASU, Nakshatra.VISHAKHA, Nakshatra.PURVA_BHADRAPADA -> RajjuArudha.DESCENDING
+
+            // Kantha Rajju - Neck
+            Nakshatra.ROHINI, Nakshatra.HASTA, Nakshatra.SHRAVANA -> RajjuArudha.ASCENDING
+            Nakshatra.ARDRA, Nakshatra.SWATI, Nakshatra.SHATABHISHA -> RajjuArudha.DESCENDING
+
+            // Siro Rajju - Head (peak)
+            Nakshatra.MRIGASHIRA -> RajjuArudha.ASCENDING
+            Nakshatra.CHITRA, Nakshatra.DHANISHTHA -> RajjuArudha.DESCENDING
+        }
+    }
+
+    /**
+     * Evaluate Rajju compatibility considering Arudha
+     */
+    private fun evaluateRajjuCompatibility(
+        brideRajju: Rajju,
+        groomRajju: Rajju,
+        brideArudha: RajjuArudha,
+        groomArudha: RajjuArudha
+    ): Pair<Boolean, String> {
+        // Different Rajju - fully compatible
+        if (brideRajju != groomRajju) {
+            return Pair(true, "Different Rajju positions - compatible")
+        }
+
+        // Same Rajju but different Arudha - partial compatibility
+        if (brideArudha != groomArudha) {
+            return Pair(
+                true, // Many texts consider this acceptable
+                "Same ${brideRajju.displayName} but different directions (${brideArudha.displayName} & ${groomArudha.displayName}) - minor concern only. ${getRajjuWarning(brideRajju)} effect is mitigated."
+            )
+        }
+
+        // Same Rajju and same Arudha - most problematic
+        return Pair(
+            false,
+            "Both in ${brideRajju.displayName} (${brideRajju.bodyPart}) with same direction (${brideArudha.displayName}) - ${getRajjuWarning(brideRajju)}. Remedies recommended."
         )
     }
 

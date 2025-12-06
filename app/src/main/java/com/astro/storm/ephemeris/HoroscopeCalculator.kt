@@ -276,22 +276,52 @@ class HoroscopeCalculator(private val context: Context) : AutoCloseable {
         }
     }
 
+    /**
+     * Analyze planetary influences using comprehensive Gochara (transit) analysis
+     *
+     * Enhanced with:
+     * 1. Vedha (obstruction) check - certain planets can block beneficial transits
+     * 2. Ashtakavarga integration - transit results modified by SAV/BAV scores
+     * 3. Classical Gochara effects per Brihat Parasara Hora Shastra
+     * 4. Retrograde and combustion considerations
+     */
     private fun analyzePlanetaryInfluences(
         natalChart: VedicChart,
         transitChart: VedicChart,
         natalMoonHouse: Int
     ): List<PlanetaryInfluence> {
+        // Pre-calculate Ashtakavarga if available
+        val ashtakavarga = try {
+            AshtakavargaCalculator.calculateFullAshtakavarga(natalChart)
+        } catch (e: Exception) {
+            Log.w(TAG, "Ashtakavarga calculation failed, proceeding without it", e)
+            null
+        }
+
         return transitChart.planetPositions
             .filter { it.planet in Planet.MAIN_PLANETS }
             .map { transitPos ->
                 val natalPos = natalChart.planetPositions.find { it.planet == transitPos.planet }
                 val houseFromMoon = calculateHouseFromMoon(transitPos.sign, natalChart)
-                val (influence, strength, isPositive) = analyzeGocharaEffect(
-                    transitPos.planet,
-                    houseFromMoon,
-                    transitPos.isRetrograde,
-                    natalPos
+
+                // Check for Vedha (obstruction) from other transiting planets
+                val vedhaInfo = checkGocharaVedha(transitPos.planet, houseFromMoon, transitChart, natalChart)
+
+                // Get Ashtakavarga score for this transit
+                val ashtakavargaScore = getAshtakavargaTransitScore(
+                    transitPos.planet, transitPos.sign, ashtakavarga
                 )
+
+                val (influence, strength, isPositive) = analyzeGocharaEffectAdvanced(
+                    planet = transitPos.planet,
+                    houseFromMoon = houseFromMoon,
+                    isRetrograde = transitPos.isRetrograde,
+                    natalPosition = natalPos,
+                    vedhaInfo = vedhaInfo,
+                    ashtakavargaScore = ashtakavargaScore,
+                    transitSign = transitPos.sign
+                )
+
                 PlanetaryInfluence(
                     planet = transitPos.planet,
                     influence = influence,
@@ -302,6 +332,86 @@ class HoroscopeCalculator(private val context: Context) : AutoCloseable {
             .sortedByDescending { it.strength }
     }
 
+    /**
+     * Data class for Vedha obstruction information
+     */
+    private data class VedhaInfo(
+        val hasVedha: Boolean,
+        val obstructingPlanet: Planet? = null,
+        val obstructingHouse: Int? = null
+    )
+
+    /**
+     * Check for Gochara Vedha (transit obstruction)
+     *
+     * Per classical texts, certain planets in specific houses can obstruct
+     * the beneficial effects of other transiting planets.
+     *
+     * Vedha pairs (planet's favorable house → obstructing house):
+     * Sun: 3↔9, 6↔12, 10↔4, 11↔5
+     * Moon: 1↔5, 3↔9, 6↔12, 7↔2, 10↔4, 11↔8
+     * Mars: 3↔12, 6↔9, 11↔5
+     * Mercury: 2↔5, 4↔3, 6↔9, 8↔1, 10↔8, 11↔12
+     * Jupiter: 2↔12, 5↔4, 7↔3, 9↔10, 11↔8
+     * Venus: 1↔8, 2↔7, 3↔1, 4↔10, 5↔9, 8↔5, 9↔11, 11↔6, 12↔3
+     * Saturn: 3↔12, 6↔9, 11↔5
+     */
+    private fun checkGocharaVedha(
+        planet: Planet,
+        houseFromMoon: Int,
+        transitChart: VedicChart,
+        natalChart: VedicChart
+    ): VedhaInfo {
+        val vedhaPairs = GOCHARA_VEDHA_PAIRS[planet] ?: return VedhaInfo(false)
+        val vedhaHouse = vedhaPairs[houseFromMoon] ?: return VedhaInfo(false)
+
+        // Check if any planet is transiting the Vedha house
+        for (otherTransit in transitChart.planetPositions) {
+            if (otherTransit.planet == planet) continue
+            if (otherTransit.planet !in Planet.MAIN_PLANETS) continue
+
+            val otherHouseFromMoon = calculateHouseFromMoon(otherTransit.sign, natalChart)
+            if (otherHouseFromMoon == vedhaHouse) {
+                return VedhaInfo(
+                    hasVedha = true,
+                    obstructingPlanet = otherTransit.planet,
+                    obstructingHouse = vedhaHouse
+                )
+            }
+        }
+
+        return VedhaInfo(false)
+    }
+
+    /**
+     * Get Ashtakavarga score for a transit position
+     *
+     * Higher BAV score (5-8) = stronger positive results
+     * Lower BAV score (0-3) = weaker or negative results
+     * SAV score modifies overall house strength
+     */
+    private fun getAshtakavargaTransitScore(
+        planet: Planet,
+        transitSign: ZodiacSign,
+        ashtakavarga: AshtakavargaCalculator.AshtakavargaResult?
+    ): Int? {
+        if (ashtakavarga == null) return null
+
+        // Get BAV (Bhinnashtakavarga) score for this planet in the transit sign
+        val bavChart = when (planet) {
+            Planet.SUN -> ashtakavarga.sunBav
+            Planet.MOON -> ashtakavarga.moonBav
+            Planet.MARS -> ashtakavarga.marsBav
+            Planet.MERCURY -> ashtakavarga.mercuryBav
+            Planet.JUPITER -> ashtakavarga.jupiterBav
+            Planet.VENUS -> ashtakavarga.venusBav
+            Planet.SATURN -> ashtakavarga.saturnBav
+            else -> return null
+        }
+
+        return bavChart.getOrNull(transitSign.ordinal)
+    }
+
     private fun calculateHouseFromMoon(transitSign: ZodiacSign, natalChart: VedicChart): Int {
         val natalMoon = natalChart.planetPositions.find { it.planet == Planet.MOON }
         val natalMoonSign = natalMoon?.sign ?: ZodiacSign.ARIES
@@ -310,32 +420,149 @@ class HoroscopeCalculator(private val context: Context) : AutoCloseable {
         return ((transitSignIndex - moonSignIndex + 12) % 12) + 1
     }
 
-    private fun analyzeGocharaEffect(
+    /**
+     * Advanced Gochara effect analysis with Vedha and Ashtakavarga
+     */
+    private fun analyzeGocharaEffectAdvanced(
         planet: Planet,
         houseFromMoon: Int,
         isRetrograde: Boolean,
-        natalPosition: PlanetPosition?
+        natalPosition: PlanetPosition?,
+        vedhaInfo: VedhaInfo,
+        ashtakavargaScore: Int?,
+        transitSign: ZodiacSign
     ): Triple<String, Int, Boolean> {
         val favorableHouses = GOCHARA_FAVORABLE_HOUSES[planet] ?: emptyList()
-        val isFavorable = houseFromMoon in favorableHouses
+        var isFavorable = houseFromMoon in favorableHouses
 
-        val (influence, baseStrength) = getGocharaInfluence(planet, houseFromMoon, isFavorable)
-        
-        val adjustedStrength = when {
-            isRetrograde && isFavorable -> baseStrength - 1
-            isRetrograde && !isFavorable -> baseStrength + 1
-            else -> baseStrength
-        }.coerceIn(1, 10)
+        // Get base influence and strength
+        var (influence, baseStrength) = getGocharaInfluenceDetailed(planet, houseFromMoon, isFavorable)
+
+        // Apply Vedha obstruction - significantly reduces beneficial effects
+        if (vedhaInfo.hasVedha && isFavorable) {
+            influence = "$influence However, ${vedhaInfo.obstructingPlanet?.displayName} creates Vedha obstruction, reducing benefits."
+            baseStrength = (baseStrength * 0.5).toInt().coerceAtLeast(2)
+            // Vedha can turn favorable to unfavorable in severe cases
+            if (baseStrength <= 3) {
+                isFavorable = false
+            }
+        }
+
+        // Apply Ashtakavarga modification
+        ashtakavargaScore?.let { score ->
+            val ashtakavargaModifier = when {
+                score >= 5 -> {
+                    influence = "$influence Ashtakavarga ($score/8) strengthens results."
+                    1.3
+                }
+                score == 4 -> 1.0  // Neutral
+                score >= 2 -> {
+                    influence = "$influence Ashtakavarga ($score/8) moderates results."
+                    0.85
+                }
+                else -> {
+                    influence = "$influence Low Ashtakavarga ($score/8) weakens results."
+                    if (isFavorable) isFavorable = false
+                    0.6
+                }
+            }
+            baseStrength = (baseStrength * ashtakavargaModifier).toInt()
+        }
+
+        // Retrograde adjustment
+        val retrogradeAdjustment = when {
+            isRetrograde && isFavorable -> {
+                influence = "$influence ${planet.displayName}'s retrograde motion delays manifestation."
+                -1
+            }
+            isRetrograde && !isFavorable -> {
+                influence = "$influence ${planet.displayName}'s retrograde provides some relief from challenges."
+                1
+            }
+            else -> 0
+        }
+
+        // Check if transit planet is in own sign, exaltation, or debilitation
+        val dignityModifier = when {
+            isInOwnSign(planet, transitSign) -> {
+                influence = "$influence Strong in own sign."
+                if (isFavorable) 2 else 0
+            }
+            isExalted(planet, transitSign) -> {
+                influence = "$influence Exalted - excellent results."
+                if (isFavorable) 3 else 1
+            }
+            isDebilitated(planet, transitSign) -> {
+                influence = "$influence Debilitated - results weakened."
+                if (isFavorable) -2 else -1
+            }
+            else -> 0
+        }
+
+        val adjustedStrength = (baseStrength + retrogradeAdjustment + dignityModifier).coerceIn(1, 10)
 
         return Triple(influence, adjustedStrength, isFavorable)
     }
 
-    private fun getGocharaInfluence(planet: Planet, house: Int, isFavorable: Boolean): Pair<String, Int> {
+    /**
+     * Get detailed Gochara influence based on classical texts
+     */
+    private fun getGocharaInfluenceDetailed(planet: Planet, house: Int, isFavorable: Boolean): Pair<String, Int> {
         return when {
-            isFavorable -> FAVORABLE_GOCHARA_EFFECTS[planet]?.get(house)
-                ?: ("Positive ${planet.displayName} energy" to 7)
-            else -> UNFAVORABLE_GOCHARA_EFFECTS[planet]?.get(house)
-                ?: ("Challenging ${planet.displayName} transit" to 4)
+            isFavorable -> FAVORABLE_GOCHARA_EFFECTS_DETAILED[planet]?.get(house)
+                ?: FAVORABLE_GOCHARA_EFFECTS[planet]?.get(house)
+                ?: ("Favorable ${planet.displayName} transit in house $house." to 7)
+            else -> UNFAVORABLE_GOCHARA_EFFECTS_DETAILED[planet]?.get(house)
+                ?: UNFAVORABLE_GOCHARA_EFFECTS[planet]?.get(house)
+                ?: ("Challenging ${planet.displayName} transit in house $house." to 4)
+        }
+    }
+
+    /**
+     * Check if planet is in own sign
+     */
+    private fun isInOwnSign(planet: Planet, sign: ZodiacSign): Boolean {
+        return when (planet) {
+            Planet.SUN -> sign == ZodiacSign.LEO
+            Planet.MOON -> sign == ZodiacSign.CANCER
+            Planet.MARS -> sign in listOf(ZodiacSign.ARIES, ZodiacSign.SCORPIO)
+            Planet.MERCURY -> sign in listOf(ZodiacSign.GEMINI, ZodiacSign.VIRGO)
+            Planet.JUPITER -> sign in listOf(ZodiacSign.SAGITTARIUS, ZodiacSign.PISCES)
+            Planet.VENUS -> sign in listOf(ZodiacSign.TAURUS, ZodiacSign.LIBRA)
+            Planet.SATURN -> sign in listOf(ZodiacSign.CAPRICORN, ZodiacSign.AQUARIUS)
+            else -> false
+        }
+    }
+
+    /**
+     * Check if planet is exalted
+     */
+    private fun isExalted(planet: Planet, sign: ZodiacSign): Boolean {
+        return when (planet) {
+            Planet.SUN -> sign == ZodiacSign.ARIES
+            Planet.MOON -> sign == ZodiacSign.TAURUS
+            Planet.MARS -> sign == ZodiacSign.CAPRICORN
+            Planet.MERCURY -> sign == ZodiacSign.VIRGO
+            Planet.JUPITER -> sign == ZodiacSign.CANCER
+            Planet.VENUS -> sign == ZodiacSign.PISCES
+            Planet.SATURN -> sign == ZodiacSign.LIBRA
+            else -> false
+        }
+    }
+
+    /**
+     * Check if planet is debilitated
+     */
+    private fun isDebilitated(planet: Planet, sign: ZodiacSign): Boolean {
+        return when (planet) {
+            Planet.SUN -> sign == ZodiacSign.LIBRA
+            Planet.MOON -> sign == ZodiacSign.SCORPIO
+            Planet.MARS -> sign == ZodiacSign.CANCER
+            Planet.MERCURY -> sign == ZodiacSign.PISCES
+            Planet.JUPITER -> sign == ZodiacSign.CAPRICORN
+            Planet.VENUS -> sign == ZodiacSign.VIRGO
+            Planet.SATURN -> sign == ZodiacSign.ARIES
+            else -> false
         }
     }
 
@@ -694,6 +921,10 @@ class HoroscopeCalculator(private val context: Context) : AutoCloseable {
         private val NATURAL_BENEFICS = listOf(Planet.JUPITER, Planet.VENUS, Planet.MERCURY, Planet.MOON)
         private val NATURAL_MALEFICS = listOf(Planet.SATURN, Planet.MARS, Planet.RAHU, Planet.KETU)
 
+        /**
+         * Gochara favorable houses per Brihat Parasara Hora Shastra
+         * These are houses from natal Moon where transiting planets give good results
+         */
         private val GOCHARA_FAVORABLE_HOUSES = mapOf(
             Planet.SUN to listOf(3, 6, 10, 11),
             Planet.MOON to listOf(1, 3, 6, 7, 10, 11),
@@ -704,6 +935,192 @@ class HoroscopeCalculator(private val context: Context) : AutoCloseable {
             Planet.SATURN to listOf(3, 6, 11),
             Planet.RAHU to listOf(3, 6, 10, 11),
             Planet.KETU to listOf(3, 6, 9, 11)
+        )
+
+        /**
+         * Gochara Vedha (obstruction) pairs per classical texts
+         * Maps favorable house → vedha (obstructing) house
+         * When another planet transits the vedha house, the beneficial results are obstructed
+         */
+        private val GOCHARA_VEDHA_PAIRS = mapOf(
+            Planet.SUN to mapOf(
+                3 to 9, 6 to 12, 10 to 4, 11 to 5
+            ),
+            Planet.MOON to mapOf(
+                1 to 5, 3 to 9, 6 to 12, 7 to 2, 10 to 4, 11 to 8
+            ),
+            Planet.MARS to mapOf(
+                3 to 12, 6 to 9, 11 to 5
+            ),
+            Planet.MERCURY to mapOf(
+                2 to 5, 4 to 3, 6 to 9, 8 to 1, 10 to 8, 11 to 12
+            ),
+            Planet.JUPITER to mapOf(
+                2 to 12, 5 to 4, 7 to 3, 9 to 10, 11 to 8
+            ),
+            Planet.VENUS to mapOf(
+                1 to 8, 2 to 7, 3 to 1, 4 to 10, 5 to 9, 8 to 5, 9 to 11, 11 to 6, 12 to 3
+            ),
+            Planet.SATURN to mapOf(
+                3 to 12, 6 to 9, 11 to 5
+            ),
+            Planet.RAHU to mapOf(
+                3 to 12, 6 to 9, 10 to 4, 11 to 5
+            ),
+            Planet.KETU to mapOf(
+                3 to 12, 6 to 9, 9 to 10, 11 to 5
+            )
+        )
+
+        /**
+         * Detailed favorable Gochara effects with classical interpretations
+         */
+        private val FAVORABLE_GOCHARA_EFFECTS_DETAILED = mapOf(
+            Planet.SUN to mapOf(
+                3 to ("Courage and valor increase. Victory over rivals." to 8),
+                6 to ("Destruction of enemies. Health improves. Debts decrease." to 8),
+                10 to ("Professional success and recognition. Authority increases." to 9),
+                11 to ("Gains of wealth. Fulfillment of desires. Success in endeavors." to 9)
+            ),
+            Planet.MOON to mapOf(
+                1 to ("Mental peace and satisfaction. Good health and comforts." to 8),
+                3 to ("Courage increases. Success in short journeys. Good relations with siblings." to 7),
+                6 to ("Victory over enemies. Relief from debts and diseases." to 8),
+                7 to ("Pleasure through spouse. Partnership gains. Social happiness." to 8),
+                10 to ("Success in profession. Recognition from superiors." to 8),
+                11 to ("Financial gains. Fulfillment of desires. Social success." to 9)
+            ),
+            Planet.MARS to mapOf(
+                3 to ("Courage and determination. Victory in competitions. Energy for initiatives." to 8),
+                6 to ("Defeat of enemies. Success through effort. Good for legal matters." to 8),
+                11 to ("Financial gains through effort. Achievement of goals. Success in ventures." to 8)
+            ),
+            Planet.MERCURY to mapOf(
+                2 to ("Gains through speech and intellect. Family harmony. Financial gains." to 8),
+                4 to ("Domestic happiness. Property matters favorable. Mental peace." to 7),
+                6 to ("Victory over competitors. Success in studies. Sharp intellect." to 8),
+                8 to ("Gains through research. Understanding occult matters." to 7),
+                10 to ("Professional success. Recognition for intelligence. Business growth." to 8),
+                11 to ("Financial gains through communication. Network expansion." to 8)
+            ),
+            Planet.JUPITER to mapOf(
+                2 to ("Wealth increases. Family harmony. Sweet speech. Good food." to 9),
+                5 to ("Intelligence flourishes. Good for children. Romance. Creativity." to 9),
+                7 to ("Partnership success. Marriage prospects. Business partnerships." to 8),
+                9 to ("Spiritual growth. Luck and fortune. Father's blessings. Pilgrimage." to 10),
+                11 to ("Major gains. Fulfillment of desires. Eldest sibling's success." to 9)
+            ),
+            Planet.VENUS to mapOf(
+                1 to ("Personal charm increases. Attraction and luxury. Good health." to 8),
+                2 to ("Wealth and family happiness. Good food and comforts." to 8),
+                3 to ("Artistic talents shine. Harmonious relations with siblings." to 7),
+                4 to ("Domestic bliss. Vehicle and property gains. Mother's blessings." to 8),
+                5 to ("Romance and creativity. Pleasure through children. Entertainment." to 9),
+                8 to ("Unexpected gains. Inheritance matters favorable." to 7),
+                9 to ("Fortune through relationships. Spiritual partnerships." to 8),
+                11 to ("Major gains through arts/finance. Social success." to 9),
+                12 to ("Pleasures of bed. Foreign connections favorable." to 7)
+            ),
+            Planet.SATURN to mapOf(
+                3 to ("Perseverance pays off. Courage through discipline. Victory through patience." to 7),
+                6 to ("Victory over enemies through persistence. Health through discipline." to 8),
+                11 to ("Long-term gains materialize. Slow but steady prosperity." to 8)
+            ),
+            Planet.RAHU to mapOf(
+                3 to ("Courage for unconventional paths. Success through innovation." to 7),
+                6 to ("Victory over hidden enemies. Overcoming obstacles." to 7),
+                10 to ("Sudden rise in career. Foreign opportunities." to 8),
+                11 to ("Unexpected gains. Fulfillment of unusual desires." to 8)
+            ),
+            Planet.KETU to mapOf(
+                3 to ("Spiritual courage. Success in research." to 7),
+                6 to ("Healing abilities increase. Victory through spiritual means." to 7),
+                9 to ("Spiritual insights. Pilgrimage. Blessings from teachers." to 8),
+                11 to ("Gains through spiritual pursuits. Liberation from desires." to 7)
+            )
+        )
+
+        /**
+         * Detailed unfavorable Gochara effects with classical interpretations
+         */
+        private val UNFAVORABLE_GOCHARA_EFFECTS_DETAILED = mapOf(
+            Planet.SUN to mapOf(
+                1 to ("Health issues. Ego challenges. Conflicts with authority." to 4),
+                2 to ("Financial difficulties. Family disputes. Speech issues." to 4),
+                4 to ("Domestic unrest. Mental worry. Vehicle problems." to 4),
+                5 to ("Obstacles to children. Poor decisions. Speculation loss." to 4),
+                7 to ("Relationship strain. Partnership challenges." to 4),
+                8 to ("Health concerns. Unexpected problems. Hidden enemies." to 3),
+                9 to ("Obstacles in luck. Difficulties with father/teacher." to 4),
+                12 to ("Expenses increase. Sleep disturbances. Hidden losses." to 4)
+            ),
+            Planet.MOON to mapOf(
+                2 to ("Financial fluctuations. Emotional eating issues." to 4),
+                4 to ("Mental restlessness. Domestic worries." to 4),
+                5 to ("Emotional challenges with children. Poor speculation." to 4),
+                8 to ("Emotional turmoil. Hidden anxieties. Health vulnerabilities." to 3),
+                9 to ("Spiritual doubts. Emotional distance from teachers." to 4),
+                12 to ("Sleep issues. Expenses. Emotional withdrawal." to 4)
+            ),
+            Planet.MARS to mapOf(
+                1 to ("Impulsive actions. Accidents. Health issues. Anger." to 4),
+                2 to ("Financial losses through haste. Family arguments." to 4),
+                4 to ("Domestic conflicts. Property disputes. Mother's health." to 4),
+                5 to ("Children's issues. Poor decisions. Speculation loss." to 4),
+                7 to ("Relationship conflicts. Partnership disputes." to 3),
+                8 to ("Accidents. Surgeries. Hidden enemies active." to 3),
+                9 to ("Conflicts with teachers. Father's health." to 4),
+                10 to ("Professional conflicts. Authority issues." to 4),
+                12 to ("Hidden enemies. Expenses. Hospitalization risk." to 3)
+            ),
+            Planet.MERCURY to mapOf(
+                1 to ("Nervous tension. Skin issues. Restless mind." to 4),
+                3 to ("Communication problems. Sibling issues. Short trips troubled." to 4),
+                5 to ("Poor decisions. Learning difficulties." to 4),
+                7 to ("Partnership misunderstandings. Contract issues." to 4),
+                9 to ("Educational obstacles. Communication with father strained." to 4),
+                12 to ("Mental anxieties. Hidden worries. Poor sleep." to 4)
+            ),
+            Planet.JUPITER to mapOf(
+                1 to ("Weight gain. Overconfidence. Health issues." to 4),
+                3 to ("Reduced courage. Sibling issues." to 5),
+                4 to ("Domestic expansion issues. Property disputes." to 4),
+                6 to ("Debts may increase. Enemy problems." to 4),
+                8 to ("Unexpected expenses. Health vulnerabilities." to 4),
+                10 to ("Professional setbacks. Reputation challenges." to 4),
+                12 to ("Expenses. Foreign troubles. Spiritual doubts." to 4)
+            ),
+            Planet.SATURN to mapOf(
+                1 to ("Health issues. Depression. Physical weakness." to 3),
+                2 to ("Financial constraints. Family separation. Speech issues." to 4),
+                4 to ("Domestic stress. Mother's health. Property issues." to 3),
+                5 to ("Children's problems. Poor decisions. Mental worry." to 4),
+                7 to ("Relationship strain. Partnership challenges. Delays in marriage." to 3),
+                8 to ("Chronic health issues. Hidden problems. Accidents." to 2),
+                9 to ("Father's troubles. Spiritual obstacles. Bad luck phase." to 3),
+                10 to ("Career setbacks. Authority conflicts. Reputation damage." to 4),
+                12 to ("Isolation. Expenses. Sleep issues. Foreign troubles." to 3)
+            ),
+            Planet.RAHU to mapOf(
+                1 to ("Confusion. Wrong decisions. Health anxieties." to 4),
+                2 to ("Financial deception. Family disharmony." to 4),
+                4 to ("Mental confusion. Domestic issues." to 4),
+                5 to ("Children's concerns. Poor speculation." to 4),
+                7 to ("Relationship deceptions. Partnership frauds." to 3),
+                8 to ("Sudden problems. Hidden enemies. Health scares." to 3),
+                9 to ("Spiritual confusion. Issues with teachers." to 4),
+                12 to ("Hidden enemies. Expenses. Foreign troubles." to 3)
+            ),
+            Planet.KETU to mapOf(
+                1 to ("Health vulnerabilities. Lack of direction." to 4),
+                2 to ("Financial losses. Family separation." to 4),
+                4 to ("Domestic detachment. Property losses." to 4),
+                5 to ("Children's issues. Poor decisions." to 4),
+                7 to ("Relationship detachment. Partnership dissolution." to 3),
+                8 to ("Sudden health issues. Accidents. Hidden problems." to 3),
+                10 to ("Career confusion. Direction loss." to 4),
+                12 to ("Expenses. Spiritual confusion. Isolation." to 4)
+            )
         )
 
         private val FAVORABLE_GOCHARA_EFFECTS = mapOf(

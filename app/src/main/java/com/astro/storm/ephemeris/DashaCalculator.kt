@@ -177,14 +177,136 @@ object DashaCalculator {
         val mahadashaPlanet: Planet,
         val startDate: LocalDate,
         val endDate: LocalDate,
-        val durationDays: Long
+        val durationDays: Long,
+        val pranadashas: List<Pranadasha> = emptyList()
     ) {
+        val durationHours: Double
+            get() = durationDays * 24.0
+
         fun isActiveOn(date: LocalDate): Boolean {
             return !date.isBefore(startDate) && !date.isAfter(endDate)
         }
 
         val isActive: Boolean
             get() = isActiveOn(LocalDate.now())
+
+        fun getActivePranadasha(): Pranadasha? {
+            return getPranadashaOn(LocalDate.now())
+        }
+
+        fun getPranadashaOn(date: LocalDate): Pranadasha? {
+            return pranadashas.find { it.isActiveOn(date) }
+        }
+    }
+
+    /**
+     * Prana Dasha - The 5th level of Vimsottari Dasha system
+     *
+     * Prana (breath/life force) Dasha operates at very fine granularity,
+     * typically lasting from a few hours to a couple of days.
+     *
+     * Duration calculation:
+     * Prana = Sookshmadasha duration × (Planet's years / 120)
+     *
+     * This level is useful for:
+     * - Muhurta (electional astrology) timing
+     * - Very precise event timing
+     * - Understanding subtle energy shifts
+     */
+    data class Pranadasha(
+        val planet: Planet,
+        val sookshmadashaPlanet: Planet,
+        val pratyantardashaPlanet: Planet,
+        val antardashaPlanet: Planet,
+        val mahadashaPlanet: Planet,
+        val startDate: LocalDate,
+        val endDate: LocalDate,
+        val durationMinutes: Long,
+        val dehadashas: List<Dehadasha> = emptyList()
+    ) {
+        val durationHours: Double
+            get() = durationMinutes / 60.0
+
+        val durationDays: Double
+            get() = durationMinutes / (60.0 * 24.0)
+
+        fun isActiveOn(date: LocalDate): Boolean {
+            return !date.isBefore(startDate) && !date.isAfter(endDate)
+        }
+
+        val isActive: Boolean
+            get() = isActiveOn(LocalDate.now())
+
+        fun getActiveDehadasha(): Dehadasha? {
+            return getDehadashaOn(LocalDate.now())
+        }
+
+        fun getDehadashaOn(date: LocalDate): Dehadasha? {
+            return dehadashas.find { it.isActiveOn(date) }
+        }
+
+        /**
+         * Get a human-readable duration string
+         */
+        fun getDurationString(): String {
+            val hours = durationMinutes / 60
+            val mins = durationMinutes % 60
+            return when {
+                hours >= 24 -> {
+                    val days = hours / 24
+                    val remainingHours = hours % 24
+                    "${days}d ${remainingHours}h ${mins}m"
+                }
+                hours > 0 -> "${hours}h ${mins}m"
+                else -> "${mins}m"
+            }
+        }
+    }
+
+    /**
+     * Deha Dasha - The 6th level of Vimsottari Dasha system
+     *
+     * Deha (body) Dasha is the finest subdivision, typically lasting
+     * from minutes to a few hours. It represents the most subtle
+     * manifestation of planetary energy.
+     *
+     * Duration calculation:
+     * Deha = Prana duration × (Planet's years / 120)
+     *
+     * This level is primarily used for:
+     * - Prashna (horary) astrology
+     * - Understanding momentary planetary influences
+     * - Very fine-tuned Muhurta work
+     */
+    data class Dehadasha(
+        val planet: Planet,
+        val pranadashaPlanet: Planet,
+        val sookshmadashaPlanet: Planet,
+        val pratyantardashaPlanet: Planet,
+        val antardashaPlanet: Planet,
+        val mahadashaPlanet: Planet,
+        val startDate: LocalDate,
+        val endDate: LocalDate,
+        val durationMinutes: Long
+    ) {
+        val durationHours: Double
+            get() = durationMinutes / 60.0
+
+        fun isActiveOn(date: LocalDate): Boolean {
+            return !date.isBefore(startDate) && !date.isAfter(endDate)
+        }
+
+        val isActive: Boolean
+            get() = isActiveOn(LocalDate.now())
+
+        /**
+         * Get a human-readable duration string
+         */
+        fun getDurationString(): String {
+            val hours = durationMinutes / 60
+            val mins = durationMinutes % 60
+            return if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
+        }
     }
 
     data class DashaSandhi(
@@ -200,11 +322,13 @@ object DashaCalculator {
         }
     }
 
-    enum class DashaLevel {
-        MAHADASHA,
-        ANTARDASHA,
-        PRATYANTARDASHA,
-        SOOKSHMADASHA
+    enum class DashaLevel(val displayName: String, val levelNumber: Int) {
+        MAHADASHA("Mahadasha", 1),
+        ANTARDASHA("Antardasha/Bhukti", 2),
+        PRATYANTARDASHA("Pratyantardasha", 3),
+        SOOKSHMADASHA("Sookshmadasha", 4),
+        PRANADASHA("Pranadasha", 5),
+        DEHADASHA("Dehadasha", 6)
     }
 
     data class DashaTimeline(
@@ -219,8 +343,13 @@ object DashaCalculator {
         val currentAntardasha: Antardasha?,
         val currentPratyantardasha: Pratyantardasha?,
         val currentSookshmadasha: Sookshmadasha?,
+        val currentPranadasha: Pranadasha?,
+        val currentDehadasha: Dehadasha?,
         val upcomingSandhis: List<DashaSandhi>
     ) {
+        /**
+         * Get a full description of the current dasha period up to Sookshmadasha level
+         */
         fun getCurrentPeriodDescription(): String {
             return buildString {
                 currentMahadasha?.let { md ->
@@ -231,6 +360,32 @@ object DashaCalculator {
                             append(" → ${pd.planet.displayName} Pratyantar")
                             currentSookshmadasha?.let { sd ->
                                 append(" → ${sd.planet.displayName} Sookshma")
+                            }
+                        }
+                    }
+                } ?: append("No active Dasha period")
+            }
+        }
+
+        /**
+         * Get a full description including Prana and Deha levels
+         */
+        fun getFullPeriodDescription(): String {
+            return buildString {
+                currentMahadasha?.let { md ->
+                    append("${md.planet.displayName} Mahadasha")
+                    currentAntardasha?.let { ad ->
+                        append(" → ${ad.planet.displayName} Bhukti")
+                        currentPratyantardasha?.let { pd ->
+                            append(" → ${pd.planet.displayName} Pratyantar")
+                            currentSookshmadasha?.let { sd ->
+                                append(" → ${sd.planet.displayName} Sookshma")
+                                currentPranadasha?.let { prd ->
+                                    append(" → ${prd.planet.displayName} Prana")
+                                    currentDehadasha?.let { dd ->
+                                        append(" → ${dd.planet.displayName} Deha")
+                                    }
+                                }
                             }
                         }
                     }
@@ -252,18 +407,48 @@ object DashaCalculator {
             }
         }
 
+        /**
+         * Get a compact description with all 6 levels using planet symbols
+         */
+        fun getFullShortDescription(): String {
+            return buildString {
+                currentMahadasha?.let { md ->
+                    append(md.planet.symbol)
+                    currentAntardasha?.let { ad ->
+                        append("-${ad.planet.symbol}")
+                        currentPratyantardasha?.let { pd ->
+                            append("-${pd.planet.symbol}")
+                            currentSookshmadasha?.let { sd ->
+                                append("-${sd.planet.symbol}")
+                                currentPranadasha?.let { prd ->
+                                    append("-${prd.planet.symbol}")
+                                    currentDehadasha?.let { dd ->
+                                        append("-${dd.planet.symbol}")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } ?: append("--")
+            }
+        }
+
         fun getDashaAtDate(date: LocalDate): DashaPeriodInfo {
             val mahadasha = mahadashas.find { it.isActiveOn(date) }
             val antardasha = mahadasha?.getAntardashaOn(date)
             val pratyantardasha = antardasha?.getPratyantardashaOn(date)
             val sookshmadasha = pratyantardasha?.getSookshmadashaOn(date)
+            val pranadasha = sookshmadasha?.getPranadashaOn(date)
+            val dehadasha = pranadasha?.getDehadashaOn(date)
 
             return DashaPeriodInfo(
                 date = date,
                 mahadasha = mahadasha,
                 antardasha = antardasha,
                 pratyantardasha = pratyantardasha,
-                sookshmadasha = sookshmadasha
+                sookshmadasha = sookshmadasha,
+                pranadasha = pranadasha,
+                dehadasha = dehadasha
             )
         }
 
@@ -279,6 +464,20 @@ object DashaCalculator {
                 !sandhi.transitionDate.isBefore(today) && !sandhi.transitionDate.isAfter(futureDate)
             }
         }
+
+        /**
+         * Get a list of all active dasha lords from Mahadasha to Dehadasha
+         */
+        fun getActiveDashaLords(): List<Pair<DashaLevel, Planet>> {
+            val lords = mutableListOf<Pair<DashaLevel, Planet>>()
+            currentMahadasha?.let { lords.add(DashaLevel.MAHADASHA to it.planet) }
+            currentAntardasha?.let { lords.add(DashaLevel.ANTARDASHA to it.planet) }
+            currentPratyantardasha?.let { lords.add(DashaLevel.PRATYANTARDASHA to it.planet) }
+            currentSookshmadasha?.let { lords.add(DashaLevel.SOOKSHMADASHA to it.planet) }
+            currentPranadasha?.let { lords.add(DashaLevel.PRANADASHA to it.planet) }
+            currentDehadasha?.let { lords.add(DashaLevel.DEHADASHA to it.planet) }
+            return lords
+        }
     }
 
     data class DashaPeriodInfo(
@@ -286,8 +485,31 @@ object DashaCalculator {
         val mahadasha: Mahadasha?,
         val antardasha: Antardasha?,
         val pratyantardasha: Pratyantardasha?,
-        val sookshmadasha: Sookshmadasha?
-    )
+        val sookshmadasha: Sookshmadasha?,
+        val pranadasha: Pranadasha? = null,
+        val dehadasha: Dehadasha? = null
+    ) {
+        /**
+         * Get all active dasha lords at this date
+         */
+        fun getAllLords(): List<Planet> {
+            return listOfNotNull(
+                mahadasha?.planet,
+                antardasha?.planet,
+                pratyantardasha?.planet,
+                sookshmadasha?.planet,
+                pranadasha?.planet,
+                dehadasha?.planet
+            )
+        }
+
+        /**
+         * Get the combined dasha period string (e.g., "Sun-Moon-Mars-Jupiter-Venus-Saturn")
+         */
+        fun getCombinedPeriodString(): String {
+            return getAllLords().joinToString("-") { it.displayName }
+        }
+    }
 
     fun calculateDashaTimeline(chart: VedicChart): DashaTimeline {
         val birthDate = chart.birthData.dateTime.toLocalDate()
@@ -328,6 +550,8 @@ object DashaCalculator {
         val currentAntardasha = currentMahadasha?.getAntardashaOn(today)
         val currentPratyantardasha = currentAntardasha?.getPratyantardashaOn(today)
         val currentSookshmadasha = currentPratyantardasha?.getSookshmadashaOn(today)
+        val currentPranadasha = currentSookshmadasha?.getPranadashaOn(today)
+        val currentDehadasha = currentPranadasha?.getDehadashaOn(today)
 
         val upcomingSandhis = calculateUpcomingSandhis(mahadashas, today, lookAheadDays = 365)
 
@@ -343,6 +567,8 @@ object DashaCalculator {
             currentAntardasha = currentAntardasha,
             currentPratyantardasha = currentPratyantardasha,
             currentSookshmadasha = currentSookshmadasha,
+            currentPranadasha = currentPranadasha,
+            currentDehadasha = currentDehadasha,
             upcomingSandhis = upcomingSandhis
         )
     }
@@ -523,7 +749,8 @@ object DashaCalculator {
         pratyantardashaPlanet: Planet,
         pratyantarStart: LocalDate,
         pratyantarEnd: LocalDate,
-        pratyantarDurationYearsBd: BigDecimal
+        pratyantarDurationYearsBd: BigDecimal,
+        includePranadasha: Boolean = true
     ): List<Sookshmadasha> {
         val sookshmadashas = mutableListOf<Sookshmadasha>()
         var currentStart = pratyantarStart
@@ -542,6 +769,21 @@ object DashaCalculator {
             val sookshmaDays = yearsToRoundedDays(proportionalDurationBd).coerceAtLeast(1L)
             val sookshmaEnd = currentStart.plusDays(sookshmaDays)
 
+            // Calculate Prana dashas if requested
+            val pranadashas = if (includePranadasha) {
+                calculatePranadashas(
+                    mahadashaPlanet = mahadashaPlanet,
+                    antardashaPlanet = antardashaPlanet,
+                    pratyantardashaPlanet = pratyantardashaPlanet,
+                    sookshmadashaPlanet = sookshmaPlanet,
+                    sookshmaStart = currentStart,
+                    sookshmaEnd = sookshmaEnd,
+                    sookshmaDurationDays = sookshmaDays
+                )
+            } else {
+                emptyList()
+            }
+
             sookshmadashas.add(
                 Sookshmadasha(
                     planet = sookshmaPlanet,
@@ -550,13 +792,152 @@ object DashaCalculator {
                     mahadashaPlanet = mahadashaPlanet,
                     startDate = currentStart,
                     endDate = sookshmaEnd,
-                    durationDays = sookshmaDays
+                    durationDays = sookshmaDays,
+                    pranadashas = pranadashas
                 )
             )
             currentStart = sookshmaEnd
         }
 
         return sookshmadashas
+    }
+
+    /**
+     * Calculate Prana Dashas (5th level) within a Sookshmadasha
+     *
+     * Prana duration = Sookshmadasha duration × (Planet's years / 120)
+     *
+     * For a typical Sookshmadasha lasting 1-7 days, Prana dashas last
+     * approximately 2-40 hours each.
+     */
+    private fun calculatePranadashas(
+        mahadashaPlanet: Planet,
+        antardashaPlanet: Planet,
+        pratyantardashaPlanet: Planet,
+        sookshmadashaPlanet: Planet,
+        sookshmaStart: LocalDate,
+        sookshmaEnd: LocalDate,
+        sookshmaDurationDays: Long,
+        includeDehadasha: Boolean = true
+    ): List<Pranadasha> {
+        val pranadashas = mutableListOf<Pranadasha>()
+        var currentStart = sookshmaStart
+
+        // Convert days to minutes for more precise calculation at this level
+        val sookshmaDurationMinutes = sookshmaDurationDays * 24 * 60
+
+        val startIndex = DASHA_SEQUENCE.indexOf(sookshmadashaPlanet)
+
+        for (i in 0 until 9) {
+            val planetIndex = (startIndex + i) % DASHA_SEQUENCE.size
+            val pranaPlanet = DASHA_SEQUENCE[planetIndex]
+
+            val pranaYearsBd = DASHA_YEARS[pranaPlanet] ?: BigDecimal.ZERO
+            // Calculate proportional duration in minutes
+            val proportionalMinutes = pranaYearsBd
+                .divide(TOTAL_CYCLE_YEARS_BD, MATH_CONTEXT)
+                .multiply(BigDecimal(sookshmaDurationMinutes), MATH_CONTEXT)
+                .toLong()
+                .coerceAtLeast(1L)
+
+            // Convert minutes to days for end date calculation
+            val pranaDays = (proportionalMinutes / (24 * 60)).coerceAtLeast(1L)
+            val pranaEnd = currentStart.plusDays(pranaDays)
+
+            // Calculate Deha dashas if requested
+            val dehadashas = if (includeDehadasha) {
+                calculateDehadashas(
+                    mahadashaPlanet = mahadashaPlanet,
+                    antardashaPlanet = antardashaPlanet,
+                    pratyantardashaPlanet = pratyantardashaPlanet,
+                    sookshmadashaPlanet = sookshmadashaPlanet,
+                    pranadashaPlanet = pranaPlanet,
+                    pranaStart = currentStart,
+                    pranaEnd = pranaEnd,
+                    pranaDurationMinutes = proportionalMinutes
+                )
+            } else {
+                emptyList()
+            }
+
+            pranadashas.add(
+                Pranadasha(
+                    planet = pranaPlanet,
+                    sookshmadashaPlanet = sookshmadashaPlanet,
+                    pratyantardashaPlanet = pratyantardashaPlanet,
+                    antardashaPlanet = antardashaPlanet,
+                    mahadashaPlanet = mahadashaPlanet,
+                    startDate = currentStart,
+                    endDate = pranaEnd,
+                    durationMinutes = proportionalMinutes,
+                    dehadashas = dehadashas
+                )
+            )
+            currentStart = pranaEnd
+        }
+
+        return pranadashas
+    }
+
+    /**
+     * Calculate Deha Dashas (6th level) within a Pranadasha
+     *
+     * Deha duration = Prana duration × (Planet's years / 120)
+     *
+     * For a typical Pranadasha lasting 2-40 hours, Deha dashas last
+     * approximately 10 minutes to 3 hours each.
+     *
+     * This is the finest subdivision and is primarily used in
+     * Prashna (horary) and very precise Muhurta work.
+     */
+    private fun calculateDehadashas(
+        mahadashaPlanet: Planet,
+        antardashaPlanet: Planet,
+        pratyantardashaPlanet: Planet,
+        sookshmadashaPlanet: Planet,
+        pranadashaPlanet: Planet,
+        pranaStart: LocalDate,
+        pranaEnd: LocalDate,
+        pranaDurationMinutes: Long
+    ): List<Dehadasha> {
+        val dehadashas = mutableListOf<Dehadasha>()
+        var currentStart = pranaStart
+
+        val startIndex = DASHA_SEQUENCE.indexOf(pranadashaPlanet)
+
+        for (i in 0 until 9) {
+            val planetIndex = (startIndex + i) % DASHA_SEQUENCE.size
+            val dehaPlanet = DASHA_SEQUENCE[planetIndex]
+
+            val dehaYearsBd = DASHA_YEARS[dehaPlanet] ?: BigDecimal.ZERO
+            // Calculate proportional duration in minutes
+            val proportionalMinutes = dehaYearsBd
+                .divide(TOTAL_CYCLE_YEARS_BD, MATH_CONTEXT)
+                .multiply(BigDecimal(pranaDurationMinutes), MATH_CONTEXT)
+                .toLong()
+                .coerceAtLeast(1L)
+
+            // Convert minutes to days for end date (minimum 1 day for LocalDate)
+            val dehaDays = (proportionalMinutes / (24 * 60)).coerceAtLeast(1L)
+            val dehaEnd = currentStart.plusDays(dehaDays)
+
+            dehadashas.add(
+                Dehadasha(
+                    planet = dehaPlanet,
+                    pranadashaPlanet = pranadashaPlanet,
+                    sookshmadashaPlanet = sookshmadashaPlanet,
+                    pratyantardashaPlanet = pratyantardashaPlanet,
+                    antardashaPlanet = antardashaPlanet,
+                    mahadashaPlanet = mahadashaPlanet,
+                    startDate = currentStart,
+                    endDate = dehaEnd,
+                    durationMinutes = proportionalMinutes
+                )
+            )
+            currentStart = dehaEnd
+        }
+
+        return dehadashas
     }
 
     private fun calculateUpcomingSandhis(
@@ -612,10 +993,12 @@ object DashaCalculator {
 
     private fun calculateSandhiDuration(level: DashaLevel, periodDurationYears: Double): Long {
         val sandhiPercentage = when (level) {
-            DashaLevel.MAHADASHA -> 0.05
-            DashaLevel.ANTARDASHA -> 0.10
-            DashaLevel.PRATYANTARDASHA -> 0.15
-            DashaLevel.SOOKSHMADASHA -> 0.20
+            DashaLevel.MAHADASHA -> 0.05      // 5% - around 2-12 months
+            DashaLevel.ANTARDASHA -> 0.10    // 10% - around 1-3 weeks
+            DashaLevel.PRATYANTARDASHA -> 0.15  // 15% - around 1-5 days
+            DashaLevel.SOOKSHMADASHA -> 0.20    // 20% - around 4-24 hours
+            DashaLevel.PRANADASHA -> 0.20       // 20% - around 30 min to 8 hours
+            DashaLevel.DEHADASHA -> 0.20        // 20% - around 2 min to 1 hour
         }
 
         val sandhiYears = periodDurationYears * sandhiPercentage
@@ -661,6 +1044,19 @@ object DashaCalculator {
                         timeline.currentSookshmadasha?.let { sd ->
                             appendLine("\nSookshmadasha: ${sd.planet.displayName}")
                             appendLine("  Period: ${sd.startDate} to ${sd.endDate}")
+                            appendLine("  Duration: ${sd.durationDays} days")
+
+                            timeline.currentPranadasha?.let { prd ->
+                                appendLine("\nPranadasha: ${prd.planet.displayName}")
+                                appendLine("  Period: ${prd.startDate} to ${prd.endDate}")
+                                appendLine("  Duration: ${prd.getDurationString()}")
+
+                                timeline.currentDehadasha?.let { dd ->
+                                    appendLine("\nDehadasha: ${dd.planet.displayName}")
+                                    appendLine("  Period: ${dd.startDate} to ${dd.endDate}")
+                                    appendLine("  Duration: ${dd.getDurationString()}")
+                                }
+                            }
                         }
                     }
                 }
