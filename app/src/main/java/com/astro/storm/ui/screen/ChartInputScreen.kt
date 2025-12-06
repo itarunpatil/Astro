@@ -197,16 +197,15 @@ fun ChartInputScreen(
                 isLoading = uiState is ChartUiState.Calculating,
                 onClick = {
                     isCalculating = true
-                    val birthData = BirthData(
-                        name = name.trim(),
-                        dateTime = LocalDateTime.of(selectedDate, selectedTime),
-                        latitude = latitude.toDouble(),
-                        longitude = longitude.toDouble(),
-                        altitude = altitude.toDoubleOrNull() ?: 0.0,
-                        timezone = selectedTimezone,
-                        location = locationLabel.trim(),
-                        gender = selectedGender
-                    )
+val birthData = BirthData(
+    name = name.trim(),
+    dateTime = LocalDateTime.of(selectedDate, selectedTime),
+    latitude = latitude.toDoubleOrNull() ?: 0.0,
+    longitude = longitude.toDoubleOrNull() ?: 0.0,
+    timezone = selectedTimezone,
+    location = locationLabel.trim(),
+    gender = selectedGender
+)
                     viewModel.calculateChart(birthData)
                 }
             )
