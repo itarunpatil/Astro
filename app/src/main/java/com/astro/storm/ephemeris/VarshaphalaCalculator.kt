@@ -11,27 +11,9 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.min
-import kotlin.math.sin
-import kotlin.math.roundToLong
 
-/**
- * Comprehensive Varshaphala (Annual Horoscope) Calculator
- *
- * This calculator implements the Tajika system of annual horoscopy as practiced in Vedic astrology.
- * It calculates:
- * - Solar Return Chart with precise Swiss Ephemeris calculations
- * - Muntha (progressed ascendant)
- * - Year Lord (Varsheshwara) determination using traditional rules
- * - Pancha Vargiya Bala (five-fold planetary strength)
- * - Tri-Pataki Chakra (three-flag diagram)
- * - Sahams (Arabic Parts/Lots)
- * - Tajika Aspects and Yogas
- * - Mudda Dasha (annual planetary periods)
- * - House-wise predictions
- */
 class VarshaphalaCalculator(context: Context) {
 
     private val swissEph = SwissEph()
@@ -43,14 +25,12 @@ class VarshaphalaCalculator(context: Context) {
         private const val SEFLG_SPEED = SweConst.SEFLG_SPEED
         private const val SIDEREAL_YEAR_DAYS = 365.256363
 
-        // Tajika aspect orbs
         private const val CONJUNCTION_ORB = 12.0
         private const val OPPOSITION_ORB = 9.0
         private const val TRINE_ORB = 8.0
         private const val SQUARE_ORB = 7.0
         private const val SEXTILE_ORB = 6.0
 
-        // Vimshottari Dasha periods (in years)
         private val VIMSHOTTARI_YEARS = mapOf(
             Planet.KETU to 7,
             Planet.VENUS to 20,
@@ -69,16 +49,15 @@ class VarshaphalaCalculator(context: Context) {
         )
 
         private val DAY_LORDS = listOf(
-            Planet.SUN,     // Sunday
-            Planet.MOON,    // Monday
-            Planet.MARS,    // Tuesday
-            Planet.MERCURY, // Wednesday
-            Planet.JUPITER, // Thursday
-            Planet.VENUS,   // Friday
-            Planet.SATURN   // Saturday
+            Planet.SUN,
+            Planet.MOON,
+            Planet.MARS,
+            Planet.MERCURY,
+            Planet.JUPITER,
+            Planet.VENUS,
+            Planet.SATURN
         )
 
-        // Hadda (Term) boundaries for each sign
         private val HADDA_LORDS = mapOf(
             ZodiacSign.ARIES to listOf(
                 Triple(0.0, 6.0, Planet.JUPITER),
@@ -166,18 +145,16 @@ class VarshaphalaCalculator(context: Context) {
             )
         )
 
-        // Exaltation degrees for planets
         private val EXALTATION_DEGREES = mapOf(
-            Planet.SUN to 10.0,      // Aries 10°
-            Planet.MOON to 33.0,     // Taurus 3°
-            Planet.MARS to 298.0,    // Capricorn 28°
-            Planet.MERCURY to 165.0, // Virgo 15°
-            Planet.JUPITER to 95.0,  // Cancer 5°
-            Planet.VENUS to 357.0,   // Pisces 27°
-            Planet.SATURN to 200.0   // Libra 20°
+            Planet.SUN to 10.0,
+            Planet.MOON to 33.0,
+            Planet.MARS to 298.0,
+            Planet.MERCURY to 165.0,
+            Planet.JUPITER to 95.0,
+            Planet.VENUS to 357.0,
+            Planet.SATURN to 200.0
         )
 
-        // Debilitation signs
         private val DEBILITATION_SIGNS = mapOf(
             Planet.SUN to ZodiacSign.LIBRA,
             Planet.MOON to ZodiacSign.SCORPIO,
@@ -188,7 +165,6 @@ class VarshaphalaCalculator(context: Context) {
             Planet.SATURN to ZodiacSign.ARIES
         )
 
-        // Own signs for planets
         private val OWN_SIGNS = mapOf(
             Planet.SUN to listOf(ZodiacSign.LEO),
             Planet.MOON to listOf(ZodiacSign.CANCER),
@@ -199,7 +175,6 @@ class VarshaphalaCalculator(context: Context) {
             Planet.SATURN to listOf(ZodiacSign.CAPRICORN, ZodiacSign.AQUARIUS)
         )
 
-        // Planetary friendships
         private val FRIENDSHIPS = mapOf(
             Planet.SUN to listOf(Planet.MOON, Planet.MARS, Planet.JUPITER),
             Planet.MOON to listOf(Planet.SUN, Planet.MERCURY),
@@ -210,7 +185,6 @@ class VarshaphalaCalculator(context: Context) {
             Planet.SATURN to listOf(Planet.MERCURY, Planet.VENUS)
         )
 
-        // Neutral relationships
         private val NEUTRALS = mapOf(
             Planet.SUN to listOf(Planet.MERCURY),
             Planet.MOON to listOf(Planet.MARS, Planet.JUPITER, Planet.VENUS, Planet.SATURN),
@@ -220,6 +194,29 @@ class VarshaphalaCalculator(context: Context) {
             Planet.VENUS to listOf(Planet.MARS, Planet.JUPITER),
             Planet.SATURN to listOf(Planet.MARS, Planet.JUPITER)
         )
+
+        private val MUDDA_DASHA_PLANETS = listOf(
+            Planet.SUN, Planet.MOON, Planet.MARS, Planet.MERCURY,
+            Planet.JUPITER, Planet.VENUS, Planet.SATURN, Planet.RAHU, Planet.KETU
+        )
+
+        private val MUDDA_DASHA_DAYS = mapOf(
+            Planet.SUN to 110,
+            Planet.MOON to 60,
+            Planet.MARS to 32,
+            Planet.MERCURY to 40,
+            Planet.JUPITER to 48,
+            Planet.VENUS to 56,
+            Planet.SATURN to 4,
+            Planet.RAHU to 5,
+            Planet.KETU to 5
+        )
+
+        private val STANDARD_ZODIAC_SIGNS = listOf(
+            ZodiacSign.ARIES, ZodiacSign.TAURUS, ZodiacSign.GEMINI, ZodiacSign.CANCER,
+            ZodiacSign.LEO, ZodiacSign.VIRGO, ZodiacSign.LIBRA, ZodiacSign.SCORPIO,
+            ZodiacSign.SAGITTARIUS, ZodiacSign.CAPRICORN, ZodiacSign.AQUARIUS, ZodiacSign.PISCES
+        )
     }
 
     init {
@@ -228,13 +225,6 @@ class VarshaphalaCalculator(context: Context) {
         swissEph.swe_set_sid_mode(AYANAMSA_LAHIRI, 0.0, 0.0)
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // DATA CLASSES
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Tajika aspect types used in annual horoscopy
-     */
     enum class TajikaAspectType(val displayName: String, val description: String, val isPositive: Boolean) {
         ITHASALA("Ithasala", "Applying aspect - promises fulfillment of matters", true),
         EASARAPHA("Easarapha", "Separating aspect - event has passed or is fading", false),
@@ -253,9 +243,6 @@ class VarshaphalaCalculator(context: Context) {
         IKKABALA("Ikkabala", "Unity of strength between planets", true)
     }
 
-    /**
-     * Aspect strength classification
-     */
     enum class AspectStrength(val displayName: String, val weight: Double) {
         VERY_STRONG("Very Strong", 1.0),
         STRONG("Strong", 0.8),
@@ -264,9 +251,6 @@ class VarshaphalaCalculator(context: Context) {
         VERY_WEAK("Very Weak", 0.2)
     }
 
-    /**
-     * Saham (Arabic Part/Lot) types
-     */
     enum class SahamType(
         val displayName: String,
         val sanskritName: String,
@@ -294,16 +278,10 @@ class VarshaphalaCalculator(context: Context) {
         KARYASIDDHI("Success", "Karyasiddhi Saham", "Accomplishment of goals")
     }
 
-    /**
-     * Key date types for the year
-     */
     enum class KeyDateType {
         FAVORABLE, CHALLENGING, IMPORTANT, TRANSIT
     }
 
-    /**
-     * Solar Return Chart data
-     */
     data class SolarReturnChart(
         val year: Int,
         val solarReturnTime: LocalDateTime,
@@ -320,9 +298,6 @@ class VarshaphalaCalculator(context: Context) {
         val moonNakshatra: String
     )
 
-    /**
-     * Planet position in solar return chart
-     */
     data class SolarReturnPlanetPosition(
         val longitude: Double,
         val sign: ZodiacSign,
@@ -334,9 +309,6 @@ class VarshaphalaCalculator(context: Context) {
         val speed: Double
     )
 
-    /**
-     * Muntha (progressed ascendant) information
-     */
     data class MunthaResult(
         val longitude: Double,
         val sign: ZodiacSign,
@@ -349,9 +321,6 @@ class VarshaphalaCalculator(context: Context) {
         val themes: List<String>
     )
 
-    /**
-     * Saham (Arabic Part) result
-     */
     data class SahamResult(
         val type: SahamType,
         val name: String,
@@ -369,9 +338,6 @@ class VarshaphalaCalculator(context: Context) {
         val activationPeriods: List<String>
     )
 
-    /**
-     * Tajika Aspect result
-     */
     data class TajikaAspectResult(
         val type: TajikaAspectType,
         val planet1: Planet,
@@ -387,9 +353,6 @@ class VarshaphalaCalculator(context: Context) {
         val prediction: String
     )
 
-    /**
-     * Mudda Dasha period
-     */
     data class MuddaDashaPeriod(
         val planet: Planet,
         val startDate: LocalDate,
@@ -404,9 +367,6 @@ class VarshaphalaCalculator(context: Context) {
         val progressPercent: Float
     )
 
-    /**
-     * Mudda Antardasha (sub-period)
-     */
     data class MuddaAntardasha(
         val planet: Planet,
         val startDate: LocalDate,
@@ -415,9 +375,6 @@ class VarshaphalaCalculator(context: Context) {
         val interpretation: String
     )
 
-    /**
-     * Pancha Vargiya Bala (five-fold strength)
-     */
     data class PanchaVargiyaBala(
         val planet: Planet,
         val uchcha: Double,
@@ -429,9 +386,6 @@ class VarshaphalaCalculator(context: Context) {
         val category: String
     )
 
-    /**
-     * Tri-Pataki Chakra sector
-     */
     data class TriPatakiSector(
         val name: String,
         val signs: List<ZodiacSign>,
@@ -439,9 +393,6 @@ class VarshaphalaCalculator(context: Context) {
         val influence: String
     )
 
-    /**
-     * Tri-Pataki Chakra (three-flag diagram)
-     */
     data class TriPatakiChakra(
         val risingSign: ZodiacSign,
         val sectors: List<TriPatakiSector>,
@@ -449,9 +400,6 @@ class VarshaphalaCalculator(context: Context) {
         val interpretation: String
     )
 
-    /**
-     * House prediction
-     */
     data class HousePrediction(
         val house: Int,
         val signOnCusp: ZodiacSign,
@@ -465,9 +413,6 @@ class VarshaphalaCalculator(context: Context) {
         val specificEvents: List<String>
     )
 
-    /**
-     * Key date in the year
-     */
     data class KeyDate(
         val date: LocalDate,
         val event: String,
@@ -475,9 +420,6 @@ class VarshaphalaCalculator(context: Context) {
         val description: String
     )
 
-    /**
-     * Complete Varshaphala result
-     */
     data class VarshaphalaResult(
         val natalChart: VedicChart,
         val year: Int,
@@ -502,9 +444,6 @@ class VarshaphalaCalculator(context: Context) {
         val keyDates: List<KeyDate>,
         val timestamp: Long = System.currentTimeMillis()
     ) {
-        /**
-         * Generate plain text report for export
-         */
         fun toPlainText(): String = buildString {
             appendLine("═══════════════════════════════════════════════════════════")
             appendLine("            VARSHAPHALA (ANNUAL HOROSCOPE) REPORT")
@@ -558,13 +497,6 @@ class VarshaphalaCalculator(context: Context) {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // MAIN CALCULATION METHOD
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate complete Varshaphala for a given year
-     */
     fun calculateVarshaphala(natalChart: VedicChart, year: Int): VarshaphalaResult {
         val birthDateTime = natalChart.birthData.dateTime
         val birthYear = birthDateTime.year
@@ -572,7 +504,6 @@ class VarshaphalaCalculator(context: Context) {
 
         require(age >= 0) { "Year must be after birth year" }
 
-        // Calculate solar return time using Swiss Ephemeris
         val solarReturnTime = calculateSolarReturnTime(
             natalChart.birthData.dateTime,
             year,
@@ -581,7 +512,6 @@ class VarshaphalaCalculator(context: Context) {
             natalChart.birthData.timezone
         )
 
-        // Build complete solar return chart
         val solarReturnChart = calculateSolarReturnChart(
             solarReturnTime,
             natalChart.birthData.latitude,
@@ -590,51 +520,22 @@ class VarshaphalaCalculator(context: Context) {
             year
         )
 
-        // Calculate Pancha Vargiya Bala for all planets
         val panchaVargiyaBala = calculateAllPanchaVargiyaBalas(solarReturnChart)
-
-        // Calculate Muntha
         val muntha = calculateMuntha(natalChart, age, solarReturnChart)
-
-        // Determine Year Lord
         val yearLord = determineYearLord(solarReturnChart, muntha, natalChart, panchaVargiyaBala)
         val yearLordHouse = solarReturnChart.planetPositions[yearLord]?.house ?: 1
         val yearLordStrength = evaluatePlanetStrengthDescription(yearLord, solarReturnChart)
         val yearLordDignity = getYearLordDignityDescription(yearLord, solarReturnChart)
-
-        // Calculate Tri-Pataki Chakra
         val triPatakiChakra = calculateTriPatakiChakra(solarReturnChart)
-
-        // Calculate Sahams
         val sahams = calculateSahams(solarReturnChart)
-
-        // Calculate Tajika Aspects
         val tajikaAspects = calculateTajikaAspects(solarReturnChart)
-
-        // Calculate Mudda Dasha
         val muddaDasha = calculateMuddaDasha(solarReturnChart, solarReturnTime.toLocalDate())
-
-        // Generate House Predictions
         val housePredictions = generateHousePredictions(solarReturnChart, muntha, yearLord)
-
-        // Identify Major Themes
         val majorThemes = identifyMajorThemes(solarReturnChart, muntha, yearLord, housePredictions, triPatakiChakra, tajikaAspects)
-
-        // Calculate favorable and challenging months
         val (favorableMonths, challengingMonths) = calculateMonthlyInfluences(solarReturnChart, solarReturnTime)
-
-        // Calculate key dates
         val keyDates = calculateKeyDates(solarReturnChart, solarReturnTime, muddaDasha)
-
-        // Generate overall prediction
-        val overallPrediction = generateOverallPrediction(
-            solarReturnChart, yearLord, muntha, tajikaAspects, housePredictions
-        )
-
-        // Calculate year rating
-        val yearRating = calculateYearRating(
-            solarReturnChart, yearLord, muntha, tajikaAspects, housePredictions
-        )
+        val overallPrediction = generateOverallPrediction(solarReturnChart, yearLord, muntha, tajikaAspects, housePredictions)
+        val yearRating = calculateYearRating(solarReturnChart, yearLord, muntha, tajikaAspects, housePredictions)
 
         return VarshaphalaResult(
             natalChart = natalChart,
@@ -661,13 +562,6 @@ class VarshaphalaCalculator(context: Context) {
         )
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SOLAR RETURN CALCULATIONS (Using Swiss Ephemeris)
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate precise solar return time using Swiss Ephemeris
-     */
     private fun calculateSolarReturnTime(
         birthDateTime: LocalDateTime,
         targetYear: Int,
@@ -679,15 +573,12 @@ class VarshaphalaCalculator(context: Context) {
         val birthUtc = birthZoned.withZoneSameInstant(ZoneId.of("UTC"))
         val birthJd = calculateJulianDay(birthUtc.toLocalDateTime())
 
-        // Get natal Sun longitude using Swiss Ephemeris
         val natalSunLong = getPlanetLongitude(SweConst.SE_SUN, birthJd)
 
-        // Approximate Julian Day for solar return
         val yearsElapsed = targetYear - birthDateTime.year
         val approximateJd = birthJd + (yearsElapsed * SIDEREAL_YEAR_DAYS)
         var currentJd = approximateJd
 
-        // Iterative refinement to find exact solar return
         repeat(50) {
             val currentSunLong = getPlanetLongitude(SweConst.SE_SUN, currentJd)
             var diff = natalSunLong - currentSunLong
@@ -711,29 +602,20 @@ class VarshaphalaCalculator(context: Context) {
         return jdToLocalDateTime(currentJd, timezone)
     }
 
-    /**
-     * Get planet longitude from Swiss Ephemeris
-     */
     private fun getPlanetLongitude(planetId: Int, julianDay: Double): Double {
         val xx = DoubleArray(6)
         val serr = StringBuffer()
         swissEph.swe_calc_ut(julianDay, planetId, SEFLG_SIDEREAL or SEFLG_SPEED, xx, serr)
-        return normalizeAngle360(xx[0])
+        return normalizeAngle(xx[0])
     }
 
-    /**
-     * Get Sun speed (degrees per day)
-     */
     private fun getSunSpeed(julianDay: Double): Double {
         val xx = DoubleArray(6)
         val serr = StringBuffer()
         swissEph.swe_calc_ut(julianDay, SweConst.SE_SUN, SEFLG_SIDEREAL or SEFLG_SPEED, xx, serr)
-        return if (xx[3] != 0.0) xx[3] else 0.9856 // Mean motion if speed unavailable
+        return if (xx[3] != 0.0) xx[3] else 0.9856
     }
 
-    /**
-     * Calculate complete solar return chart
-     */
     private fun calculateSolarReturnChart(
         solarReturnTime: LocalDateTime,
         latitude: Double,
@@ -746,30 +628,26 @@ class VarshaphalaCalculator(context: Context) {
         val julianDay = calculateJulianDay(utcDateTime.toLocalDateTime())
         val ayanamsa = swissEph.swe_get_ayanamsa_ut(julianDay)
 
-        // Calculate house cusps
         val cusps = DoubleArray(13)
         val ascmc = DoubleArray(10)
         swissEph.swe_houses(julianDay, SEFLG_SIDEREAL, latitude, longitude, 'W'.code, cusps, ascmc)
 
-        val houseCusps = (1..12).map { cusps[it] }
-        val ascendantDegree = cusps[1]
-        val ascendant = ZodiacSign.fromLongitude(ascendantDegree)
-        val midheaven = ascmc[1]
+        val houseCusps = (1..12).map { normalizeAngle(cusps[it]) }
+        val ascendantDegree = normalizeAngle(cusps[1])
+        val ascendant = getZodiacSignFromLongitude(ascendantDegree)
+        val midheaven = normalizeAngle(ascmc[1])
 
-        // Calculate planet positions
         val planetPositions = mutableMapOf<Planet, SolarReturnPlanetPosition>()
         for (planet in Planet.MAIN_PLANETS) {
             val position = calculateSolarReturnPlanetPosition(planet, julianDay, ascendantDegree)
             planetPositions[planet] = position
         }
 
-        // Determine if day or night birth
         val sunPos = planetPositions[Planet.SUN]?.longitude ?: 0.0
         val isDayBirth = isDayChart(sunPos, ascendantDegree)
 
-        // Get Moon details
         val moonLong = planetPositions[Planet.MOON]?.longitude ?: 0.0
-        val moonSign = ZodiacSign.fromLongitude(moonLong)
+        val moonSign = getZodiacSignFromLongitude(moonLong)
         val (moonNakshatra, _) = Nakshatra.fromLongitude(moonLong)
 
         return SolarReturnChart(
@@ -789,9 +667,6 @@ class VarshaphalaCalculator(context: Context) {
         )
     }
 
-    /**
-     * Calculate planet position for solar return chart
-     */
     private fun calculateSolarReturnPlanetPosition(
         planet: Planet,
         julianDay: Double,
@@ -801,21 +676,20 @@ class VarshaphalaCalculator(context: Context) {
         val serr = StringBuffer()
 
         val planetId = when (planet) {
-            Planet.KETU -> -1 // Calculate from Rahu
+            Planet.KETU -> -1
             else -> planet.swissEphId
         }
 
         if (planetId >= 0) {
             swissEph.swe_calc_ut(julianDay, planetId, SEFLG_SIDEREAL or SEFLG_SPEED, xx, serr)
         } else {
-            // Ketu is 180° from Rahu
             swissEph.swe_calc_ut(julianDay, SweConst.SE_MEAN_NODE, SEFLG_SIDEREAL or SEFLG_SPEED, xx, serr)
-            xx[0] = normalizeAngle360(xx[0] + 180.0)
+            xx[0] = normalizeAngle(xx[0] + 180.0)
             xx[3] = -xx[3]
         }
 
-        val longitude = normalizeAngle360(xx[0])
-        val sign = ZodiacSign.fromLongitude(longitude)
+        val longitude = normalizeAngle(xx[0])
+        val sign = getZodiacSignFromLongitude(longitude)
         val house = calculateWholeSignHouse(longitude, ascendantLongitude)
         val degree = longitude % 30.0
         val (nakshatra, pada) = Nakshatra.fromLongitude(longitude)
@@ -834,29 +708,12 @@ class VarshaphalaCalculator(context: Context) {
         )
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // YEAR LORD CALCULATION
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Determine Year Lord using traditional Tajika rules
-     *
-     * The Year Lord (Varsheshwara) is determined from five candidates:
-     * 1. Dina Pati (Day Lord)
-     * 2. Lagna Pati (Ascendant Lord)
-     * 3. Muntha Pati (Muntha Lord)
-     * 4. Tri-Rashi Pati (Tri-sign Lord)
-     * 5. Janma Rashi Pati (Moon Sign Lord from birth chart)
-     *
-     * The strongest among these becomes the Year Lord based on Pancha Vargiya Bala
-     */
     private fun determineYearLord(
         solarReturnChart: SolarReturnChart,
         muntha: MunthaResult,
         natalChart: VedicChart,
         allBalas: List<PanchaVargiyaBala>
     ): Planet {
-        // 1. Dina Pati (Day Lord)
         val dayOfWeek = solarReturnChart.solarReturnTime.dayOfWeek
         val dayIndex = when (dayOfWeek) {
             DayOfWeek.SUNDAY -> 0
@@ -868,78 +725,52 @@ class VarshaphalaCalculator(context: Context) {
             DayOfWeek.SATURDAY -> 6
         }
         val dinaPati = DAY_LORDS[dayIndex]
-
-        // 2. Lagna Pati (Ascendant Lord)
         val lagnaPati = solarReturnChart.ascendant.ruler
-
-        // 3. Muntha Pati (Muntha Lord)
         val munthaPati = muntha.lord
-
-        // 4. Janma Rashi Pati (Moon Sign Lord from birth chart)
         val natalMoonSign = natalChart.planetPositions.find { it.planet == Planet.MOON }?.sign
             ?: ZodiacSign.ARIES
         val janmaRashiPati = natalMoonSign.ruler
 
-        // Collect unique candidates
         val candidates = listOf(dinaPati, lagnaPati, munthaPati, janmaRashiPati).distinct()
 
-        // Calculate strength for each candidate
         val candidatesWithStrength = candidates.map { planet ->
             val bala = allBalas.find { it.planet == planet }?.total ?: 0.0
             val additionalStrength = calculateAdditionalStrength(planet, solarReturnChart)
             planet to (bala + additionalStrength)
         }
 
-        // Return the strongest candidate
         return candidatesWithStrength.maxByOrNull { it.second }?.first ?: dinaPati
     }
 
-    /**
-     * Calculate additional strength factors for year lord determination
-     */
     private fun calculateAdditionalStrength(planet: Planet, chart: SolarReturnChart): Double {
         var strength = 0.0
         val position = chart.planetPositions[planet] ?: return 0.0
 
-        // Angular placement bonus
         when (position.house) {
-            1, 4, 7, 10 -> strength += 5.0  // Kendra (angular) houses
-            5, 9 -> strength += 3.0          // Trikona (trine) houses
-            6, 8, 12 -> strength -= 3.0      // Dusthana (malefic) houses
+            1, 4, 7, 10 -> strength += 5.0
+            5, 9 -> strength += 3.0
+            6, 8, 12 -> strength -= 3.0
         }
 
-        // Dignity considerations
-        if (position.sign.ruler == planet) strength += 4.0  // Own sign
+        if (position.sign.ruler == planet) strength += 4.0
         if (isExalted(planet, position.sign)) strength += 5.0
         if (isDebilitated(planet, position.sign)) strength -= 5.0
-
-        // Direct motion bonus
         if (!position.isRetrograde) strength += 1.0
 
         return strength
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // MUNTHA CALCULATION
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate Muntha (progressed ascendant)
-     *
-     * Muntha progresses one sign per year from the natal ascendant.
-     * Its position and lord are significant indicators for the year.
-     */
     private fun calculateMuntha(
         natalChart: VedicChart,
         age: Int,
         solarReturnChart: SolarReturnChart
     ): MunthaResult {
-        val natalAscLongitude = natalChart.ascendant
-        val progressedLongitude = normalizeAngle360(natalAscLongitude + (age * 30.0))
-        val munthaSign = ZodiacSign.fromLongitude(progressedLongitude)
+        val natalAscLongitude = normalizeAngle(natalChart.ascendant)
+        val progressedLongitude = normalizeAngle(natalAscLongitude + (age * 30.0))
+        val munthaSign = getZodiacSignFromLongitude(progressedLongitude)
         val degreeInSign = progressedLongitude % 30.0
-        val munthaHouse = calculateWholeSignHouse(progressedLongitude,
-            solarReturnChart.ascendant.ordinal * 30.0 + solarReturnChart.ascendantDegree)
+        val ascendantLongitude = getStandardZodiacIndex(solarReturnChart.ascendant) * 30.0 + solarReturnChart.ascendantDegree
+        val munthaHouse = calculateWholeSignHouse(progressedLongitude, ascendantLongitude)
         val munthaLord = munthaSign.ruler
 
         val lordPosition = solarReturnChart.planetPositions[munthaLord]
@@ -988,7 +819,6 @@ class VarshaphalaCalculator(context: Context) {
         lordStrength: String
     ): String {
         val houseSignificance = getHouseSignificance(house)
-
         val lordQuality = when (lordStrength) {
             "Exalted", "Strong" -> "excellent"
             "Moderate", "Angular" -> "favorable"
@@ -1000,33 +830,16 @@ class VarshaphalaCalculator(context: Context) {
                 "The Muntha lord ${lord.displayName} in house $lordHouse provides $lordQuality support for these matters."
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // PANCHA VARGIYA BALA
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate Pancha Vargiya Bala for all planets
-     */
     private fun calculateAllPanchaVargiyaBalas(chart: SolarReturnChart): List<PanchaVargiyaBala> {
         return Planet.MAIN_PLANETS.filter { it != Planet.RAHU && it != Planet.KETU }
             .map { calculatePanchaVargiyaBala(it, chart) }
     }
 
-    /**
-     * Calculate five-fold planetary strength
-     *
-     * Components:
-     * 1. Uchcha Bala - Exaltation strength
-     * 2. Hadda Bala - Term strength
-     * 3. Drekkana Bala - Decanate strength
-     * 4. Navamsha Bala - Ninth divisional strength
-     * 5. Dwadashamsha Bala - Twelfth divisional strength
-     */
     private fun calculatePanchaVargiyaBala(planet: Planet, chart: SolarReturnChart): PanchaVargiyaBala {
         val position = chart.planetPositions[planet]
             ?: return PanchaVargiyaBala(planet, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "Unknown")
 
-        val longitude = position.longitude
+        val longitude = normalizeAngle(position.longitude)
 
         val uchcha = calculateUchchaBala(planet, longitude)
         val hadda = calculateHaddaBala(planet, position.sign, position.degree)
@@ -1058,7 +871,8 @@ class VarshaphalaCalculator(context: Context) {
 
     private fun calculateUchchaBala(planet: Planet, longitude: Double): Double {
         val exaltationPoint = EXALTATION_DEGREES[planet] ?: return 0.0
-        val diff = abs(normalizeAngle360(longitude - exaltationPoint))
+        val normalizedLong = normalizeAngle(longitude)
+        val diff = abs(normalizeAngle(normalizedLong - exaltationPoint))
         val adjustedDiff = if (diff > 180) 360 - diff else diff
         return ((180 - adjustedDiff) / 180.0 * 5.0).coerceIn(0.0, 5.0)
     }
@@ -1079,15 +893,16 @@ class VarshaphalaCalculator(context: Context) {
         return 2.0
     }
 
-    private fun calculateDrekkanaBala(planet: Planet, sign: ZodiacSign, degree: Double): Double {
+        private fun calculateDrekkanaBala(planet: Planet, sign: ZodiacSign, degree: Double): Double {
         val drekkanaNumber = when {
             degree < 10 -> 1
             degree < 20 -> 2
             else -> 3
         }
 
-        val drekkanaSignIndex = (sign.number - 1 + (drekkanaNumber - 1) * 4) % 12
-        val drekkanaSign = ZodiacSign.entries[drekkanaSignIndex]
+        val signIndex = getStandardZodiacIndex(sign)
+        val drekkanaSignIndex = (signIndex + (drekkanaNumber - 1) * 4) % 12
+        val drekkanaSign = STANDARD_ZODIAC_SIGNS[drekkanaSignIndex]
         val drekkanaLord = drekkanaSign.ruler
 
         return when {
@@ -1099,19 +914,20 @@ class VarshaphalaCalculator(context: Context) {
     }
 
     private fun calculateNavamshaBala(planet: Planet, longitude: Double): Double {
-        val degreeInSign = longitude % 30.0
-        val navamshaIndex = (degreeInSign / 3.333333).toInt()
-        val signIndex = (longitude / 30.0).toInt()
+        val normalizedLong = normalizeAngle(longitude)
+        val degreeInSign = normalizedLong % 30.0
+        val navamshaIndex = (degreeInSign / 3.333333).toInt().coerceIn(0, 8)
+        val signIndex = (normalizedLong / 30.0).toInt().coerceIn(0, 11)
 
         val startSign = when (signIndex % 4) {
-            0 -> 0  // Fire signs start from Aries
-            1 -> 9  // Earth signs start from Capricorn
-            2 -> 6  // Air signs start from Libra
-            else -> 3  // Water signs start from Cancer
+            0 -> 0
+            1 -> 9
+            2 -> 6
+            else -> 3
         }
 
         val navamshaSignIndex = (startSign + navamshaIndex) % 12
-        val navamshaLord = ZodiacSign.entries[navamshaSignIndex].ruler
+        val navamshaLord = STANDARD_ZODIAC_SIGNS[navamshaSignIndex].ruler
 
         return when {
             navamshaLord == planet -> 4.0
@@ -1122,11 +938,12 @@ class VarshaphalaCalculator(context: Context) {
     }
 
     private fun calculateDwadashamshabala(planet: Planet, longitude: Double): Double {
-        val degreeInSign = longitude % 30.0
-        val d12Index = (degreeInSign / 2.5).toInt()
-        val signIndex = (longitude / 30.0).toInt()
+        val normalizedLong = normalizeAngle(longitude)
+        val degreeInSign = normalizedLong % 30.0
+        val d12Index = (degreeInSign / 2.5).toInt().coerceIn(0, 11)
+        val signIndex = (normalizedLong / 30.0).toInt().coerceIn(0, 11)
         val d12SignIndex = (signIndex + d12Index) % 12
-        val d12Lord = ZodiacSign.entries[d12SignIndex].ruler
+        val d12Lord = STANDARD_ZODIAC_SIGNS[d12SignIndex].ruler
 
         return when {
             d12Lord == planet -> 3.0
@@ -1136,37 +953,25 @@ class VarshaphalaCalculator(context: Context) {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // TRI-PATAKI CHAKRA
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate Tri-Pataki Chakra (Three-Flag Diagram)
-     *
-     * Divides the zodiac into three sectors based on ascendant:
-     * 1. Dharma Trikona (1, 5, 9) - Righteousness
-     * 2. Artha Trikona (2, 6, 10) - Material prosperity
-     * 3. Kama Trikona (3, 7, 11) - Desires
-     */
     private fun calculateTriPatakiChakra(chart: SolarReturnChart): TriPatakiChakra {
-        val ascIndex = chart.ascendant.ordinal
+        val ascIndex = getStandardZodiacIndex(chart.ascendant)
 
         val dharmaSigns = listOf(
-            ZodiacSign.entries[ascIndex],
-            ZodiacSign.entries[(ascIndex + 4) % 12],
-            ZodiacSign.entries[(ascIndex + 8) % 12]
+            STANDARD_ZODIAC_SIGNS[ascIndex],
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 4) % 12],
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 8) % 12]
         )
 
         val arthaSigns = listOf(
-            ZodiacSign.entries[(ascIndex + 1) % 12],
-            ZodiacSign.entries[(ascIndex + 5) % 12],
-            ZodiacSign.entries[(ascIndex + 9) % 12]
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 1) % 12],
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 5) % 12],
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 9) % 12]
         )
 
         val kamaSigns = listOf(
-            ZodiacSign.entries[(ascIndex + 2) % 12],
-            ZodiacSign.entries[(ascIndex + 6) % 12],
-            ZodiacSign.entries[(ascIndex + 10) % 12]
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 2) % 12],
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 6) % 12],
+            STANDARD_ZODIAC_SIGNS[(ascIndex + 10) % 12]
         )
 
         fun getPlanetsInSector(signs: List<ZodiacSign>): List<Planet> {
@@ -1252,13 +1057,6 @@ class VarshaphalaCalculator(context: Context) {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SAHAMS (ARABIC PARTS)
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate Sahams (Arabic Parts/Lots)
-     */
     private fun calculateSahams(chart: SolarReturnChart): List<SahamResult> {
         val sahams = mutableListOf<SahamResult>()
         val isDayBirth = chart.isDayBirth
@@ -1270,7 +1068,7 @@ class VarshaphalaCalculator(context: Context) {
         val jupiterLong = chart.planetPositions[Planet.JUPITER]?.longitude ?: 0.0
         val venusLong = chart.planetPositions[Planet.VENUS]?.longitude ?: 0.0
         val saturnLong = chart.planetPositions[Planet.SATURN]?.longitude ?: 0.0
-        val ascLong = chart.ascendant.ordinal * 30.0 + chart.ascendantDegree
+        val ascLong = getStandardZodiacIndex(chart.ascendant) * 30.0 + chart.ascendantDegree
 
         val sahamFormulas = listOf(
             Triple(SahamType.PUNYA, { if (isDayBirth) moonLong + ascLong - sunLong else sunLong + ascLong - moonLong }, "Moon + Asc - Sun"),
@@ -1295,8 +1093,8 @@ class VarshaphalaCalculator(context: Context) {
 
         for ((type, formula, formulaStr) in sahamFormulas) {
             try {
-                val longitude = normalizeAngle360(formula())
-                val sign = ZodiacSign.fromLongitude(longitude)
+                val longitude = normalizeAngle(formula())
+                val sign = getZodiacSignFromLongitude(longitude)
                 val house = calculateWholeSignHouse(longitude, ascLong)
                 val degree = longitude % 30.0
                 val lord = sign.ruler
@@ -1365,19 +1163,12 @@ class VarshaphalaCalculator(context: Context) {
 
     private fun getSahamActivationPeriods(lord: Planet): List<String> {
         val periods = mutableListOf<String>()
-        if (lord in VIMSHOTTARI_ORDER) {
+        if (lord in MUDDA_DASHA_PLANETS) {
             periods.add("${lord.displayName} Mudda Dasha")
         }
         return periods
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // TAJIKA ASPECTS
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate Tajika aspects between planets
-     */
     private fun calculateTajikaAspects(chart: SolarReturnChart): List<TajikaAspectResult> {
         val aspects = mutableListOf<TajikaAspectResult>()
         val planets = listOf(
@@ -1395,7 +1186,7 @@ class VarshaphalaCalculator(context: Context) {
                 val pos1 = chart.planetPositions[planet1] ?: continue
                 val pos2 = chart.planetPositions[planet2] ?: continue
 
-                val diff = abs(normalizeAngle360(pos1.longitude - pos2.longitude))
+                val diff = abs(normalizeAngle(pos1.longitude - pos2.longitude))
 
                 for (angle in aspectAngles) {
                     val maxOrb = when (angle) {
@@ -1448,7 +1239,7 @@ class VarshaphalaCalculator(context: Context) {
     }
 
     private fun determineTajikaApplication(long1: Double, long2: Double, speed1: Double, speed2: Double): Boolean {
-        val diff = normalizeAngle360(long2 - long1)
+        val diff = normalizeAngle(long2 - long1)
         return if (diff < 180) speed1 > speed2 else speed2 > speed1
     }
 
@@ -1526,67 +1317,40 @@ class VarshaphalaCalculator(context: Context) {
         return "The ${type.displayName} between ${planet1.displayName} and ${planet2.displayName} is $quality for matters of $houseStr."
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // MUDDA DASHA
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Calculate Mudda Dasha (annual planetary periods)
-     */
     private fun calculateMuddaDasha(chart: SolarReturnChart, startDate: LocalDate): List<MuddaDashaPeriod> {
-        val dashaOrder = listOf(
-            Planet.SUN, Planet.MOON, Planet.MARS, Planet.MERCURY,
-            Planet.JUPITER, Planet.VENUS, Planet.SATURN, Planet.RAHU, Planet.KETU
-        )
-
-        // Proportional days based on Vimshottari years (scaled to 365 days)
-        val dashaDays = mapOf(
-            Planet.SUN to 110,
-            Planet.MOON to 60,
-            Planet.MARS to 32,
-            Planet.MERCURY to 40,
-            Planet.JUPITER to 48,
-            Planet.VENUS to 56,
-            Planet.SATURN to 4,
-            Planet.RAHU to 5,
-            Planet.KETU to 5
-        )
-
         val totalDays = 360
         val today = LocalDate.now()
 
-        // Determine starting lord based on Moon's nakshatra
         val moonLong = chart.planetPositions[Planet.MOON]?.longitude ?: 0.0
         val (nakshatra, _) = Nakshatra.fromLongitude(moonLong)
         val startingLord = nakshatra.ruler
-        val startIndex = dashaOrder.indexOf(
-            when (startingLord) {
-                in dashaOrder -> startingLord
-                else -> Planet.SUN
-            }
-        )
+
+        val startIndex = MUDDA_DASHA_PLANETS.indexOf(startingLord).let { 
+            if (it >= 0) it else 0 
+        }
 
         val periods = mutableListOf<MuddaDashaPeriod>()
         var currentDate = startDate
 
-        for (i in dashaOrder.indices) {
-            val planetIndex = (startIndex + i) % dashaOrder.size
-            val planet = dashaOrder[planetIndex]
-            val days = (dashaDays[planet] ?: 30) * totalDays / 360
+        for (i in MUDDA_DASHA_PLANETS.indices) {
+            val planetIndex = (startIndex + i) % MUDDA_DASHA_PLANETS.size
+            val planet = MUDDA_DASHA_PLANETS[planetIndex]
+            val baseDays = MUDDA_DASHA_DAYS[planet] ?: 30
+            val days = (baseDays * totalDays / 360).coerceAtLeast(1)
 
             val endDate = currentDate.plusDays(days.toLong() - 1)
-            val isCurrent = today >= currentDate && today <= endDate
+            val isCurrent = !today.isBefore(currentDate) && !today.isAfter(endDate)
 
             val progressPercent = if (isCurrent) {
                 val daysPassed = ChronoUnit.DAYS.between(currentDate, today).toFloat()
                 (daysPassed / days).coerceIn(0f, 1f)
-            } else if (today > endDate) {
+            } else if (today.isAfter(endDate)) {
                 1f
             } else {
                 0f
             }
 
-            val subPeriods = calculateMuddaAntardasha(planet, currentDate, endDate, dashaOrder)
+            val subPeriods = calculateMuddaAntardasha(planet, currentDate, endDate)
             val planetStrength = evaluatePlanetStrengthDescription(planet, chart)
             val houseRuled = getHousesRuledBy(planet, chart)
             val prediction = generateDashaPrediction(planet, chart, planetStrength)
@@ -1617,27 +1381,31 @@ class VarshaphalaCalculator(context: Context) {
     private fun calculateMuddaAntardasha(
         mainPlanet: Planet,
         startDate: LocalDate,
-        endDate: LocalDate,
-        dashaOrder: List<Planet>
+        endDate: LocalDate
     ): List<MuddaAntardasha> {
-        val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toInt()
+        val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toInt().coerceAtLeast(1)
         val subPeriods = mutableListOf<MuddaAntardasha>()
 
-        val startIndex = dashaOrder.indexOf(mainPlanet)
+        val startIndex = MUDDA_DASHA_PLANETS.indexOf(mainPlanet).let {
+            if (it >= 0) it else 0
+        }
+        
         var currentDate = startDate
-        val subDays = totalDays / 9
+        val subDays = (totalDays / MUDDA_DASHA_PLANETS.size).coerceAtLeast(1)
 
-        for (i in dashaOrder.indices) {
-            val planetIndex = (startIndex + i) % dashaOrder.size
-            val planet = dashaOrder[planetIndex]
+        for (i in MUDDA_DASHA_PLANETS.indices) {
+            val planetIndex = (startIndex + i) % MUDDA_DASHA_PLANETS.size
+            val planet = MUDDA_DASHA_PLANETS[planetIndex]
 
-            val actualSubDays = if (i == dashaOrder.size - 1) {
-                ChronoUnit.DAYS.between(currentDate, endDate).toInt() + 1
+            val actualSubDays = if (i == MUDDA_DASHA_PLANETS.size - 1) {
+                ChronoUnit.DAYS.between(currentDate, endDate).toInt().coerceAtLeast(1)
             } else {
                 subDays
             }
 
-            val subEndDate = currentDate.plusDays(actualSubDays.toLong() - 1)
+            val subEndDate = currentDate.plusDays(actualSubDays.toLong() - 1).let {
+                if (it.isAfter(endDate)) endDate else it
+            }
 
             subPeriods.add(
                 MuddaAntardasha(
@@ -1650,7 +1418,7 @@ class VarshaphalaCalculator(context: Context) {
             )
 
             currentDate = subEndDate.plusDays(1)
-            if (currentDate > endDate) break
+            if (currentDate.isAfter(endDate)) break
         }
 
         return subPeriods
@@ -1658,11 +1426,11 @@ class VarshaphalaCalculator(context: Context) {
 
     private fun getHousesRuledBy(planet: Planet, chart: SolarReturnChart): List<Int> {
         val houses = mutableListOf<Int>()
-        val ascendantIndex = chart.ascendant.ordinal
+        val ascendantIndex = getStandardZodiacIndex(chart.ascendant)
 
         for (i in 0..11) {
             val signIndex = (ascendantIndex + i) % 12
-            val sign = ZodiacSign.entries[signIndex]
+            val sign = STANDARD_ZODIAC_SIGNS[signIndex]
             if (sign.ruler == planet) {
                 houses.add(i + 1)
             }
@@ -1736,24 +1504,17 @@ class VarshaphalaCalculator(context: Context) {
         return (planetKeywords + houseKeywords).take(5)
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // HOUSE PREDICTIONS
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Generate predictions for all 12 houses
-     */
     private fun generateHousePredictions(
         chart: SolarReturnChart,
         muntha: MunthaResult,
         yearLord: Planet
     ): List<HousePrediction> {
         val predictions = mutableListOf<HousePrediction>()
-        val ascIndex = chart.ascendant.ordinal
+        val ascIndex = getStandardZodiacIndex(chart.ascendant)
 
         for (house in 1..12) {
             val signIndex = (ascIndex + house - 1) % 12
-            val sign = ZodiacSign.entries[signIndex]
+            val sign = STANDARD_ZODIAC_SIGNS[signIndex]
             val houseLord = sign.ruler
             val lordPosition = chart.planetPositions[houseLord]?.house ?: 1
 
@@ -1996,10 +1757,6 @@ class VarshaphalaCalculator(context: Context) {
         return events.take(4)
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // MAJOR THEMES & OVERALL PREDICTION
-    // ═══════════════════════════════════════════════════════════════════════════
-
     private fun identifyMajorThemes(
         chart: SolarReturnChart,
         muntha: MunthaResult,
@@ -2010,23 +1767,18 @@ class VarshaphalaCalculator(context: Context) {
     ): List<String> {
         val themes = mutableListOf<String>()
 
-        // Year Lord theme
         val yearLordHouse = chart.planetPositions[yearLord]?.house ?: 1
         themes.add("Year Lord ${yearLord.displayName} emphasizes ${getHouseSignificance(yearLordHouse)}")
 
-        // Muntha theme
         themes.add("Muntha in House ${muntha.house} focuses on ${muntha.themes.firstOrNull() ?: "personal growth"}")
 
-        // Tri-Pataki theme
         themes.add("Tri-Pataki: ${triPataki.dominantInfluence}")
 
-        // Strong houses
         housePredictions.filter { it.strength in listOf("Excellent", "Strong") }
             .sortedByDescending { it.rating }
             .take(2)
             .forEach { themes.add("Favorable: ${getHouseSignificance(it.house)} (House ${it.house})") }
 
-        // Tajika aspects theme
         val positiveAspects = tajikaAspects.count { it.type.isPositive }
         val totalAspects = tajikaAspects.size
         if (totalAspects > 0) {
@@ -2049,7 +1801,7 @@ class VarshaphalaCalculator(context: Context) {
 
         for (monthOffset in 0..11) {
             val month = ((solarReturnTime.monthValue - 1 + monthOffset) % 12) + 1
-            val transitHouse = (yearLordHouse + monthOffset) % 12 + 1
+            val transitHouse = (yearLordHouse + monthOffset - 1) % 12 + 1
 
             val isFavorable = transitHouse in listOf(1, 2, 4, 5, 7, 9, 10, 11)
 
@@ -2070,7 +1822,6 @@ class VarshaphalaCalculator(context: Context) {
     ): List<KeyDate> {
         val keyDates = mutableListOf<KeyDate>()
 
-        // Solar Return date
         keyDates.add(
             KeyDate(
                 date = solarReturnTime.toLocalDate(),
@@ -2080,7 +1831,6 @@ class VarshaphalaCalculator(context: Context) {
             )
         )
 
-        // Mudda Dasha start dates
         muddaDasha.forEach { period ->
             keyDates.add(
                 KeyDate(
@@ -2153,7 +1903,6 @@ class VarshaphalaCalculator(context: Context) {
     ): Float {
         var rating = 3.0f
 
-        // Year Lord strength
         val yearLordStrength = evaluatePlanetStrengthDescription(yearLord, chart)
         rating += when (yearLordStrength) {
             "Exalted" -> 0.8f
@@ -2163,7 +1912,6 @@ class VarshaphalaCalculator(context: Context) {
             else -> 0.0f
         }
 
-        // Muntha lord strength
         rating += when (muntha.lordStrength) {
             "Exalted", "Strong" -> 0.3f
             "Moderate" -> 0.1f
@@ -2171,19 +1919,15 @@ class VarshaphalaCalculator(context: Context) {
             else -> 0.0f
         }
 
-        // Muntha house
         if (muntha.house in listOf(1, 2, 4, 5, 9, 10, 11)) rating += 0.2f
 
-        // Tajika aspects
         val positiveAspects = tajikaAspects.count { it.type.isPositive && it.strength.weight >= 0.6 }
         val negativeAspects = tajikaAspects.count { !it.type.isPositive && it.strength.weight >= 0.6 }
         rating += (positiveAspects * 0.1f - negativeAspects * 0.1f).coerceIn(-0.5f, 0.5f)
 
-        // House predictions average
         val averageHouseRating = housePredictions.map { it.rating }.average().toFloat()
         rating += (averageHouseRating - 3.0f) * 0.3f
 
-        // Benefics in angles
         val beneficsAngular = chart.planetPositions.count { (planet, pos) ->
             planet in listOf(Planet.JUPITER, Planet.VENUS) && pos.house in listOf(1, 4, 7, 10)
         }
@@ -2191,10 +1935,6 @@ class VarshaphalaCalculator(context: Context) {
 
         return rating.coerceIn(1.0f, 5.0f)
     }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // UTILITY FUNCTIONS
-    // ═══════════════════════════════════════════════════════════════════════════
 
     private fun calculateJulianDay(dateTime: LocalDateTime): Double {
         var y = dateTime.year
@@ -2243,22 +1983,37 @@ class VarshaphalaCalculator(context: Context) {
         return localZoned.toLocalDateTime()
     }
 
-    private fun normalizeAngle360(angle: Double): Double {
+    private fun normalizeAngle(angle: Double): Double {
         var result = angle % 360.0
         if (result < 0) result += 360.0
         return result
     }
 
+    private fun getZodiacSignFromLongitude(longitude: Double): ZodiacSign {
+        val normalizedLong = normalizeAngle(longitude)
+        val signIndex = (normalizedLong / 30.0).toInt().coerceIn(0, 11)
+        return STANDARD_ZODIAC_SIGNS[signIndex]
+    }
+
+    private fun getStandardZodiacIndex(sign: ZodiacSign): Int {
+        val index = STANDARD_ZODIAC_SIGNS.indexOf(sign)
+        return if (index >= 0) index else 0
+    }
+
     private fun calculateWholeSignHouse(longitude: Double, ascendantLongitude: Double): Int {
-        val ascSign = (ascendantLongitude / 30.0).toInt()
-        val planetSign = (longitude / 30.0).toInt()
+        val normalizedLong = normalizeAngle(longitude)
+        val normalizedAsc = normalizeAngle(ascendantLongitude)
+        val ascSign = (normalizedAsc / 30.0).toInt().coerceIn(0, 11)
+        val planetSign = (normalizedLong / 30.0).toInt().coerceIn(0, 11)
         val house = ((planetSign - ascSign + 12) % 12) + 1
-        return house
+        return house.coerceIn(1, 12)
     }
 
     private fun isDayChart(sunLongitude: Double, ascendant: Double): Boolean {
-        val sunSign = (sunLongitude / 30.0).toInt()
-        val ascSign = (ascendant / 30.0).toInt()
+        val normalizedSun = normalizeAngle(sunLongitude)
+        val normalizedAsc = normalizeAngle(ascendant)
+        val sunSign = (normalizedSun / 30.0).toInt().coerceIn(0, 11)
+        val ascSign = (normalizedAsc / 30.0).toInt().coerceIn(0, 11)
         val houseOfSun = ((sunSign - ascSign + 12) % 12) + 1
         return houseOfSun in listOf(7, 8, 9, 10, 11, 12, 1)
     }
@@ -2268,7 +2023,6 @@ class VarshaphalaCalculator(context: Context) {
 
         val dignityDetails = mutableListOf<String>()
 
-        // Sign-based dignity
         when {
             isExalted(planet, position.sign) -> dignityDetails.add("exalted in ${position.sign.displayName}")
             OWN_SIGNS[planet]?.contains(position.sign) == true -> dignityDetails.add("in its own sign of ${position.sign.displayName}")
@@ -2283,7 +2037,6 @@ class VarshaphalaCalculator(context: Context) {
             }
         }
 
-        // House-based placement
         when (position.house) {
             1, 4, 7, 10 -> dignityDetails.add("in an angular house (Kendra)")
             5, 9 -> dignityDetails.add("in a trine house (Trikona)")
@@ -2315,7 +2068,7 @@ class VarshaphalaCalculator(context: Context) {
 
     private fun isExalted(planet: Planet, sign: ZodiacSign): Boolean {
         val exaltationDegree = EXALTATION_DEGREES[planet] ?: return false
-        val exaltationSign = ZodiacSign.fromLongitude(exaltationDegree)
+        val exaltationSign = getZodiacSignFromLongitude(exaltationDegree)
         return sign == exaltationSign
     }
 
@@ -2359,13 +2112,7 @@ class VarshaphalaCalculator(context: Context) {
         }
     }
 
-    /**
-     * Get house meaning for external use
-     */
     fun getHouseMeaning(house: Int): String = getHouseSignificance(house)
 
-    /**
-     * Get house keywords for external use
-     */
     fun getHouseKeywordsExternal(house: Int): List<String> = getHouseKeywords(house)
 }
