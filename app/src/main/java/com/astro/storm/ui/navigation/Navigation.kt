@@ -160,7 +160,6 @@ fun AstroStormNavigation(
             // Load chart if not already loaded
             LaunchedEffect(chartId) {
                 if (selectedChartId != chartId) {
-                    selectedChartId = chartId
                     viewModel.loadChart(chartId)
                 }
             }
@@ -221,7 +220,6 @@ fun AstroStormNavigation(
 
             LaunchedEffect(chartId) {
                 if (selectedChartId != chartId) {
-                    selectedChartId = chartId
                     viewModel.loadChart(chartId)
                 }
             }
@@ -241,7 +239,6 @@ fun AstroStormNavigation(
 
             LaunchedEffect(chartId) {
                 if (selectedChartId != chartId) {
-                    selectedChartId = chartId
                     viewModel.loadChart(chartId)
                 }
             }
