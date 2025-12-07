@@ -1,28 +1,39 @@
 package com.astro.storm.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.DashaCalculator
@@ -30,22 +41,7 @@ import com.astro.storm.ui.screen.chartdetail.tabs.DashasTabContent
 import com.astro.storm.ui.theme.AppTheme
 import com.astro.storm.ui.viewmodel.DashaUiState
 import com.astro.storm.ui.viewmodel.DashaViewModel
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
-/**
- * Dashas Screen - Standalone screen for Vimshottari Dasha planetary periods
- *
- * Features:
- * - Current period display (Mahadasha, Antardasha, Pratyantardasha, Sookshmadasha)
- * - Birth nakshatra and lord information
- * - Dasha sandhi (transition) alerts with upcoming 90-day warnings
- * - Complete 120-year Vimshottari timeline
- * - Expandable Mahadasha cards with Antardasha sub-periods
- * - Progress indicators with remaining time calculations
- * - Period insights and interpretations
- * - Educational information about Vimshottari Dasha system
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashasScreen(
@@ -53,34 +49,37 @@ fun DashasScreen(
     onBack: () -> Unit,
     viewModel: DashaViewModel = viewModel()
 ) {
-    LaunchedEffect(chart) {
+    val chartKey = remember(chart) {
+        chart?.let {
+            "${it.birthData.dateTime}|${it.birthData.latitude}|${it.birthData.longitude}"
+        }
+    }
+
+    LaunchedEffect(chartKey) {
         viewModel.loadDashaTimeline(chart)
     }
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val currentPeriodText by remember(uiState) {
+        derivedStateOf {
+            when (val state = uiState) {
+                is DashaUiState.Success -> formatCurrentPeriod(state.timeline)
+                is DashaUiState.Loading -> "Loading..."
+                is DashaUiState.Error -> "Error"
+                is DashaUiState.Idle -> "No data"
+            }
+        }
+    }
 
     Scaffold(
         containerColor = AppTheme.ScreenBackground,
         topBar = {
-            val currentPeriod = when (val state = uiState) {
-                is DashaUiState.Success -> {
-                    val timeline = state.timeline
-                    buildString {
-                        timeline.currentMahadasha?.let { md ->
-                            append(md.planet.displayName)
-                            timeline.currentAntardasha?.let { ad ->
-                                append(" → ${ad.planet.displayName}")
-                            }
-                        } ?: append("Current period")
-                    }
-                }
-                else -> "Calculating..."
-            }
             DashasTopBar(
                 chartName = chart?.birthData?.name ?: "Dashas",
-                currentPeriod = currentPeriod,
+                currentPeriod = currentPeriodText,
                 onBack = onBack,
-                onJumpToToday = { /* TODO */ }
+                onJumpToToday = { }
             )
         }
     ) { paddingValues ->
@@ -92,13 +91,16 @@ fun DashasScreen(
         ) {
             when (val state = uiState) {
                 is DashaUiState.Loading -> {
-                    // Indeterminate loading indicator
+                    LoadingContent()
                 }
                 is DashaUiState.Success -> {
                     DashasTabContent(timeline = state.timeline)
                 }
                 is DashaUiState.Error -> {
-                    // Error state
+                    ErrorContent(
+                        message = state.message,
+                        onRetry = { viewModel.loadDashaTimeline(chart) }
+                    )
                 }
                 is DashaUiState.Idle -> {
                     if (chart == null) {
@@ -111,6 +113,84 @@ fun DashasScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = AppTheme.AccentPrimary,
+                strokeWidth = 4.dp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Calculating Dasha Timeline...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppTheme.TextMuted
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorContent(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ErrorOutline,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Calculation Error",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = AppTheme.TextPrimary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppTheme.TextMuted,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            TextButton(onClick = onRetry) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
+private fun formatCurrentPeriod(timeline: DashaCalculator.DashaTimeline): String {
+    return buildString {
+        timeline.currentMahadasha?.let { md ->
+            append(md.planet.displayName)
+            timeline.currentAntardasha?.let { ad ->
+                append(" → ${ad.planet.displayName}")
+            }
+        } ?: append("Current period")
     }
 }
 
