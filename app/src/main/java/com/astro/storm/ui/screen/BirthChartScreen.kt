@@ -161,7 +161,11 @@ fun BirthChartScreen(
                 chart = chart,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
-          
+
+        }
+    }
+}
+
 @Composable
 private fun BirthInfoSummaryCard(
     chart: VedicChart,
