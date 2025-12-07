@@ -1630,16 +1630,16 @@ private fun CurrentDashaCard(timeline: DashaCalculator.DashaTimeline) {
                 )
 
                 timeline.currentPratyantardasha?.let { pratyantardasha ->
-                    Spacer(modifier = Modifier.height(12.dp))
-                    PratyantardashaRow(pratyantardasha)
-                }
+    Spacer(modifier = Modifier.height(12.dp))
+    PratyantardashaRow(pratyantardasha)
+}
             }
         }
     }
 }
 
 @Composable
-private fun PratyantardashaRow(pratyantardasha: DashaCalculator.DashaPeriod) {
+private fun PratyantardashaRow(pratyantardasha: DashaCalculator.Pratyantardasha) {
     val planetColor = getPlanetColor(pratyantardasha.planet)
 
     Row(
