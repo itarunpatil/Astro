@@ -26,11 +26,13 @@ class ChartRenderer {
         isAntiAlias = true
         isSubpixelText = true
         hinting = android.graphics.Paint.HINTING_ON
+        letterSpacing = 0.02f
     }
 
-    private val borderStroke = Stroke(width = 3f)
-    private val lineStroke = Stroke(width = 2.5f)
+    private val borderStroke = Stroke(width = 2.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+    private val lineStroke = Stroke(width = 1.8f, cap = StrokeCap.Round, join = StrokeJoin.Round)
     private val frameLinesPath = Path()
+    private val arrowPath = Path()
 
     private enum class HouseType {
         DIAMOND,
@@ -38,12 +40,20 @@ class ChartRenderer {
         CORNER
     }
 
+    private enum class PlanetaryDignity {
+        EXALTED,
+        MOOL_TRIKONA,
+        OWN_SIGN,
+        NEUTRAL,
+        ENEMY,
+        DEBILITATED
+    }
+
     private data class HouseDisplayItem(
         val text: String,
         val color: Color,
         val isBold: Boolean,
-        val isExalted: Boolean = false,
-        val isDebilitated: Boolean = false,
+        val dignity: PlanetaryDignity = PlanetaryDignity.NEUTRAL,
         val isLagna: Boolean = false
     )
 
@@ -78,37 +88,46 @@ class ChartRenderer {
         private val TYPEFACE_NORMAL = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
         private val TYPEFACE_BOLD = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
 
-        private val BACKGROUND_COLOR = Color(0xFFD4C4A8)
-        private val BORDER_COLOR = Color(0xFFB8860B)
-        private val HOUSE_NUMBER_COLOR = Color(0xFF4A4A4A)
-        private val TEXT_BACKGROUND_COLOR = Color(0xFFD4C4A8)
+        private val BACKGROUND_COLOR = Color(0xFFFAF8F5)
+        private val CHART_FILL_COLOR = Color(0xFFF5F2ED)
+        private val BORDER_COLOR = Color(0xFF8B7355)
+        private val LINE_COLOR = Color(0xFFA69276)
+        private val HOUSE_NUMBER_COLOR = Color(0xFF6B5B4F)
+        private val TEXT_BACKGROUND_COLOR = Color(0xFFFAF8F5)
 
-        private val SUN_COLOR = Color(0xFFD2691E)
-        private val MOON_COLOR = Color(0xFFDC143C)
-        private val MARS_COLOR = Color(0xFFB22222)
-        private val MERCURY_COLOR = Color(0xFF228B22)
-        private val JUPITER_COLOR = Color(0xFFDAA520)
-        private val VENUS_COLOR = Color(0xFF9370DB)
-        private val SATURN_COLOR = Color(0xFF4169E1)
-        private val RAHU_COLOR = Color(0xFF8B0000)
-        private val KETU_COLOR = Color(0xFF8B0000)
-        private val URANUS_COLOR = Color(0xFF20B2AA)
-        private val NEPTUNE_COLOR = Color(0xFF4682B4)
-        private val PLUTO_COLOR = Color(0xFF800080)
-        private val LAGNA_COLOR = Color(0xFF8B4513)
-        private val EXALTED_ARROW_COLOR = Color(0xFF006400)
-        private val DEBILITATED_ARROW_COLOR = Color(0xFFB22222)
+        private val SUN_COLOR = Color(0xFFE67E22)
+        private val MOON_COLOR = Color(0xFFE74C3C)
+        private val MARS_COLOR = Color(0xFFC0392B)
+        private val MERCURY_COLOR = Color(0xFF27AE60)
+        private val JUPITER_COLOR = Color(0xFFF39C12)
+        private val VENUS_COLOR = Color(0xFF9B59B6)
+        private val SATURN_COLOR = Color(0xFF3498DB)
+        private val RAHU_COLOR = Color(0xFF7B241C)
+        private val KETU_COLOR = Color(0xFF7B241C)
+        private val URANUS_COLOR = Color(0xFF1ABC9C)
+        private val NEPTUNE_COLOR = Color(0xFF2980B9)
+        private val PLUTO_COLOR = Color(0xFF8E44AD)
+        private val LAGNA_COLOR = Color(0xFF795548)
 
-        const val SYMBOL_RETROGRADE = "*"
-        const val SYMBOL_COMBUST = "^"
-        const val SYMBOL_VARGOTTAMA = "\u00A4"
+        private val EXALTED_COLOR = Color(0xFF1E8449)
+        private val OWN_SIGN_COLOR = Color(0xFF2874A6)
+        private val MOOL_TRIKONA_COLOR = Color(0xFF6C3483)
+        private val DEBILITATED_COLOR = Color(0xFFC0392B)
 
-        private const val BASE_TEXT_SIZE_RATIO = 0.030f
-        private const val BASE_LINE_HEIGHT_RATIO = 0.040f
-        private const val MIN_SCALE_FACTOR = 0.60f
+        const val SYMBOL_RETROGRADE = "ᴿ"
+        const val SYMBOL_COMBUST = "°"
+        const val SYMBOL_VARGOTTAMA = "ᵛ"
+        const val SYMBOL_EXALTED = "↑"
+        const val SYMBOL_DEBILITATED = "↓"
+        const val SYMBOL_OWN_SIGN = "⌂"
+        const val SYMBOL_MOOL_TRIKONA = "△"
+
+        private const val BASE_TEXT_SIZE_RATIO = 0.032f
+        private const val BASE_LINE_HEIGHT_RATIO = 0.042f
+        private const val MIN_SCALE_FACTOR = 0.65f
         private const val MAX_SCALE_FACTOR = 1.0f
-        private const val ARROW_SIZE_RATIO = 0.35f
-        private const val TEXT_PADDING_RATIO = 0.12f
+        private const val TEXT_PADDING_RATIO = 0.15f
+        private const val CHART_PADDING_RATIO = 0.025f
     }
 
     private fun getPlanetColor(planet: Planet): Color = when (planet) {
@@ -164,6 +183,43 @@ class ChartRenderer {
         else -> false
     }
 
+    private fun isOwnSign(planet: Planet, sign: ZodiacSign): Boolean = when (planet) {
+        Planet.SUN -> sign == ZodiacSign.LEO
+        Planet.MOON -> sign == ZodiacSign.CANCER
+        Planet.MARS -> sign == ZodiacSign.ARIES || sign == ZodiacSign.SCORPIO
+        Planet.MERCURY -> sign == ZodiacSign.GEMINI || sign == ZodiacSign.VIRGO
+        Planet.JUPITER -> sign == ZodiacSign.SAGITTARIUS || sign == ZodiacSign.PISCES
+        Planet.VENUS -> sign == ZodiacSign.TAURUS || sign == ZodiacSign.LIBRA
+        Planet.SATURN -> sign == ZodiacSign.CAPRICORN || sign == ZodiacSign.AQUARIUS
+        Planet.RAHU -> sign == ZodiacSign.AQUARIUS || sign == ZodiacSign.VIRGO
+        Planet.KETU -> sign == ZodiacSign.SCORPIO || sign == ZodiacSign.PISCES
+        else -> false
+    }
+
+    private fun isMoolTrikona(planet: Planet, sign: ZodiacSign, longitude: Double): Boolean {
+        val degreeInSign = longitude % 30.0
+        return when (planet) {
+            Planet.SUN -> sign == ZodiacSign.LEO && degreeInSign >= 0.0 && degreeInSign <= 20.0
+            Planet.MOON -> sign == ZodiacSign.TAURUS && degreeInSign >= 3.0 && degreeInSign <= 30.0
+            Planet.MARS -> sign == ZodiacSign.ARIES && degreeInSign >= 0.0 && degreeInSign <= 12.0
+            Planet.MERCURY -> sign == ZodiacSign.VIRGO && degreeInSign >= 15.0 && degreeInSign <= 20.0
+            Planet.JUPITER -> sign == ZodiacSign.SAGITTARIUS && degreeInSign >= 0.0 && degreeInSign <= 10.0
+            Planet.VENUS -> sign == ZodiacSign.LIBRA && degreeInSign >= 0.0 && degreeInSign <= 15.0
+            Planet.SATURN -> sign == ZodiacSign.AQUARIUS && degreeInSign >= 0.0 && degreeInSign <= 20.0
+            else -> false
+        }
+    }
+
+    private fun getPlanetaryDignity(planet: Planet, sign: ZodiacSign, longitude: Double): PlanetaryDignity {
+        return when {
+            isExalted(planet, sign) -> PlanetaryDignity.EXALTED
+            isDebilitated(planet, sign) -> PlanetaryDignity.DEBILITATED
+            isMoolTrikona(planet, sign, longitude) -> PlanetaryDignity.MOOL_TRIKONA
+            isOwnSign(planet, sign) -> PlanetaryDignity.OWN_SIGN
+            else -> PlanetaryDignity.NEUTRAL
+        }
+    }
+
     private fun isVargottama(planet: PlanetPosition): Boolean {
         return DivisionalChartCalculator.isVargottama(planet.sign, planet.longitude)
     }
@@ -203,7 +259,7 @@ class ChartRenderer {
     }
 
     private fun DrawScope.drawNorthIndianFrame(size: Float): ChartFrame {
-        val padding = size * 0.02f
+        val padding = size * CHART_PADDING_RATIO
         val chartSize = size - (padding * 2)
         val left = padding
         val top = padding
@@ -213,6 +269,12 @@ class ChartRenderer {
         val centerY = (top + bottom) / 2
 
         drawRect(color = BACKGROUND_COLOR, size = Size(size, size))
+
+        drawRect(
+            color = CHART_FILL_COLOR,
+            topLeft = Offset(left, top),
+            size = Size(chartSize, chartSize)
+        )
 
         drawRect(
             color = BORDER_COLOR,
@@ -232,7 +294,7 @@ class ChartRenderer {
         frameLinesPath.moveTo(right, top)
         frameLinesPath.lineTo(left, bottom)
 
-        drawPath(frameLinesPath, BORDER_COLOR, style = lineStroke)
+        drawPath(frameLinesPath, LINE_COLOR, style = lineStroke)
 
         return ChartFrame(left, top, chartSize, centerX, centerY)
     }
@@ -300,8 +362,7 @@ class ChartRenderer {
         ascendantSign: ZodiacSign,
         planetPositions: List<PlanetPosition>,
         size: Float,
-        sunPosition: PlanetPosition? = null,
-        showSignNumbers: Boolean = true
+        sunPosition: PlanetPosition? = null
     ) {
         val planetsByHouse = planetPositions.groupBy { it.house }
 
@@ -311,11 +372,7 @@ class ChartRenderer {
             val houseBounds = calculateHouseBounds(housePolygon, getHouseType(houseNum))
             val houseType = getHouseType(houseNum)
 
-            val numberText = if (showSignNumbers) {
-                signNumberForHouse(houseNum, ascendantSign).toString()
-            } else {
-                houseNum.toString()
-            }
+            val numberText = signNumberForHouse(houseNum, ascendantSign).toString()
 
             val planets = planetsByHouse[houseNum] ?: emptyList()
             val displayItems = buildDisplayItems(houseNum, planets, sunPosition)
@@ -334,7 +391,7 @@ class ChartRenderer {
                 centerY = centerY
             )
 
-            val numberTextSize = size * 0.033f
+            val numberTextSize = size * 0.030f
             drawTextCentered(
                 text = numberText,
                 position = numberPosition,
@@ -376,7 +433,7 @@ class ChartRenderer {
         if (houseNum == 1) {
             items.add(
                 HouseDisplayItem(
-                    text = "Lg",
+                    text = "Asc",
                     color = LAGNA_COLOR,
                     isBold = true,
                     isLagna = true
@@ -389,13 +446,19 @@ class ChartRenderer {
             val degree = (planet.longitude % 30.0).toInt()
             val degreeSuper = toSuperscript(degree)
 
-            val exalted = isExalted(planet.planet, planet.sign)
-            val debilitated = isDebilitated(planet.planet, planet.sign)
+            val dignity = getPlanetaryDignity(planet.planet, planet.sign, planet.longitude)
 
             val statusIndicators = buildString {
                 if (planet.isRetrograde) append(SYMBOL_RETROGRADE)
                 if (isCombust(planet, sunPosition)) append(SYMBOL_COMBUST)
                 if (isVargottama(planet)) append(SYMBOL_VARGOTTAMA)
+                when (dignity) {
+                    PlanetaryDignity.EXALTED -> append(SYMBOL_EXALTED)
+                    PlanetaryDignity.DEBILITATED -> append(SYMBOL_DEBILITATED)
+                    PlanetaryDignity.OWN_SIGN -> append(SYMBOL_OWN_SIGN)
+                    PlanetaryDignity.MOOL_TRIKONA -> append(SYMBOL_MOOL_TRIKONA)
+                    else -> {}
+                }
             }
 
             items.add(
@@ -403,8 +466,7 @@ class ChartRenderer {
                     text = "$abbrev$degreeSuper$statusIndicators",
                     color = getPlanetColor(planet.planet),
                     isBold = true,
-                    isExalted = exalted,
-                    isDebilitated = debilitated
+                    dignity = dignity
                 )
             )
         }
@@ -471,9 +533,9 @@ class ChartRenderer {
         val height = maxY - minY
 
         val (effectiveWidth, effectiveHeight) = when (houseType) {
-            HouseType.CORNER -> Pair(width * 0.55f, height * 0.55f)
-            HouseType.SIDE -> Pair(width * 0.60f, height * 0.65f)
-            HouseType.DIAMOND -> Pair(width * 0.70f, height * 0.70f)
+            HouseType.CORNER -> Pair(width * 0.58f, height * 0.58f)
+            HouseType.SIDE -> Pair(width * 0.62f, height * 0.68f)
+            HouseType.DIAMOND -> Pair(width * 0.72f, height * 0.72f)
         }
 
         return HouseBounds(minX, maxX, minY, maxY, width, height, effectiveWidth, effectiveHeight)
@@ -497,7 +559,7 @@ class ChartRenderer {
 
         return when (houseNum) {
             1 -> {
-                val baseY = top + chartSize * 0.15f
+                val baseY = top + chartSize * 0.14f
                 if (displayItems.isEmpty()) {
                     Offset(centerX, houseCentroid.y)
                 } else {
@@ -506,7 +568,7 @@ class ChartRenderer {
             }
 
             4 -> {
-                val baseX = left + chartSize * 0.15f
+                val baseX = left + chartSize * 0.14f
                 if (displayItems.isEmpty()) {
                     Offset(houseCentroid.x, centerY)
                 } else {
@@ -515,7 +577,7 @@ class ChartRenderer {
             }
 
             7 -> {
-                val baseY = bottom - chartSize * 0.15f
+                val baseY = bottom - chartSize * 0.14f
                 if (displayItems.isEmpty()) {
                     Offset(centerX, houseCentroid.y)
                 } else {
@@ -524,7 +586,7 @@ class ChartRenderer {
             }
 
             10 -> {
-                val baseX = right - chartSize * 0.15f
+                val baseX = right - chartSize * 0.14f
                 if (displayItems.isEmpty()) {
                     Offset(houseCentroid.x, centerY)
                 } else {
@@ -533,50 +595,50 @@ class ChartRenderer {
             }
 
             2 -> {
-                val cornerInsetX = chartSize * 0.22f
-                val cornerInsetY = chartSize * 0.048f
+                val cornerInsetX = chartSize * 0.20f
+                val cornerInsetY = chartSize * 0.045f
                 Offset(left + cornerInsetX, top + cornerInsetY)
             }
 
             6 -> {
-                val cornerInsetX = chartSize * 0.22f
-                val cornerInsetY = chartSize * 0.048f
+                val cornerInsetX = chartSize * 0.20f
+                val cornerInsetY = chartSize * 0.045f
                 Offset(left + cornerInsetX, bottom - cornerInsetY)
             }
 
             8 -> {
-                val cornerInsetX = chartSize * 0.22f
-                val cornerInsetY = chartSize * 0.048f
+                val cornerInsetX = chartSize * 0.20f
+                val cornerInsetY = chartSize * 0.045f
                 Offset(right - cornerInsetX, bottom - cornerInsetY)
             }
 
             12 -> {
-                val cornerInsetX = chartSize * 0.22f
-                val cornerInsetY = chartSize * 0.048f
+                val cornerInsetX = chartSize * 0.20f
+                val cornerInsetY = chartSize * 0.045f
                 Offset(right - cornerInsetX, top + cornerInsetY)
             }
 
             3 -> {
-                val sideInsetX = chartSize * 0.055f
-                val sideOffsetY = chartSize * 0.22f
+                val sideInsetX = chartSize * 0.052f
+                val sideOffsetY = chartSize * 0.20f
                 Offset(left + sideInsetX, centerY - sideOffsetY)
             }
 
             5 -> {
-                val sideInsetX = chartSize * 0.055f
-                val sideOffsetY = chartSize * 0.22f
+                val sideInsetX = chartSize * 0.052f
+                val sideOffsetY = chartSize * 0.20f
                 Offset(left + sideInsetX, centerY + sideOffsetY)
             }
 
             9 -> {
-                val sideInsetX = chartSize * 0.055f
-                val sideOffsetY = chartSize * 0.22f
+                val sideInsetX = chartSize * 0.052f
+                val sideOffsetY = chartSize * 0.20f
                 Offset(right - sideInsetX, centerY + sideOffsetY)
             }
 
             11 -> {
-                val sideInsetX = chartSize * 0.055f
-                val sideOffsetY = chartSize * 0.22f
+                val sideInsetX = chartSize * 0.052f
+                val sideOffsetY = chartSize * 0.20f
                 Offset(right - sideInsetX, centerY - sideOffsetY)
             }
 
@@ -596,9 +658,9 @@ class ChartRenderer {
         val numberRadius = numberTextSize * 0.8f
 
         val offsetFromNumber = when (houseType) {
-            HouseType.CORNER -> size * 0.025f
-            HouseType.SIDE -> size * 0.030f
-            HouseType.DIAMOND -> size * 0.035f
+            HouseType.CORNER -> size * 0.022f
+            HouseType.SIDE -> size * 0.028f
+            HouseType.DIAMOND -> size * 0.032f
         }
 
         val directionFromNumber = Offset(
@@ -613,8 +675,8 @@ class ChartRenderer {
             val shift = numberRadius + offsetFromNumber
 
             Offset(
-                numberPosition.x + normalizedDir.x * shift + (houseCentroid.x - numberPosition.x) * 0.6f,
-                numberPosition.y + normalizedDir.y * shift + (houseCentroid.y - numberPosition.y) * 0.6f
+                numberPosition.x + normalizedDir.x * shift + (houseCentroid.x - numberPosition.x) * 0.58f,
+                numberPosition.y + normalizedDir.y * shift + (houseCentroid.y - numberPosition.y) * 0.58f
             )
         } else {
             houseCentroid
@@ -629,7 +691,7 @@ class ChartRenderer {
     ): GridLayout {
         val baseTextSize = size * BASE_TEXT_SIZE_RATIO
         val baseLineHeight = size * BASE_LINE_HEIGHT_RATIO
-        val avgItemWidth = baseTextSize * 2.5f
+        val avgItemWidth = baseTextSize * 2.8f
 
         val maxColsByWidth = (houseBounds.effectiveWidth / avgItemWidth).toInt().coerceIn(1, 3)
 
@@ -679,9 +741,9 @@ class ChartRenderer {
         val adjustedLineHeight = baseLineHeight * scaleFactor
 
         val columnSpacing = when (houseType) {
-            HouseType.CORNER -> houseBounds.effectiveWidth / columns.coerceAtLeast(1) * 0.90f
-            HouseType.SIDE -> houseBounds.effectiveWidth / columns.coerceAtLeast(1) * 0.92f
-            HouseType.DIAMOND -> houseBounds.effectiveWidth / columns.coerceAtLeast(1) * 0.95f
+            HouseType.CORNER -> houseBounds.effectiveWidth / columns.coerceAtLeast(1) * 0.92f
+            HouseType.SIDE -> houseBounds.effectiveWidth / columns.coerceAtLeast(1) * 0.94f
+            HouseType.DIAMOND -> houseBounds.effectiveWidth / columns.coerceAtLeast(1) * 0.96f
         }
 
         return GridLayout(columns, actualRows, adjustedTextSize, adjustedLineHeight, columnSpacing)
@@ -713,25 +775,14 @@ class ChartRenderer {
             val yOffset = row * layout.lineHeight
             val position = Offset(contentCenter.x + xOffset, startY + yOffset)
 
-            val arrowWidth = if (item.isExalted || item.isDebilitated) {
-                layout.textSize * ARROW_SIZE_RATIO * 1.2f
-            } else {
-                0f
-            }
-
             drawTextWithBackground(
                 text = item.text,
                 position = position,
                 textSize = layout.textSize,
                 color = item.color,
                 isBold = item.isBold,
-                extraWidth = arrowWidth
+                dignity = item.dignity
             )
-
-            when {
-                item.isExalted -> drawExaltedArrow(position, layout.textSize, item.text)
-                item.isDebilitated -> drawDebilitatedArrow(position, layout.textSize, item.text)
-            }
         }
     }
 
@@ -741,7 +792,7 @@ class ChartRenderer {
         textSize: Float,
         color: Color,
         isBold: Boolean,
-        extraWidth: Float = 0f
+        dignity: PlanetaryDignity = PlanetaryDignity.NEUTRAL
     ) {
         val typeface = if (isBold) TYPEFACE_BOLD else TYPEFACE_NORMAL
         textPaint.color = color.toArgb()
@@ -754,7 +805,7 @@ class ChartRenderer {
 
         val bgLeft = position.x - textWidth / 2 - padding
         val bgTop = position.y - textHeight / 2 - padding * 0.5f
-        val bgWidth = textWidth + padding * 2 + extraWidth
+        val bgWidth = textWidth + padding * 2
         val bgHeight = textHeight + padding
 
         drawRect(
@@ -763,62 +814,27 @@ class ChartRenderer {
             size = Size(bgWidth, bgHeight)
         )
 
+        if (dignity != PlanetaryDignity.NEUTRAL) {
+            val underlineColor = when (dignity) {
+                PlanetaryDignity.EXALTED -> EXALTED_COLOR
+                PlanetaryDignity.DEBILITATED -> DEBILITATED_COLOR
+                PlanetaryDignity.OWN_SIGN -> OWN_SIGN_COLOR
+                PlanetaryDignity.MOOL_TRIKONA -> MOOL_TRIKONA_COLOR
+                else -> Color.Transparent
+            }
+
+            drawLine(
+                color = underlineColor,
+                start = Offset(bgLeft + padding * 0.5f, bgTop + bgHeight - padding * 0.3f),
+                end = Offset(bgLeft + bgWidth - padding * 0.5f, bgTop + bgHeight - padding * 0.3f),
+                strokeWidth = 1.5f
+            )
+        }
+
         drawContext.canvas.nativeCanvas.apply {
             val textOffset = textHeight / 2 - textPaint.descent()
             drawText(text, position.x, position.y + textOffset, textPaint)
         }
-    }
-
-    private fun DrawScope.drawExaltedArrow(
-        textPosition: Offset,
-        textSize: Float,
-        text: String
-    ) {
-        textPaint.textSize = textSize
-        val textWidth = textPaint.measureText(text)
-
-        val arrowSize = textSize * ARROW_SIZE_RATIO
-        val arrowCenterX = textPosition.x + textWidth / 2 + arrowSize * 0.8f
-        val arrowCenterY = textPosition.y
-
-        val path = Path().apply {
-            moveTo(arrowCenterX, arrowCenterY - arrowSize * 0.7f)
-            lineTo(arrowCenterX - arrowSize * 0.5f, arrowCenterY + arrowSize * 0.2f)
-            lineTo(arrowCenterX - arrowSize * 0.15f, arrowCenterY + arrowSize * 0.2f)
-            lineTo(arrowCenterX - arrowSize * 0.15f, arrowCenterY + arrowSize * 0.7f)
-            lineTo(arrowCenterX + arrowSize * 0.15f, arrowCenterY + arrowSize * 0.7f)
-            lineTo(arrowCenterX + arrowSize * 0.15f, arrowCenterY + arrowSize * 0.2f)
-            lineTo(arrowCenterX + arrowSize * 0.5f, arrowCenterY + arrowSize * 0.2f)
-            close()
-        }
-
-        drawPath(path = path, color = EXALTED_ARROW_COLOR)
-    }
-
-    private fun DrawScope.drawDebilitatedArrow(
-        textPosition: Offset,
-        textSize: Float,
-        text: String
-    ) {
-        textPaint.textSize = textSize
-        val textWidth = textPaint.measureText(text)
-
-        val arrowSize = textSize * ARROW_SIZE_RATIO
-        val arrowCenterX = textPosition.x + textWidth / 2 + arrowSize * 0.8f
-        val arrowCenterY = textPosition.y
-
-        val path = Path().apply {
-            moveTo(arrowCenterX, arrowCenterY + arrowSize * 0.7f)
-            lineTo(arrowCenterX - arrowSize * 0.5f, arrowCenterY - arrowSize * 0.2f)
-            lineTo(arrowCenterX - arrowSize * 0.15f, arrowCenterY - arrowSize * 0.2f)
-            lineTo(arrowCenterX - arrowSize * 0.15f, arrowCenterY - arrowSize * 0.7f)
-            lineTo(arrowCenterX + arrowSize * 0.15f, arrowCenterY - arrowSize * 0.7f)
-            lineTo(arrowCenterX + arrowSize * 0.15f, arrowCenterY - arrowSize * 0.2f)
-            lineTo(arrowCenterX + arrowSize * 0.5f, arrowCenterY - arrowSize * 0.2f)
-            close()
-        }
-
-        drawPath(path = path, color = DEBILITATED_ARROW_COLOR)
     }
 
     private fun polygonCentroid(points: List<Offset>): Offset {
@@ -934,84 +950,58 @@ class ChartRenderer {
         chartWidth: Float,
         textSize: Float
     ) {
-        val legendY = chartBottom + textSize * 1.5f
-        val legendSpacing = chartWidth / 5f
-
-        val legendStartX = chartLeft + legendSpacing / 2
+        val legendY = chartBottom + textSize * 1.8f
+        val legendSpacing = chartWidth / 6f
+        val legendStartX = chartLeft + legendSpacing * 0.8f
+        val itemTextSize = textSize * 0.72f
 
         drawTextCentered(
-            text = "$SYMBOL_RETROGRADE Retro",
+            text = "${SYMBOL_RETROGRADE}Retro",
             position = Offset(legendStartX, legendY),
-            textSize = textSize * 0.75f,
+            textSize = itemTextSize,
             color = HOUSE_NUMBER_COLOR,
             isBold = false
         )
 
         drawTextCentered(
-            text = "$SYMBOL_COMBUST Comb",
+            text = "${SYMBOL_COMBUST}Comb",
             position = Offset(legendStartX + legendSpacing, legendY),
-            textSize = textSize * 0.75f,
+            textSize = itemTextSize,
             color = HOUSE_NUMBER_COLOR,
             isBold = false
         )
 
         drawTextCentered(
-            text = "$SYMBOL_VARGOTTAMA Vargo",
+            text = "${SYMBOL_VARGOTTAMA}Vargo",
             position = Offset(legendStartX + legendSpacing * 2, legendY),
-            textSize = textSize * 0.75f,
+            textSize = itemTextSize,
             color = HOUSE_NUMBER_COLOR,
             isBold = false
         )
 
-        val exaltedX = legendStartX + legendSpacing * 3
-        drawLegendExaltedArrow(Offset(exaltedX - textSize * 1.2f, legendY), textSize)
         drawTextCentered(
-            text = "Exalt",
-            position = Offset(exaltedX + textSize * 0.3f, legendY),
-            textSize = textSize * 0.75f,
-            color = HOUSE_NUMBER_COLOR,
+            text = "${SYMBOL_EXALTED}Exalt",
+            position = Offset(legendStartX + legendSpacing * 3, legendY),
+            textSize = itemTextSize,
+            color = EXALTED_COLOR,
             isBold = false
         )
 
-        val debilitatedX = legendStartX + legendSpacing * 4
-        drawLegendDebilitatedArrow(Offset(debilitatedX - textSize * 1.2f, legendY), textSize)
         drawTextCentered(
-            text = "Deb",
-            position = Offset(debilitatedX + textSize * 0.2f, legendY),
-            textSize = textSize * 0.75f,
-            color = HOUSE_NUMBER_COLOR,
+            text = "${SYMBOL_DEBILITATED}Deb",
+            position = Offset(legendStartX + legendSpacing * 4, legendY),
+            textSize = itemTextSize,
+            color = DEBILITATED_COLOR,
             isBold = false
         )
-    }
 
-    private fun DrawScope.drawLegendExaltedArrow(position: Offset, textSize: Float) {
-        val arrowSize = textSize * 0.4f
-        val path = Path().apply {
-            moveTo(position.x, position.y - arrowSize * 0.6f)
-            lineTo(position.x - arrowSize * 0.45f, position.y + arrowSize * 0.15f)
-            lineTo(position.x - arrowSize * 0.12f, position.y + arrowSize * 0.15f)
-            lineTo(position.x - arrowSize * 0.12f, position.y + arrowSize * 0.6f)
-            lineTo(position.x + arrowSize * 0.12f, position.y + arrowSize * 0.6f)
-            lineTo(position.x + arrowSize * 0.12f, position.y + arrowSize * 0.15f)
-            lineTo(position.x + arrowSize * 0.45f, position.y + arrowSize * 0.15f)
-            close()
-        }
-        drawPath(path = path, color = EXALTED_ARROW_COLOR)
-    }
-
-    private fun DrawScope.drawLegendDebilitatedArrow(position: Offset, textSize: Float) {
-        val arrowSize = textSize * 0.4f
-        val path = Path().apply {
-            moveTo(position.x, position.y + arrowSize * 0.6f)
-            lineTo(position.x - arrowSize * 0.45f, position.y - arrowSize * 0.15f)
-            lineTo(position.x - arrowSize * 0.12f, position.y - arrowSize * 0.15f)
-            lineTo(position.x - arrowSize * 0.12f, position.y - arrowSize * 0.6f)
-            lineTo(position.x + arrowSize * 0.12f, position.y - arrowSize * 0.6f)
-            lineTo(position.x + arrowSize * 0.12f, position.y - arrowSize * 0.15f)
-            lineTo(position.x + arrowSize * 0.45f, position.y - arrowSize * 0.15f)
-            close()
-        }
-        drawPath(path = path, color = DEBILITATED_ARROW_COLOR)
+        drawTextCentered(
+            text = "${SYMBOL_OWN_SIGN}Own",
+            position = Offset(legendStartX + legendSpacing * 5, legendY),
+            textSize = itemTextSize,
+            color = OWN_SIGN_COLOR,
+            isBold = false
+        )
     }
 
     fun drawChartWithLegend(
@@ -1022,15 +1012,15 @@ class ChartRenderer {
         showLegend: Boolean = true
     ) {
         with(drawScope) {
-            val legendHeight = if (showLegend) size * 0.08f else 0f
+            val legendHeight = if (showLegend) size * 0.085f else 0f
             val chartSize = size - legendHeight
 
             drawNorthIndianChart(this, chart, chartSize, chartTitle)
 
             if (showLegend) {
-                val padding = chartSize * 0.02f
+                val padding = chartSize * CHART_PADDING_RATIO
                 val chartWidth = chartSize - (padding * 2)
-                val textSize = chartSize * 0.028f
+                val textSize = chartSize * 0.030f
 
                 drawRect(
                     color = BACKGROUND_COLOR,
