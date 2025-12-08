@@ -23,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
@@ -51,8 +53,8 @@ fun PlanetsScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Planets",
-            message = "No chart data available. Please select or create a profile first.",
+            title = stringResource(StringKey.FEATURE_PLANETS),
+            message = stringResource(StringKey.NO_PROFILE_MESSAGE),
             onBack = onBack
         )
         return
@@ -126,7 +128,7 @@ private fun PlanetsTopBar(
         title = {
             Column {
                 Text(
-                    text = "Planets",
+                    text = stringResource(StringKey.FEATURE_PLANETS),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -142,7 +144,7 @@ private fun PlanetsTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(StringKey.BTN_BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -151,7 +153,7 @@ private fun PlanetsTopBar(
             IconButton(onClick = onShowShadbala) {
                 Icon(
                     imageVector = Icons.Outlined.Analytics,
-                    contentDescription = "Shadbala Analysis",
+                    contentDescription = stringResource(StringKey.FEATURE_SHADBALA),
                     tint = AppTheme.TextPrimary
                 )
             }

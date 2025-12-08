@@ -27,9 +27,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.astro.storm.data.localization.BikramSambatConverter
+import com.astro.storm.data.localization.DateSystem
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.LocalDateSystem
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.getLocalizedName
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.BirthData
 import com.astro.storm.data.model.Gender
 import com.astro.storm.data.model.VedicChart
+import com.astro.storm.ui.components.BSDatePickerDialog
 import com.astro.storm.ui.theme.AppTheme
 import com.astro.storm.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.launch
@@ -58,10 +67,13 @@ fun ProfileEditScreen(
     onBack: () -> Unit,
     onSaveComplete: () -> Unit
 ) {
+    val language = LocalLanguage.current
+    val dateSystem = LocalDateSystem.current
+
     if (chart == null) {
         EmptyChartScreen(
-            title = "Edit Profile",
-            message = "No chart data available. Please select a profile to edit.",
+            title = stringResource(StringKey.EDIT_PROFILE_TITLE),
+            message = stringResource(StringKey.EDIT_PROFILE_NO_DATA),
             onBack = onBack
         )
         return
@@ -81,9 +93,11 @@ fun ProfileEditScreen(
     var selectedTimezone by remember { mutableStateOf(chart.birthData.timezone) }
 
     var showDatePicker by remember { mutableStateOf(false) }
+    var showBSDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTimezoneDropdown by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
+    var errorKey by remember { mutableStateOf<StringKey?>(null) }
     var errorMessage by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
 
@@ -113,25 +127,28 @@ fun ProfileEditScreen(
         ).distinct()
     }
 
+    // Extract localized string outside of regular function (stringResource is @Composable)
+    val unknownText = stringResource(StringKey.MISC_UNKNOWN)
+
     fun saveProfile() {
         try {
             val lat = latitude.toDoubleOrNull()
             val lon = longitude.toDoubleOrNull()
 
             if (lat == null || lon == null) {
-                errorMessage = "Please enter valid latitude and longitude"
+                errorKey = StringKey.ERROR_INVALID_COORDS
                 showError = true
                 return
             }
 
             if (lat < -90 || lat > 90) {
-                errorMessage = "Latitude must be between -90 and 90"
+                errorKey = StringKey.ERROR_LATITUDE_RANGE
                 showError = true
                 return
             }
 
             if (lon < -180 || lon > 180) {
-                errorMessage = "Longitude must be between -180 and 180"
+                errorKey = StringKey.ERROR_LONGITUDE_RANGE
                 showError = true
                 return
             }
@@ -139,12 +156,12 @@ fun ProfileEditScreen(
             isSaving = true
             val dateTime = LocalDateTime.of(selectedDate, selectedTime)
             val updatedBirthData = BirthData(
-                name = name.ifBlank { "Unknown" },
+                name = name.ifBlank { unknownText },
                 dateTime = dateTime,
                 latitude = lat,
                 longitude = lon,
                 timezone = selectedTimezone,
-                location = locationLabel.ifBlank { "Unknown" },
+                location = locationLabel.ifBlank { unknownText },
                 gender = selectedGender
             )
 
@@ -154,7 +171,7 @@ fun ProfileEditScreen(
                 onSaveComplete()
             }
         } catch (e: Exception) {
-            errorMessage = "Please check your input values"
+            errorKey = StringKey.ERROR_CHECK_INPUT
             showError = true
             isSaving = false
         }
@@ -183,13 +200,13 @@ fun ProfileEditScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 // Identity Section
-                SectionTitle("Identity")
+                SectionTitle(stringResource(StringKey.INPUT_IDENTITY))
                 Spacer(modifier = Modifier.height(12.dp))
 
                 StyledOutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = "Full name",
+                    label = stringResource(StringKey.INPUT_FULL_NAME),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
@@ -200,7 +217,7 @@ fun ProfileEditScreen(
 
                 // Gender Selection
                 Text(
-                    text = "Gender",
+                    text = stringResource(StringKey.INPUT_GENDER),
                     fontSize = 14.sp,
                     color = AppTheme.TextMuted,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -211,7 +228,7 @@ fun ProfileEditScreen(
                 ) {
                     Gender.entries.forEach { gender ->
                         GenderChip(
-                            text = gender.displayName,
+                            text = gender.getLocalizedName(language),
                             isSelected = selectedGender == gender,
                             onClick = { selectedGender = gender },
                             modifier = Modifier.weight(1f)
@@ -224,7 +241,7 @@ fun ProfileEditScreen(
                 StyledOutlinedTextField(
                     value = locationLabel,
                     onValueChange = { locationLabel = it },
-                    label = "Location",
+                    label = stringResource(StringKey.INPUT_LOCATION),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
@@ -234,16 +251,32 @@ fun ProfileEditScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 // Date & Time Section
-                SectionTitle("Date & Time")
+                SectionTitle(stringResource(StringKey.INPUT_DATE_TIME))
                 Spacer(modifier = Modifier.height(12.dp))
+
+                // Format date based on selected date system
+                val dateDisplayText = remember(selectedDate, dateSystem, language) {
+                    if (dateSystem == DateSystem.BS) {
+                        BikramSambatConverter.toBS(selectedDate)?.format(language)
+                            ?: selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    } else {
+                        selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     DateTimeChip(
-                        text = selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-                        onClick = { showDatePicker = true },
+                        text = dateDisplayText,
+                        onClick = {
+                            if (dateSystem == DateSystem.BS) {
+                                showBSDatePicker = true
+                            } else {
+                                showDatePicker = true
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     )
                     DateTimeChip(
@@ -265,7 +298,7 @@ fun ProfileEditScreen(
                         onValueChange = {},
                         readOnly = true,
                         label = {
-                            Text("Timezone", color = AppTheme.TextMuted, fontSize = 14.sp)
+                            Text(stringResource(StringKey.INPUT_TIMEZONE), color = AppTheme.TextMuted, fontSize = 14.sp)
                         },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTimezoneDropdown)
@@ -319,7 +352,7 @@ fun ProfileEditScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 // Coordinates Section
-                SectionTitle("Coordinates")
+                SectionTitle(stringResource(StringKey.INPUT_COORDINATES))
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
@@ -329,7 +362,7 @@ fun ProfileEditScreen(
                     StyledOutlinedTextField(
                         value = latitude,
                         onValueChange = { latitude = it },
-                        label = "Latitude",
+                        label = stringResource(StringKey.INPUT_LATITUDE),
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
@@ -342,7 +375,7 @@ fun ProfileEditScreen(
                     StyledOutlinedTextField(
                         value = longitude,
                         onValueChange = { longitude = it },
-                        label = "Longitude",
+                        label = stringResource(StringKey.INPUT_LONGITUDE),
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
@@ -359,7 +392,7 @@ fun ProfileEditScreen(
         }
     }
 
-    // Date Picker Dialog
+    // Date Picker Dialog (AD)
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault())
@@ -379,12 +412,12 @@ fun ProfileEditScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK", color = AppTheme.AccentGold)
+                    Text(stringResource(StringKey.BTN_OK), color = AppTheme.AccentGold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel", color = AppTheme.TextMuted)
+                    Text(stringResource(StringKey.BTN_CANCEL), color = AppTheme.TextMuted)
                 }
             },
             colors = DatePickerDefaults.colors(containerColor = AppTheme.CardBackground)
@@ -412,6 +445,23 @@ fun ProfileEditScreen(
         }
     }
 
+    // BS Date Picker Dialog
+    if (showBSDatePicker) {
+        val currentBSDate = remember(selectedDate) {
+            BikramSambatConverter.toBS(selectedDate) ?: BikramSambatConverter.today()
+        }
+        BSDatePickerDialog(
+            initialDate = currentBSDate,
+            onDismiss = { showBSDatePicker = false },
+            onConfirm = { bsDate ->
+                BikramSambatConverter.toAD(bsDate)?.let { adDate ->
+                    selectedDate = adDate
+                }
+                showBSDatePicker = false
+            }
+        )
+    }
+
     // Time Picker Dialog
     if (showTimePicker) {
         val timePickerState = rememberTimePickerState(
@@ -432,16 +482,25 @@ fun ProfileEditScreen(
     // Error Dialog
     if (showError) {
         AlertDialog(
-            onDismissRequest = { showError = false },
+            onDismissRequest = {
+                showError = false
+                errorKey = null
+            },
             title = {
-                Text("Input Error", color = AppTheme.TextPrimary, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(StringKey.ERROR_INPUT), color = AppTheme.TextPrimary, fontWeight = FontWeight.SemiBold)
             },
             text = {
-                Text(errorMessage, color = AppTheme.TextMuted)
+                Text(
+                    errorKey?.let { stringResource(it) } ?: errorMessage,
+                    color = AppTheme.TextMuted
+                )
             },
             confirmButton = {
-                TextButton(onClick = { showError = false }) {
-                    Text("OK", color = AppTheme.AccentGold)
+                TextButton(onClick = {
+                    showError = false
+                    errorKey = null
+                }) {
+                    Text(stringResource(StringKey.BTN_OK), color = AppTheme.AccentGold)
                 }
             },
             containerColor = AppTheme.CardBackground,
@@ -460,7 +519,7 @@ private fun ProfileEditTopBar(
     TopAppBar(
         title = {
             Text(
-                text = "Edit Profile",
+                text = stringResource(StringKey.EDIT_PROFILE_TITLE),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
@@ -470,7 +529,7 @@ private fun ProfileEditTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(StringKey.BTN_BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -486,7 +545,7 @@ private fun ProfileEditTopBar(
                 } else {
                     Icon(
                         imageVector = Icons.Outlined.Check,
-                        contentDescription = "Save",
+                        contentDescription = stringResource(StringKey.BTN_SAVE),
                         tint = AppTheme.AccentGold
                     )
                 }
@@ -616,7 +675,7 @@ private fun TimePickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Select time",
+                    text = stringResource(StringKey.INPUT_SELECT_TIME),
                     color = AppTheme.TextMuted,
                     fontSize = 14.sp,
                     modifier = Modifier
@@ -651,11 +710,11 @@ private fun TimePickerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = AppTheme.TextMuted)
+                        Text(stringResource(StringKey.BTN_CANCEL), color = AppTheme.TextMuted)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = onConfirm) {
-                        Text("OK", color = AppTheme.AccentGold)
+                        Text(stringResource(StringKey.BTN_OK), color = AppTheme.AccentGold)
                     }
                 }
             }

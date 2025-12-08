@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.dp
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ui.screen.chartdetail.tabs.AshtakavargaTabContent
 import com.astro.storm.ui.theme.AppTheme
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 
 /**
  * Ashtakavarga Screen - Standalone screen for Ashtakavarga analysis
@@ -47,8 +50,8 @@ fun AshtakavargaScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Ashtakavarga",
-            message = "No chart data available. Please select or create a profile first.",
+            title = stringResource(StringKey.FEATURE_ASHTAKAVARGA),
+            message = stringResource(StringKey.NO_PROFILE_MESSAGE),
             onBack = onBack
         )
         return
@@ -92,7 +95,7 @@ private fun AshtakavargaTopBar(
         title = {
             Column {
                 Text(
-                    text = "Ashtakavarga",
+                    text = stringResource(StringKey.FEATURE_ASHTAKAVARGA),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -108,7 +111,7 @@ private fun AshtakavargaTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(StringKey.BTN_BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -117,7 +120,7 @@ private fun AshtakavargaTopBar(
             IconButton(onClick = onShowInfo) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
-                    contentDescription = "Ashtakavarga Information",
+                    contentDescription = stringResource(StringKey.ASHTAKAVARGA_ABOUT_TITLE),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -134,7 +137,7 @@ private fun AshtakavargaInfoDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "About Ashtakavarga",
+                text = stringResource(StringKey.ASHTAKAVARGA_ABOUT_TITLE),
                 fontWeight = FontWeight.Bold,
                 color = AppTheme.TextPrimary
             )
@@ -142,7 +145,7 @@ private fun AshtakavargaInfoDialog(onDismiss: () -> Unit) {
         text = {
             Column {
                 Text(
-                    text = "Ashtakavarga is an ancient Vedic astrology technique for assessing planetary strength and predicting transit effects.",
+                    text = stringResource(StringKey.ASHTAKAVARGA_ABOUT_DESC),
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppTheme.TextSecondary
                 )
@@ -150,12 +153,12 @@ private fun AshtakavargaInfoDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 Text(
-                    text = "Sarvashtakavarga (SAV)",
+                    text = stringResource(StringKey.ASHTAKAVARGA_SAV_TITLE),
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
                 )
                 Text(
-                    text = "Combined strength points (bindus) from all planets in each zodiac sign. Higher values (28+) indicate favorable areas for transits.",
+                    text = stringResource(StringKey.ASHTAKAVARGA_SAV_DESC),
                     style = MaterialTheme.typography.bodySmall,
                     color = AppTheme.TextMuted
                 )
@@ -163,12 +166,12 @@ private fun AshtakavargaInfoDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
                 Text(
-                    text = "Bhinnashtakavarga (BAV)",
+                    text = stringResource(StringKey.ASHTAKAVARGA_BAV_TITLE),
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
                 )
                 Text(
-                    text = "Individual planet strength in each sign (0-8 bindus). Use this to predict how each planet's transit will affect you.",
+                    text = stringResource(StringKey.ASHTAKAVARGA_BAV_DESC),
                     style = MaterialTheme.typography.bodySmall,
                     color = AppTheme.TextMuted
                 )
@@ -176,7 +179,7 @@ private fun AshtakavargaInfoDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) {
-                Text("Close", color = AppTheme.AccentGold)
+                Text(stringResource(StringKey.BTN_CLOSE), color = AppTheme.AccentGold)
             }
         },
         containerColor = AppTheme.CardBackground

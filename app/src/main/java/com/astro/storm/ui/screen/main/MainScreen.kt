@@ -17,6 +17,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.StringResources
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.repository.SavedChart
 import com.astro.storm.ui.components.ProfileHeaderRow
@@ -177,10 +180,11 @@ private fun MainTopBar(
     currentChart: SavedChart?,
     onProfileClick: () -> Unit
 ) {
+    val language = LocalLanguage.current
     TopAppBar(
         title = {
             Text(
-                text = currentTab.title,
+                text = currentTab.getLocalizedTitle(language),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
@@ -204,6 +208,7 @@ private fun MainBottomNavigation(
     selectedTab: MainTab,
     onTabSelected: (MainTab) -> Unit
 ) {
+    val language = LocalLanguage.current
     NavigationBar(
         containerColor = AppTheme.NavBarBackground,
         contentColor = AppTheme.TextPrimary,
@@ -213,6 +218,7 @@ private fun MainBottomNavigation(
     ) {
         MainTab.entries.forEach { tab ->
             val isSelected = tab == selectedTab
+            val localizedTitle = tab.getLocalizedTitle(language)
 
             NavigationBarItem(
                 selected = isSelected,
@@ -220,13 +226,13 @@ private fun MainBottomNavigation(
                 icon = {
                     Icon(
                         imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
-                        contentDescription = tab.title,
+                        contentDescription = localizedTitle,
                         modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {
                     Text(
-                        text = tab.title,
+                        text = localizedTitle,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     )
@@ -247,23 +253,30 @@ private fun MainBottomNavigation(
  * Main navigation tabs
  */
 enum class MainTab(
-    val title: String,
+    val titleKey: StringKey,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
     HOME(
-        title = "Home",
+        titleKey = StringKey.TAB_HOME,
         selectedIcon = Icons.Filled.Home,
         unselectedIcon = Icons.Outlined.Home
     ),
     INSIGHTS(
-        title = "Insights",
+        titleKey = StringKey.TAB_INSIGHTS,
         selectedIcon = Icons.Filled.Insights,
         unselectedIcon = Icons.Outlined.Insights
     ),
     SETTINGS(
-        title = "Settings",
+        titleKey = StringKey.TAB_SETTINGS,
         selectedIcon = Icons.Filled.Settings,
         unselectedIcon = Icons.Outlined.Settings
-    )
+    );
+
+    /**
+     * Get localized title for the tab
+     */
+    fun getLocalizedTitle(language: com.astro.storm.data.localization.Language): String {
+        return StringResources.get(titleKey, language)
+    }
 }

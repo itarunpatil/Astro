@@ -28,8 +28,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.astro.storm.data.localization.BikramSambatConverter
+import com.astro.storm.data.localization.DateSystem
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.LocalDateSystem
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.getLocalizedName
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.BirthData
 import com.astro.storm.data.model.Gender
+import com.astro.storm.ui.components.BSDatePickerDialog
 import com.astro.storm.ui.components.LocationSearchField
 import com.astro.storm.ui.viewmodel.ChartUiState
 import com.astro.storm.ui.viewmodel.ChartViewModel
@@ -62,12 +71,14 @@ fun ChartInputScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
+    val language = LocalLanguage.current
+    val dateSystem = LocalDateSystem.current
 
     var name by rememberSaveable { mutableStateOf("") }
     var selectedGender by rememberSaveable { mutableStateOf(Gender.OTHER) }
     var locationLabel by rememberSaveable { mutableStateOf("") }
-    var selectedDateMillis by rememberSaveable { 
-        mutableStateOf(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()) 
+    var selectedDateMillis by rememberSaveable {
+        mutableStateOf(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
     }
     var selectedHour by rememberSaveable { mutableStateOf(10) }
     var selectedMinute by rememberSaveable { mutableStateOf(0) }
@@ -77,10 +88,12 @@ fun ChartInputScreen(
     var selectedTimezone by rememberSaveable { mutableStateOf(ZoneId.systemDefault().id) }
 
     var showDatePicker by remember { mutableStateOf(false) }
+    var showBSDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTimezoneDropdown by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var errorKey by remember { mutableStateOf<StringKey?>(null) }
     var chartCalculationInitiated by remember { mutableStateOf(false) }
 
     val selectedDate = remember(selectedDateMillis) {
@@ -173,8 +186,8 @@ fun ChartInputScreen(
                     latitude = String.format(java.util.Locale.US, "%.6f", lat)
                     longitude = String.format(java.util.Locale.US, "%.6f", lon)
                 },
-                label = "Location",
-                placeholder = "Search city or enter manually"
+                label = stringResource(StringKey.INPUT_LOCATION),
+                placeholder = stringResource(StringKey.INPUT_SEARCH_LOCATION)
             )
 
             Spacer(modifier = Modifier.height(28.dp))
@@ -185,12 +198,20 @@ fun ChartInputScreen(
                 selectedTimezone = selectedTimezone,
                 timezones = timezones,
                 showTimezoneDropdown = showTimezoneDropdown,
-                onShowDatePicker = { showDatePicker = true },
+                dateSystem = dateSystem,
+                language = language,
+                onShowDatePicker = {
+                    if (dateSystem == DateSystem.BS) {
+                        showBSDatePicker = true
+                    } else {
+                        showDatePicker = true
+                    }
+                },
                 onShowTimePicker = { showTimePicker = true },
                 onTimezoneDropdownChange = { showTimezoneDropdown = it },
-                onTimezoneSelected = { 
+                onTimezoneSelected = {
                     selectedTimezone = it
-                    showTimezoneDropdown = false 
+                    showTimezoneDropdown = false
                 }
             )
 
@@ -211,12 +232,15 @@ fun ChartInputScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
+            // Extract localized string outside the lambda (stringResource is @Composable)
+            val unknownText = stringResource(StringKey.MISC_UNKNOWN)
+
             GenerateButton(
                 isCalculating = isCalculating,
                 onClick = {
-                    val validationResult = validateInput(latitude, longitude)
-                    if (validationResult != null) {
-                        errorMessage = validationResult
+                    val validationKey = validateInputLocalized(latitude, longitude)
+                    if (validationKey != null) {
+                        errorKey = validationKey
                         showErrorDialog = true
                         return@GenerateButton
                     }
@@ -226,12 +250,12 @@ fun ChartInputScreen(
                     val dateTime = LocalDateTime.of(selectedDate, selectedTime)
 
                     val birthData = BirthData(
-                        name = name.ifBlank { "Unknown" },
+                        name = name.ifBlank { unknownText },
                         dateTime = dateTime,
                         latitude = lat,
                         longitude = lon,
                         timezone = selectedTimezone,
-                        location = locationLabel.ifBlank { "Unknown" },
+                        location = locationLabel.ifBlank { unknownText },
                         gender = selectedGender
                     )
 
@@ -253,6 +277,24 @@ fun ChartInputScreen(
         )
     }
 
+    // BS Date Picker (when date system is BS)
+    if (showBSDatePicker) {
+        val currentBSDate = remember(selectedDate) {
+            BikramSambatConverter.toBS(selectedDate) ?: BikramSambatConverter.today()
+        }
+        BSDatePickerDialog(
+            initialDate = currentBSDate,
+            onDismiss = { showBSDatePicker = false },
+            onConfirm = { bsDate ->
+                // Convert BS to AD and update selectedDateMillis
+                BikramSambatConverter.toAD(bsDate)?.let { adDate ->
+                    selectedDateMillis = adDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                }
+                showBSDatePicker = false
+            }
+        )
+    }
+
     if (showTimePicker) {
         ChartTimePickerDialog(
             initialHour = selectedHour,
@@ -268,20 +310,29 @@ fun ChartInputScreen(
 
     if (showErrorDialog) {
         AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
+            onDismissRequest = {
+                showErrorDialog = false
+                errorKey = null
+            },
             title = {
                 Text(
-                    "Input Error",
+                    stringResource(StringKey.ERROR_INPUT),
                     color = ChartInputTheme.TextPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
             },
             text = {
-                Text(errorMessage, color = ChartInputTheme.TextSecondary)
+                Text(
+                    errorKey?.let { stringResource(it) } ?: errorMessage,
+                    color = ChartInputTheme.TextSecondary
+                )
             },
             confirmButton = {
-                TextButton(onClick = { showErrorDialog = false }) {
-                    Text("OK", color = ChartInputTheme.AccentColor)
+                TextButton(onClick = {
+                    showErrorDialog = false
+                    errorKey = null
+                }) {
+                    Text(stringResource(StringKey.BTN_OK), color = ChartInputTheme.AccentColor)
                 }
             },
             containerColor = ChartInputTheme.CardBackground,
@@ -302,8 +353,21 @@ private fun validateInput(latitude: String, longitude: String): String? {
     }
 }
 
+private fun validateInputLocalized(latitude: String, longitude: String): StringKey? {
+    val lat = latitude.toDoubleOrNull()
+    val lon = longitude.toDoubleOrNull()
+
+    return when {
+        lat == null || lon == null -> StringKey.ERROR_INVALID_COORDS
+        lat < -90 || lat > 90 -> StringKey.ERROR_LATITUDE_RANGE
+        lon < -180 || lon > 180 -> StringKey.ERROR_LONGITUDE_RANGE
+        else -> null
+    }
+}
+
 @Composable
 private fun ChartInputHeader(onNavigateBack: () -> Unit) {
+    val goBackText = stringResource(StringKey.BTN_BACK)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -312,7 +376,7 @@ private fun ChartInputHeader(onNavigateBack: () -> Unit) {
     ) {
         IconButton(
             onClick = onNavigateBack,
-            modifier = Modifier.semantics { contentDescription = "Go back" }
+            modifier = Modifier.semantics { contentDescription = goBackText }
         ) {
             Icon(
                 imageVector = Icons.Outlined.ArrowBack,
@@ -323,7 +387,7 @@ private fun ChartInputHeader(onNavigateBack: () -> Unit) {
         }
         Spacer(Modifier.width(12.dp))
         Text(
-            text = "New Birth Chart",
+            text = stringResource(StringKey.INPUT_NEW_CHART),
             fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold,
             color = ChartInputTheme.TextPrimary,
@@ -340,14 +404,15 @@ private fun IdentitySection(
     onGenderChange: (Gender) -> Unit,
     onFocusNext: () -> Unit
 ) {
+    val language = LocalLanguage.current
     Column {
-        SectionTitle("Identity")
+        SectionTitle(stringResource(StringKey.INPUT_IDENTITY))
         Spacer(modifier = Modifier.height(12.dp))
 
         ChartOutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            label = "Full name",
+            label = stringResource(StringKey.INPUT_FULL_NAME),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onFocusNext() })
         )
@@ -355,7 +420,7 @@ private fun IdentitySection(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Gender",
+            text = stringResource(StringKey.INPUT_GENDER),
             fontSize = 14.sp,
             color = ChartInputTheme.TextSecondary,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -367,7 +432,7 @@ private fun IdentitySection(
         ) {
             Gender.entries.forEach { gender ->
                 GenderChip(
-                    text = gender.displayName,
+                    text = gender.getLocalizedName(language),
                     isSelected = selectedGender == gender,
                     onClick = { onGenderChange(gender) },
                     modifier = Modifier.weight(1f)
@@ -385,13 +450,28 @@ private fun DateTimeSection(
     selectedTimezone: String,
     timezones: List<String>,
     showTimezoneDropdown: Boolean,
+    dateSystem: DateSystem,
+    language: Language,
     onShowDatePicker: () -> Unit,
     onShowTimePicker: () -> Unit,
     onTimezoneDropdownChange: (Boolean) -> Unit,
     onTimezoneSelected: (String) -> Unit
 ) {
+    // Format date based on selected date system
+    val dateDisplayText = remember(selectedDate, dateSystem, language) {
+        if (dateSystem == DateSystem.BS) {
+            BikramSambatConverter.toBS(selectedDate)?.format(language)
+                ?: selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        } else {
+            selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        }
+    }
+
+    val selectDateText = stringResource(StringKey.INPUT_SELECT_DATE)
+    val selectTimeText = stringResource(StringKey.INPUT_SELECT_TIME)
+
     Column {
-        SectionTitle("Date & Time")
+        SectionTitle(stringResource(StringKey.INPUT_DATE_TIME))
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
@@ -399,16 +479,16 @@ private fun DateTimeSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             DateTimeChip(
-                text = selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                text = dateDisplayText,
                 onClick = onShowDatePicker,
                 modifier = Modifier.weight(1f),
-                contentDescription = "Select date"
+                contentDescription = selectDateText
             )
             DateTimeChip(
                 text = selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")),
                 onClick = onShowTimePicker,
                 modifier = Modifier.weight(0.7f),
-                contentDescription = "Select time"
+                contentDescription = selectTimeText
             )
         }
 
@@ -423,7 +503,7 @@ private fun DateTimeSection(
                 onValueChange = {},
                 readOnly = true,
                 label = {
-                    Text("Timezone", color = ChartInputTheme.TextSecondary, fontSize = 14.sp)
+                    Text(stringResource(StringKey.INPUT_TIMEZONE), color = ChartInputTheme.TextSecondary, fontSize = 14.sp)
                 },
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTimezoneDropdown)
@@ -471,7 +551,7 @@ private fun CoordinatesSection(
     onDone: () -> Unit
 ) {
     Column {
-        SectionTitle("Coordinates")
+        SectionTitle(stringResource(StringKey.INPUT_COORDINATES))
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
@@ -481,7 +561,7 @@ private fun CoordinatesSection(
             ChartOutlinedTextField(
                 value = latitude,
                 onValueChange = onLatitudeChange,
-                label = "Latitude",
+                label = stringResource(StringKey.INPUT_LATITUDE),
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(latitudeFocusRequester),
@@ -497,7 +577,7 @@ private fun CoordinatesSection(
             ChartOutlinedTextField(
                 value = longitude,
                 onValueChange = onLongitudeChange,
-                label = "Longitude",
+                label = stringResource(StringKey.INPUT_LONGITUDE),
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(longitudeFocusRequester),
@@ -516,7 +596,7 @@ private fun CoordinatesSection(
         ChartOutlinedTextField(
             value = altitude,
             onValueChange = onAltitudeChange,
-            label = "Altitude (m) - Optional",
+            label = stringResource(StringKey.INPUT_ALTITUDE),
             modifier = Modifier.focusRequester(altitudeFocusRequester),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
@@ -532,12 +612,13 @@ private fun GenerateButton(
     isCalculating: Boolean,
     onClick: () -> Unit
 ) {
+    val buttonContentDesc = stringResource(StringKey.BTN_GENERATE_SAVE)
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .semantics { contentDescription = "Generate and save birth chart" },
+            .semantics { contentDescription = buttonContentDesc },
         shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = ChartInputTheme.ButtonBackground,
@@ -566,7 +647,7 @@ private fun GenerateButton(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Generate & Save",
+                        stringResource(StringKey.BTN_GENERATE_SAVE),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -593,12 +674,12 @@ private fun ChartDatePickerDialog(
                     datePickerState.selectedDateMillis?.let(onConfirm)
                 }
             ) {
-                Text("OK", color = ChartInputTheme.AccentColor)
+                Text(stringResource(StringKey.BTN_OK), color = ChartInputTheme.AccentColor)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = ChartInputTheme.TextSecondary)
+                Text(stringResource(StringKey.BTN_CANCEL), color = ChartInputTheme.TextSecondary)
             }
         },
         colors = DatePickerDefaults.colors(containerColor = ChartInputTheme.CardBackground)
@@ -651,7 +732,7 @@ private fun ChartTimePickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Select time",
+                    text = stringResource(StringKey.INPUT_SELECT_TIME),
                     color = ChartInputTheme.TextSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier
@@ -686,13 +767,13 @@ private fun ChartTimePickerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = ChartInputTheme.TextSecondary)
+                        Text(stringResource(StringKey.BTN_CANCEL), color = ChartInputTheme.TextSecondary)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         onClick = { onConfirm(timePickerState.hour, timePickerState.minute) }
                     ) {
-                        Text("OK", color = ChartInputTheme.AccentColor)
+                        Text(stringResource(StringKey.BTN_OK), color = ChartInputTheme.AccentColor)
                     }
                 }
             }

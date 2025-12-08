@@ -33,6 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.astro.storm.data.api.GeocodingService
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.ui.theme.AppTheme
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +44,16 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import java.util.Locale
 
+/**
+ * Error type enum for tracking error state without calling @Composable in LaunchedEffect
+ */
+private enum class SearchErrorType {
+    NONE,
+    NETWORK,
+    RATE_LIMIT,
+    GENERIC
+}
+
 @OptIn(FlowPreview::class)
 @Composable
 fun LocationSearchField(
@@ -49,18 +61,32 @@ fun LocationSearchField(
     onValueChange: (String) -> Unit,
     onLocationSelected: (location: String, latitude: Double, longitude: Double) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Search location",
-    placeholder: String = "Enter city or place name"
+    label: String = stringResource(StringKey.LOCATION_SEARCH),
+    placeholder: String = stringResource(StringKey.LOCATION_PLACEHOLDER)
 ) {
     val focusManager = LocalFocusManager.current
 
     var searchResults by remember { mutableStateOf<List<GeocodingService.GeocodingResult>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
     var showResults by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorType by remember { mutableStateOf(SearchErrorType.NONE) }
+    var networkErrorMessage by remember { mutableStateOf<String?>(null) }
     var hasFocus by remember { mutableStateOf(false) }
 
     val searchQueryFlow = remember { MutableStateFlow("") }
+
+    // Pre-fetch localized error strings for display
+    val rateLimitText = stringResource(StringKey.ERROR_RATE_LIMIT)
+    val searchFailedText = stringResource(StringKey.ERROR_SEARCH_FAILED)
+    val clearSearchText = stringResource(StringKey.LOCATION_CLEAR)
+
+    // Compute the display error message from error type
+    val errorMessage = when (errorType) {
+        SearchErrorType.NONE -> null
+        SearchErrorType.NETWORK -> networkErrorMessage
+        SearchErrorType.RATE_LIMIT -> rateLimitText
+        SearchErrorType.GENERIC -> searchFailedText
+    }
 
     LaunchedEffect(value) {
         searchQueryFlow.emit(value)
@@ -73,17 +99,25 @@ fun LocationSearchField(
             .filter { it.length >= 3 }
             .collectLatest { query ->
                 isSearching = true
-                errorMessage = null
+                errorType = SearchErrorType.NONE
+                networkErrorMessage = null
 
                 val result = GeocodingService.searchLocation(query, limit = 6)
                 result.onSuccess { results ->
                     searchResults = results
                     showResults = results.isNotEmpty() && hasFocus
                 }.onFailure { error ->
-                    errorMessage = when (error) {
-                        is GeocodingService.GeocodingError.NetworkError -> error.message
-                        is GeocodingService.GeocodingError.RateLimitExceeded -> "Too many requests. Please wait."
-                        else -> "Search failed. Please try again."
+                    when (error) {
+                        is GeocodingService.GeocodingError.NetworkError -> {
+                            errorType = SearchErrorType.NETWORK
+                            networkErrorMessage = error.message
+                        }
+                        is GeocodingService.GeocodingError.RateLimitExceeded -> {
+                            errorType = SearchErrorType.RATE_LIMIT
+                        }
+                        else -> {
+                            errorType = SearchErrorType.GENERIC
+                        }
                     }
                     searchResults = emptyList()
                     showResults = false
@@ -97,7 +131,8 @@ fun LocationSearchField(
         if (value.length < 3) {
             searchResults = emptyList()
             showResults = false
-            errorMessage = null
+            errorType = SearchErrorType.NONE
+            networkErrorMessage = null
         }
     }
 
@@ -135,13 +170,14 @@ fun LocationSearchField(
                                 onValueChange("")
                                 searchResults = emptyList()
                                 showResults = false
-                                errorMessage = null
+                                errorType = SearchErrorType.NONE
+                                networkErrorMessage = null
                             },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Clear,
-                                contentDescription = "Clear search",
+                                contentDescription = clearSearchText,
                                 tint = AppTheme.TextMuted,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -237,12 +273,13 @@ private fun LocationResultItem(
     result: GeocodingService.GeocodingResult,
     onClick: () -> Unit
 ) {
+    val selectText = stringResource(StringKey.LOCATION_SELECT, result.formattedShortName)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp)
-            .semantics { contentDescription = "Select ${result.formattedShortName}" },
+            .semantics { contentDescription = selectText },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -311,7 +348,9 @@ class LocationSearchState {
         private set
     var results by mutableStateOf<List<GeocodingService.GeocodingResult>>(emptyList())
         private set
-    var error by mutableStateOf<String?>(null)
+    var errorType by mutableStateOf(SearchErrorType.NONE)
+        private set
+    var networkErrorMessage by mutableStateOf<String?>(null)
         private set
 
     suspend fun search(query: String, limit: Int = 5) {
@@ -321,16 +360,24 @@ class LocationSearchState {
         }
 
         isSearching = true
-        error = null
+        errorType = SearchErrorType.NONE
+        networkErrorMessage = null
 
         val result = GeocodingService.searchLocation(query, limit)
         result.onSuccess { searchResults ->
             results = searchResults
         }.onFailure { e ->
-            error = when (e) {
-                is GeocodingService.GeocodingError.NetworkError -> e.message
-                is GeocodingService.GeocodingError.RateLimitExceeded -> "Rate limit exceeded"
-                else -> "Search failed"
+            when (e) {
+                is GeocodingService.GeocodingError.NetworkError -> {
+                    errorType = SearchErrorType.NETWORK
+                    networkErrorMessage = e.message
+                }
+                is GeocodingService.GeocodingError.RateLimitExceeded -> {
+                    errorType = SearchErrorType.RATE_LIMIT
+                }
+                else -> {
+                    errorType = SearchErrorType.GENERIC
+                }
             }
             results = emptyList()
         }
@@ -340,7 +387,8 @@ class LocationSearchState {
 
     fun clear() {
         results = emptyList()
-        error = null
+        errorType = SearchErrorType.NONE
+        networkErrorMessage = null
         isSearching = false
     }
 }

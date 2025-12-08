@@ -52,6 +52,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.getLocalizedName
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
@@ -76,8 +80,8 @@ fun BirthChartScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Birth Chart",
-            message = "No chart data available. Please select or create a profile first.",
+            title = stringResource(StringKey.FEATURE_BIRTH_CHART),
+            message = stringResource(StringKey.NO_PROFILE_MESSAGE_LONG),
             onBack = onBack
         )
         return
@@ -85,9 +89,10 @@ fun BirthChartScreen(
 
     val hapticFeedback = LocalHapticFeedback.current
     val chartRenderer = remember { ChartRenderer() }
+    val ascendantLabel = stringResource(StringKey.CHART_ASCENDANT)
 
     var showFullScreenChart by remember { mutableStateOf(false) }
-    var fullScreenChartTitle by remember { mutableStateOf("Lagna") }
+    var fullScreenChartTitle by remember { mutableStateOf(ascendantLabel) }
     var fullScreenDivisionalData by remember { mutableStateOf<DivisionalChartData?>(null) }
     var selectedPlanetPosition by remember { mutableStateOf<PlanetPosition?>(null) }
     var selectedNakshatra by remember { mutableStateOf<Pair<Nakshatra, Int>?>(null) }
@@ -184,7 +189,7 @@ private fun BirthChartTopBar(
         title = {
             Column {
                 Text(
-                    text = "Birth Chart",
+                    text = stringResource(StringKey.FEATURE_BIRTH_CHART),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -202,7 +207,7 @@ private fun BirthChartTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Navigate back",
+                    contentDescription = stringResource(StringKey.BTN_BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -211,7 +216,7 @@ private fun BirthChartTopBar(
             IconButton(onClick = onCopyToClipboard) {
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = "Copy chart data to clipboard",
+                    contentDescription = stringResource(StringKey.SETTINGS_EXPORT_CLIPBOARD),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -252,7 +257,7 @@ fun EmptyChartScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back",
+                            contentDescription = stringResource(StringKey.BTN_BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -293,7 +298,7 @@ fun EmptyChartScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "No Chart Available",
+                    text = stringResource(StringKey.MISC_NO_DATA),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary,

@@ -52,6 +52,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.getLocalizedName
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ui.screen.chartdetail.tabs.DashasTabContent
 import com.astro.storm.ui.theme.AppTheme
@@ -74,16 +79,17 @@ fun DashasScreen(
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val language = LocalLanguage.current
 
-    val currentPeriodInfo = remember(uiState) {
-        extractCurrentPeriodInfo(uiState)
+    val currentPeriodInfo = remember(uiState, language) {
+        extractCurrentPeriodInfo(uiState, language)
     }
 
     Scaffold(
         containerColor = AppTheme.ScreenBackground,
         topBar = {
             DashasTopBar(
-                chartName = chart?.birthData?.name ?: "Unknown",
+                chartName = chart?.birthData?.name ?: stringResource(StringKey.MISC_UNKNOWN),
                 currentPeriodInfo = currentPeriodInfo,
                 onBack = onBack,
                 showJumpToToday = uiState is DashaUiState.Success,
@@ -148,14 +154,14 @@ private data class CurrentPeriodInfo(
     val hasError: Boolean
 )
 
-private fun extractCurrentPeriodInfo(uiState: DashaUiState): CurrentPeriodInfo {
+private fun extractCurrentPeriodInfo(uiState: DashaUiState, language: Language): CurrentPeriodInfo {
     return when (uiState) {
         is DashaUiState.Success -> {
             val md = uiState.timeline.currentMahadasha
             val ad = uiState.timeline.currentAntardasha
             CurrentPeriodInfo(
-                mahadasha = md?.planet?.displayName,
-                antardasha = ad?.planet?.displayName,
+                mahadasha = md?.planet?.getLocalizedName(language),
+                antardasha = ad?.planet?.getLocalizedName(language),
                 isLoading = false,
                 hasError = false
             )
@@ -183,7 +189,7 @@ private fun DashasTopBar(
             title = {
                 Column(modifier = Modifier.fillMaxWidth(0.85f)) {
                     Text(
-                        text = "Vimshottari Dasha",
+                        text = stringResource(StringKey.DASHA_VIMSHOTTARI),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = AppTheme.TextPrimary,
@@ -201,7 +207,7 @@ private fun DashasTopBar(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Navigate back",
+                        contentDescription = stringResource(StringKey.BTN_BACK),
                         tint = AppTheme.TextPrimary
                     )
                 }
@@ -211,7 +217,7 @@ private fun DashasTopBar(
                     IconButton(onClick = onJumpToToday) {
                         Icon(
                             imageVector = Icons.Outlined.CalendarToday,
-                            contentDescription = "Jump to current period",
+                            contentDescription = stringResource(StringKey.DASHA_JUMP_TO_TODAY),
                             tint = AppTheme.AccentPrimary
                         )
                     }
@@ -243,7 +249,7 @@ private fun TopBarSubtitle(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Calculating...",
+                    text = stringResource(StringKey.DASHA_CALCULATING),
                     style = MaterialTheme.typography.bodySmall,
                     color = AppTheme.TextMuted,
                     fontSize = 12.sp
@@ -251,7 +257,7 @@ private fun TopBarSubtitle(
             }
             periodInfo.hasError -> {
                 Text(
-                    text = "Error • $chartName",
+                    text = "${stringResource(StringKey.DASHA_ERROR)} • $chartName",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
@@ -320,14 +326,14 @@ private fun DashaLoadingContent() {
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "Calculating Dasha Timeline",
+                text = stringResource(StringKey.DASHA_CALCULATING_TIMELINE),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Computing planetary periods based on\nMoon's Nakshatra position...",
+                text = stringResource(StringKey.DASHA_CALCULATING_DESC),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTheme.TextMuted,
                 textAlign = TextAlign.Center,
@@ -367,7 +373,7 @@ private fun DashaErrorContent(
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "Calculation Failed",
+                text = stringResource(StringKey.DASHA_CALCULATION_FAILED),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
@@ -389,7 +395,7 @@ private fun DashaErrorContent(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Try Again",
+                    text = stringResource(StringKey.BTN_TRY_AGAIN),
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
@@ -425,14 +431,14 @@ private fun DashaEmptyContent(onBack: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "No Chart Selected",
+                text = stringResource(StringKey.DASHA_NO_CHART_SELECTED),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Please select or create a birth profile\nto view the Dasha timeline.",
+                text = stringResource(StringKey.DASHA_NO_CHART_MESSAGE),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppTheme.TextMuted,
                 textAlign = TextAlign.Center,
@@ -444,7 +450,7 @@ private fun DashaEmptyContent(onBack: () -> Unit) {
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Go Back",
+                    text = stringResource(StringKey.BTN_GO_BACK),
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )

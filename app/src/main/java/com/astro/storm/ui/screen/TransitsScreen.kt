@@ -24,6 +24,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.TransitAnalyzer
 import com.astro.storm.ui.screen.chartdetail.tabs.TransitsTabContent
@@ -51,8 +54,8 @@ fun TransitsScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Transits",
-            message = "No chart data available. Please select or create a profile first.",
+            title = stringResource(StringKey.FEATURE_TRANSITS),
+            message = stringResource(StringKey.NO_PROFILE_MESSAGE),
             onBack = onBack
         )
         return
@@ -108,7 +111,7 @@ private fun TransitsTopBar(
         title = {
             Column {
                 Text(
-                    text = "Transits",
+                    text = stringResource(StringKey.FEATURE_TRANSITS),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -124,7 +127,7 @@ private fun TransitsTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(StringKey.BTN_BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -133,7 +136,7 @@ private fun TransitsTopBar(
             IconButton(onClick = onRefresh) {
                 Icon(
                     imageVector = Icons.Outlined.Refresh,
-                    contentDescription = "Refresh Transits",
+                    contentDescription = stringResource(StringKey.FEATURE_TRANSITS),
                     tint = AppTheme.TextPrimary
                 )
             }

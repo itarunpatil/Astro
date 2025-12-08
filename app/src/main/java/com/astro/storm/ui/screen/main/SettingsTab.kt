@@ -21,6 +21,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.astro.storm.data.localization.BikramSambatConverter
+import com.astro.storm.data.localization.DateSystem
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.LocalDateSystem
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.LocalLocalizationManager
+import com.astro.storm.data.localization.LocalizationManager
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.StringResources
+import com.astro.storm.data.localization.getLocalizedName
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.HouseSystem
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.repository.SavedChart
@@ -45,6 +56,8 @@ fun SettingsTab(
     onManageProfiles: () -> Unit
 ) {
     val context = LocalContext.current
+    val language = LocalLanguage.current
+    val localizationManager = LocalLocalizationManager.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var chartToDelete by remember { mutableStateOf<SavedChart?>(null) }
@@ -57,7 +70,7 @@ fun SettingsTab(
     ) {
         // Profile Section
         item {
-            SettingsSectionHeader(title = "Profile")
+            SettingsSectionHeader(titleKey = StringKey.SETTINGS_PROFILE)
         }
 
         item {
@@ -75,15 +88,15 @@ fun SettingsTab(
             if (currentChart != null) {
                 SettingsItem(
                     icon = Icons.Outlined.Edit,
-                    title = "Edit Profile",
-                    subtitle = "Modify birth details",
+                    titleKey = StringKey.SETTINGS_EDIT_PROFILE,
+                    subtitleKey = StringKey.SETTINGS_EDIT_PROFILE_DESC,
                     onClick = onEditProfile
                 )
             } else {
                 SettingsItem(
                     icon = Icons.Outlined.People,
-                    title = "Manage Profiles",
-                    subtitle = "No profile selected",
+                    titleKey = StringKey.SETTINGS_MANAGE_PROFILES,
+                    subtitleKey = StringKey.SETTINGS_NO_PROFILE,
                     onClick = onManageProfiles
                 )
             }
@@ -93,14 +106,14 @@ fun SettingsTab(
         if (currentChart != null) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                SettingsSectionHeader(title = "Export")
+                SettingsSectionHeader(titleKey = StringKey.SETTINGS_EXPORT)
             }
 
             item {
                 SettingsItem(
                     icon = Icons.Outlined.PictureAsPdf,
-                    title = "Export as PDF",
-                    subtitle = "Complete chart report",
+                    titleKey = StringKey.SETTINGS_EXPORT_PDF,
+                    subtitleKey = StringKey.SETTINGS_EXPORT_PDF_DESC,
                     onClick = { onExportChart(ExportFormat.PDF) }
                 )
             }
@@ -108,8 +121,8 @@ fun SettingsTab(
             item {
                 SettingsItem(
                     icon = Icons.Outlined.Image,
-                    title = "Export as Image",
-                    subtitle = "High-quality chart image",
+                    titleKey = StringKey.SETTINGS_EXPORT_IMAGE,
+                    subtitleKey = StringKey.SETTINGS_EXPORT_IMAGE_DESC,
                     onClick = { onExportChart(ExportFormat.IMAGE) }
                 )
             }
@@ -117,8 +130,8 @@ fun SettingsTab(
             item {
                 SettingsItem(
                     icon = Icons.Outlined.ContentCopy,
-                    title = "Copy to Clipboard",
-                    subtitle = "Plain text format",
+                    titleKey = StringKey.SETTINGS_EXPORT_CLIPBOARD,
+                    subtitleKey = StringKey.SETTINGS_EXPORT_CLIPBOARD_DESC,
                     onClick = { onExportChart(ExportFormat.CLIPBOARD) }
                 )
             }
@@ -126,8 +139,8 @@ fun SettingsTab(
             item {
                 SettingsItem(
                     icon = Icons.Outlined.Code,
-                    title = "Export as JSON",
-                    subtitle = "Machine-readable format",
+                    titleKey = StringKey.SETTINGS_EXPORT_JSON,
+                    subtitleKey = StringKey.SETTINGS_EXPORT_JSON_DESC,
                     onClick = { onExportChart(ExportFormat.JSON) }
                 )
             }
@@ -136,7 +149,15 @@ fun SettingsTab(
         // Preferences Section
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            SettingsSectionHeader(title = "Preferences")
+            SettingsSectionHeader(titleKey = StringKey.SETTINGS_PREFERENCES)
+        }
+
+        item {
+            LanguageSetting(localizationManager = localizationManager)
+        }
+
+        item {
+            DateSystemSetting(localizationManager = localizationManager)
         }
 
         item {
@@ -150,14 +171,15 @@ fun SettingsTab(
         // About Section
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            SettingsSectionHeader(title = "About")
+            SettingsSectionHeader(titleKey = StringKey.SETTINGS_ABOUT)
         }
 
         item {
             SettingsItem(
                 icon = Icons.Outlined.Info,
-                title = "About AstroStorm",
-                subtitle = "Version 1.0.0",
+                titleKey = StringKey.SETTINGS_ABOUT_APP,
+                subtitleKey = StringKey.SETTINGS_VERSION,
+                subtitleArgs = arrayOf("1.0.0"),
                 onClick = { /* Show about dialog */ }
             )
         }
@@ -165,8 +187,8 @@ fun SettingsTab(
         item {
             SettingsItem(
                 icon = Icons.Outlined.Science,
-                title = "Calculation Engine",
-                subtitle = "Swiss Ephemeris (JPL Mode)",
+                titleKey = StringKey.SETTINGS_CALC_ENGINE,
+                subtitleKey = StringKey.SETTINGS_CALC_ENGINE_DESC,
                 onClick = { /* Show calculation info */ }
             )
         }
@@ -194,9 +216,9 @@ fun SettingsTab(
             containerColor = AppTheme.CardBackground,
             titleContentColor = AppTheme.TextPrimary,
             textContentColor = AppTheme.TextSecondary,
-            title = { Text("Delete Profile") },
+            title = { Text(stringResource(StringKey.DIALOG_DELETE_PROFILE)) },
             text = {
-                Text("Are you sure you want to delete ${chartToDelete?.name}? This action cannot be undone.")
+                Text(stringResource(StringKey.DIALOG_DELETE_CONFIRM, chartToDelete?.name ?: ""))
             },
             confirmButton = {
                 TextButton(
@@ -206,12 +228,12 @@ fun SettingsTab(
                         chartToDelete = null
                     }
                 ) {
-                    Text("Delete", color = AppTheme.ErrorColor)
+                    Text(stringResource(StringKey.BTN_DELETE), color = AppTheme.ErrorColor)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel", color = AppTheme.AccentPrimary)
+                    Text(stringResource(StringKey.BTN_CANCEL), color = AppTheme.AccentPrimary)
                 }
             }
         )
@@ -219,9 +241,9 @@ fun SettingsTab(
 }
 
 @Composable
-private fun SettingsSectionHeader(title: String) {
+private fun SettingsSectionHeader(titleKey: StringKey) {
     Text(
-        text = title,
+        text = stringResource(titleKey),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
         color = AppTheme.AccentPrimary,
@@ -234,6 +256,9 @@ private fun CurrentProfileCard(
     chart: VedicChart,
     onExport: () -> Unit
 ) {
+    val language = LocalLanguage.current
+    val dateSystem = LocalDateSystem.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -278,8 +303,16 @@ private fun CurrentProfileCard(
                         color = AppTheme.TextPrimary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
+
+                    // Display date based on selected date system
+                    val dateDisplay = if (dateSystem == DateSystem.BS) {
+                        com.astro.storm.data.localization.BikramSambatConverter.toBS(chart.birthData.dateTime.toLocalDate())
+                            ?.format(language) ?: chart.birthData.dateTime.toLocalDate().toString()
+                    } else {
+                        chart.birthData.dateTime.toLocalDate().toString()
+                    }
                     Text(
-                        text = chart.birthData.dateTime.toLocalDate().toString(),
+                        text = dateDisplay,
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTheme.TextMuted
                     )
@@ -303,18 +336,18 @@ private fun CurrentProfileCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ChartDetailItem(
-                    label = "Ascendant",
-                    value = chart.planetPositions.find { it.planet.displayName == "Sun" }?.sign?.displayName
-                        ?: com.astro.storm.data.model.ZodiacSign.fromLongitude(chart.ascendant).displayName
+                    labelKey = StringKey.CHART_ASCENDANT,
+                    value = chart.planetPositions.find { it.planet.displayName == "Sun" }?.sign?.getLocalizedName(language)
+                        ?: com.astro.storm.data.model.ZodiacSign.fromLongitude(chart.ascendant).getLocalizedName(language)
                 )
                 ChartDetailItem(
-                    label = "Moon Sign",
-                    value = chart.planetPositions.find { it.planet == com.astro.storm.data.model.Planet.MOON }?.sign?.displayName
+                    labelKey = StringKey.CHART_MOON_SIGN,
+                    value = chart.planetPositions.find { it.planet == com.astro.storm.data.model.Planet.MOON }?.sign?.getLocalizedName(language)
                         ?: "-"
                 )
                 ChartDetailItem(
-                    label = "Nakshatra",
-                    value = chart.planetPositions.find { it.planet == com.astro.storm.data.model.Planet.MOON }?.nakshatra?.displayName?.take(8)
+                    labelKey = StringKey.CHART_NAKSHATRA,
+                    value = chart.planetPositions.find { it.planet == com.astro.storm.data.model.Planet.MOON }?.nakshatra?.getLocalizedName(language)?.take(8)
                         ?: "-"
                 )
             }
@@ -324,7 +357,7 @@ private fun CurrentProfileCard(
 
 @Composable
 private fun ChartDetailItem(
-    label: String,
+    labelKey: StringKey,
     value: String
 ) {
     Column(
@@ -337,7 +370,7 @@ private fun ChartDetailItem(
             color = AppTheme.TextPrimary
         )
         Text(
-            text = label,
+            text = stringResource(labelKey),
             style = MaterialTheme.typography.labelSmall,
             color = AppTheme.TextMuted
         )
@@ -368,14 +401,14 @@ private fun EmptyProfileCard(onManageProfiles: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "No profile selected",
+                text = stringResource(StringKey.SETTINGS_NO_PROFILE),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = AppTheme.TextPrimary
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Tap to select or create a profile",
+                text = stringResource(StringKey.SETTINGS_TAP_TO_SELECT),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTheme.TextMuted
             )
@@ -386,11 +419,19 @@ private fun EmptyProfileCard(onManageProfiles: () -> Unit) {
 @Composable
 private fun SettingsItem(
     icon: ImageVector,
-    title: String,
-    subtitle: String,
+    titleKey: StringKey,
+    subtitleKey: StringKey,
     onClick: () -> Unit,
+    subtitleArgs: Array<Any>? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
+    val title = stringResource(titleKey)
+    val subtitle = if (subtitleArgs != null) {
+        stringResource(subtitleKey, *subtitleArgs)
+    } else {
+        stringResource(subtitleKey)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -448,6 +489,7 @@ private fun SettingsItem(
 
 @Composable
 private fun HouseSystemSetting() {
+    val language = LocalLanguage.current
     var expanded by remember { mutableStateOf(false) }
     var selectedSystem by remember { mutableStateOf(HouseSystem.DEFAULT) }
 
@@ -485,13 +527,13 @@ private fun HouseSystemSetting() {
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "House System",
+                        text = stringResource(StringKey.SETTINGS_HOUSE_SYSTEM),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = AppTheme.TextPrimary
                     )
                     Text(
-                        text = selectedSystem.displayName,
+                        text = selectedSystem.getLocalizedName(language),
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTheme.AccentPrimary
                     )
@@ -531,7 +573,7 @@ private fun HouseSystemSetting() {
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = system.displayName,
+                            text = system.getLocalizedName(language),
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (system == selectedSystem) AppTheme.TextPrimary else AppTheme.TextSecondary
                         )
@@ -542,11 +584,224 @@ private fun HouseSystemSetting() {
     }
 }
 
+/**
+ * Language Selection Setting
+ */
+@Composable
+private fun LanguageSetting(localizationManager: LocalizationManager?) {
+    val currentLanguage by localizationManager?.language?.collectAsState() ?: remember { mutableStateOf(Language.DEFAULT) }
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AppTheme.ChipBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Language,
+                        contentDescription = null,
+                        tint = AppTheme.AccentPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(StringKey.SETTINGS_LANGUAGE),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = AppTheme.TextPrimary
+                    )
+                    Text(
+                        text = currentLanguage.nativeName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTheme.AccentPrimary
+                    )
+                }
+
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = AppTheme.TextMuted
+                )
+            }
+
+            if (expanded) {
+                HorizontalDivider(color = AppTheme.DividerColor)
+
+                Language.entries.forEach { language ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                localizationManager?.setLanguage(language)
+                                expanded = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = language == currentLanguage,
+                            onClick = {
+                                localizationManager?.setLanguage(language)
+                                expanded = false
+                            },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = AppTheme.AccentPrimary,
+                                unselectedColor = AppTheme.TextMuted
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = language.nativeName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = if (language == currentLanguage) AppTheme.TextPrimary else AppTheme.TextSecondary
+                            )
+                            Text(
+                                text = language.englishName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AppTheme.TextMuted
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Date System Selection Setting (AD/BS)
+ */
+@Composable
+private fun DateSystemSetting(localizationManager: LocalizationManager?) {
+    val language by localizationManager?.language?.collectAsState() ?: remember { mutableStateOf(Language.DEFAULT) }
+    val currentDateSystem by localizationManager?.dateSystem?.collectAsState() ?: remember { mutableStateOf(DateSystem.DEFAULT) }
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AppTheme.ChipBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CalendarMonth,
+                        contentDescription = null,
+                        tint = AppTheme.AccentPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(StringKey.SETTINGS_DATE_SYSTEM),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = AppTheme.TextPrimary
+                    )
+                    Text(
+                        text = currentDateSystem.getDisplayName(language),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTheme.AccentPrimary
+                    )
+                }
+
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = AppTheme.TextMuted
+                )
+            }
+
+            if (expanded) {
+                HorizontalDivider(color = AppTheme.DividerColor)
+
+                DateSystem.entries.forEach { dateSystem ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                localizationManager?.setDateSystem(dateSystem)
+                                expanded = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = dateSystem == currentDateSystem,
+                            onClick = {
+                                localizationManager?.setDateSystem(dateSystem)
+                                expanded = false
+                            },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = AppTheme.AccentPrimary,
+                                unselectedColor = AppTheme.TextMuted
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = dateSystem.getDisplayName(language),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (dateSystem == currentDateSystem) AppTheme.TextPrimary else AppTheme.TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun AyanamsaSetting() {
-    val ayanamsaOptions = listOf("Lahiri", "Raman", "Krishnamurti", "True Chitrapaksha")
+    val language = LocalLanguage.current
+    val ayanamsaKeys = listOf(
+        StringKey.AYANAMSA_LAHIRI,
+        StringKey.AYANAMSA_RAMAN,
+        StringKey.AYANAMSA_KRISHNAMURTI,
+        StringKey.AYANAMSA_TRUE_CHITRAPAKSHA
+    )
     var expanded by remember { mutableStateOf(false) }
-    var selectedAyanamsa by remember { mutableStateOf(ayanamsaOptions[0]) }
+    var selectedAyanamsaKey by remember { mutableStateOf(ayanamsaKeys[0]) }
 
     Card(
         modifier = Modifier
@@ -582,13 +837,13 @@ private fun AyanamsaSetting() {
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Ayanamsa",
+                        text = stringResource(StringKey.SETTINGS_AYANAMSA),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = AppTheme.TextPrimary
                     )
                     Text(
-                        text = selectedAyanamsa,
+                        text = stringResource(selectedAyanamsaKey),
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTheme.AccentPrimary
                     )
@@ -604,21 +859,21 @@ private fun AyanamsaSetting() {
             if (expanded) {
                 HorizontalDivider(color = AppTheme.DividerColor)
 
-                ayanamsaOptions.forEach { ayanamsa ->
+                ayanamsaKeys.forEach { key ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                selectedAyanamsa = ayanamsa
+                                selectedAyanamsaKey = key
                                 expanded = false
                             }
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = ayanamsa == selectedAyanamsa,
+                            selected = key == selectedAyanamsaKey,
                             onClick = {
-                                selectedAyanamsa = ayanamsa
+                                selectedAyanamsaKey = key
                                 expanded = false
                             },
                             colors = RadioButtonDefaults.colors(
@@ -628,9 +883,9 @@ private fun AyanamsaSetting() {
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = ayanamsa,
+                            text = stringResource(key),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (ayanamsa == selectedAyanamsa) AppTheme.TextPrimary else AppTheme.TextSecondary
+                            color = if (key == selectedAyanamsaKey) AppTheme.TextPrimary else AppTheme.TextSecondary
                         )
                     }
                 }
@@ -664,7 +919,7 @@ private fun AboutCard() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Ultra-Precision Vedic Astrology",
+                text = stringResource(StringKey.SETTINGS_APP_TAGLINE),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppTheme.TextSecondary
             )
@@ -672,7 +927,7 @@ private fun AboutCard() {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Powered by Swiss Ephemeris with JPL planetary data for astronomical-grade accuracy in all calculations.",
+                text = stringResource(StringKey.SETTINGS_APP_DESC),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTheme.TextMuted,
                 textAlign = TextAlign.Center,
@@ -684,15 +939,15 @@ private fun AboutCard() {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                FeatureBadge(text = "Lahiri Ayanamsa")
-                FeatureBadge(text = "Placidus Houses")
+                FeatureBadge(textKey = StringKey.SETTINGS_LAHIRI)
+                FeatureBadge(textKey = StringKey.SETTINGS_PLACIDUS)
             }
         }
     }
 }
 
 @Composable
-private fun FeatureBadge(text: String) {
+private fun FeatureBadge(textKey: StringKey) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))
@@ -700,7 +955,7 @@ private fun FeatureBadge(text: String) {
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
-            text = text,
+            text = stringResource(textKey),
             style = MaterialTheme.typography.labelSmall,
             color = AppTheme.TextMuted
         )
@@ -712,13 +967,14 @@ private fun ExportOptionsDialog(
     onDismiss: () -> Unit,
     onExport: (ExportFormat) -> Unit
 ) {
+    val language = LocalLanguage.current
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = AppTheme.CardBackground,
         titleContentColor = AppTheme.TextPrimary,
         title = {
             Text(
-                text = "Export Chart",
+                text = stringResource(StringKey.DIALOG_EXPORT_CHART),
                 fontWeight = FontWeight.SemiBold
             )
         },
@@ -741,13 +997,13 @@ private fun ExportOptionsDialog(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = format.title,
+                                text = format.getLocalizedTitle(language),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = AppTheme.TextPrimary
                             )
                             Text(
-                                text = format.description,
+                                text = format.getLocalizedDescription(language),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AppTheme.TextMuted
                             )
@@ -758,20 +1014,23 @@ private fun ExportOptionsDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = AppTheme.AccentPrimary)
+                Text(stringResource(StringKey.BTN_CANCEL), color = AppTheme.AccentPrimary)
             }
         }
     )
 }
 
 enum class ExportFormat(
-    val title: String,
-    val description: String,
+    val titleKey: StringKey,
+    val descriptionKey: StringKey,
     val icon: ImageVector
 ) {
-    PDF("PDF Report", "Complete chart analysis", Icons.Outlined.PictureAsPdf),
-    IMAGE("Chart Image", "High-quality PNG", Icons.Outlined.Image),
-    JSON("JSON Data", "Machine-readable format", Icons.Outlined.Code),
-    CSV("CSV Data", "Spreadsheet format", Icons.Outlined.TableChart),
-    CLIPBOARD("Copy Text", "Plain text to clipboard", Icons.Outlined.ContentCopy)
+    PDF(StringKey.SETTINGS_EXPORT_PDF, StringKey.SETTINGS_EXPORT_PDF_DESC, Icons.Outlined.PictureAsPdf),
+    IMAGE(StringKey.SETTINGS_EXPORT_IMAGE, StringKey.SETTINGS_EXPORT_IMAGE_DESC, Icons.Outlined.Image),
+    JSON(StringKey.SETTINGS_EXPORT_JSON, StringKey.SETTINGS_EXPORT_JSON_DESC, Icons.Outlined.Code),
+    CSV(StringKey.SETTINGS_EXPORT_CSV, StringKey.SETTINGS_EXPORT_CSV_DESC, Icons.Outlined.TableChart),
+    CLIPBOARD(StringKey.SETTINGS_EXPORT_CLIPBOARD, StringKey.SETTINGS_EXPORT_CLIPBOARD_DESC, Icons.Outlined.ContentCopy);
+
+    fun getLocalizedTitle(language: Language): String = StringResources.get(titleKey, language)
+    fun getLocalizedDescription(language: Language): String = StringResources.get(descriptionKey, language)
 }

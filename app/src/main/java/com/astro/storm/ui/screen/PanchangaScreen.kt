@@ -21,6 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import com.astro.storm.data.localization.LocalLanguage
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.PanchangaCalculator
 import com.astro.storm.ui.screen.chartdetail.tabs.PanchangaTabContent
@@ -48,8 +51,8 @@ fun PanchangaScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Panchanga",
-            message = "No chart data available. Please select or create a profile first.",
+            title = stringResource(StringKey.FEATURE_PANCHANGA),
+            message = stringResource(StringKey.NO_PROFILE_MESSAGE),
             onBack = onBack
         )
         return
@@ -105,7 +108,7 @@ private fun PanchangaTopBar(
         title = {
             Column {
                 Text(
-                    text = "Panchanga",
+                    text = stringResource(StringKey.FEATURE_PANCHANGA),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -121,7 +124,7 @@ private fun PanchangaTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(StringKey.BTN_BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -130,7 +133,7 @@ private fun PanchangaTopBar(
             IconButton(onClick = { /* Reserved for future: current day panchanga */ }) {
                 Icon(
                     imageVector = Icons.Outlined.CalendarMonth,
-                    contentDescription = "Panchanga Calendar",
+                    contentDescription = stringResource(StringKey.FEATURE_PANCHANGA),
                     tint = AppTheme.TextPrimary
                 )
             }
