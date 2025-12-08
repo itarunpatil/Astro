@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.YogaCalculator
+import com.astro.storm.localization.*
 import com.astro.storm.ui.screen.chartdetail.tabs.YogasTabContent
 import com.astro.storm.ui.theme.AppTheme
 
@@ -49,8 +50,8 @@ fun YogasScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Yogas",
-            message = "No chart data available. Please select or create a profile first.",
+            title = getString(StringKey.YOGAS_TITLE),
+            message = getString(StringKey.ERROR_NO_DATA),
             onBack = onBack
         )
         return
@@ -99,17 +100,18 @@ private fun YogasTopBar(
     onBack: () -> Unit,
     onInfoClick: () -> Unit
 ) {
+    val yogasDetectedText = getString(StringKey.YOGAS_COUNT_DETECTED)
     TopAppBar(
         title = {
             Column {
                 Text(
-                    text = "Yogas",
+                    text = getString(StringKey.YOGAS_TITLE),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
                 )
                 Text(
-                    text = "$yogaCount yogas detected • $chartName",
+                    text = "$yogaCount $yogasDetectedText • $chartName",
                     style = MaterialTheme.typography.bodySmall,
                     color = AppTheme.TextMuted
                 )
@@ -119,7 +121,7 @@ private fun YogasTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = getString(StringKey.BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -128,7 +130,7 @@ private fun YogasTopBar(
             IconButton(onClick = onInfoClick) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
-                    contentDescription = "Yoga Information",
+                    contentDescription = getString(StringKey.YOGAS_INFO_TITLE),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -150,7 +152,7 @@ private fun YogaInfoDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "About Vedic Yogas",
+                text = getString(StringKey.YOGAS_INFO_TITLE),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
@@ -159,7 +161,7 @@ private fun YogaInfoDialog(
         text = {
             Column {
                 Text(
-                    text = "Yogas are special planetary combinations in Vedic astrology that indicate specific life outcomes and characteristics.",
+                    text = getString(StringKey.YOGAS_INFO_DESC),
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppTheme.TextSecondary
                 )
@@ -167,7 +169,7 @@ private fun YogaInfoDialog(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 Text(
-                    text = "Yoga Categories:",
+                    text = "${getString(StringKey.YOGAS_CATEGORY)}:",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.AccentGold
@@ -175,20 +177,20 @@ private fun YogaInfoDialog(
                 androidx.compose.foundation.layout.Spacer(
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
-                YogaCategoryInfo("Raja Yoga", "Power, authority, leadership")
-                YogaCategoryInfo("Dhana Yoga", "Wealth and prosperity")
-                YogaCategoryInfo("Mahapurusha", "Exceptional personality traits")
-                YogaCategoryInfo("Nabhasa", "Chart patterns and configurations")
-                YogaCategoryInfo("Chandra", "Moon-based combinations")
-                YogaCategoryInfo("Solar", "Sun-based combinations")
-                YogaCategoryInfo("Special", "Unique beneficial combinations")
-                YogaCategoryInfo("Negative", "Challenging combinations")
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_RAJA), getString(StringKey.YOGA_CATEGORY_RAJA_DESC))
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_DHANA), getString(StringKey.YOGA_CATEGORY_DHANA_DESC))
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_MAHAPURUSHA), getString(StringKey.YOGA_CATEGORY_MAHAPURUSHA_DESC))
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_NABHASA), getString(StringKey.YOGA_CATEGORY_NABHASA_DESC))
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_CHANDRA), getString(StringKey.YOGA_CATEGORY_CHANDRA_DESC))
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_SOLAR), getString(StringKey.YOGA_CATEGORY_SOLAR_DESC))
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_SPECIAL), getString(StringKey.YOGA_CATEGORY_SPECIAL_DESC))
+                YogaCategoryInfo(getString(StringKey.YOGA_CATEGORY_NEGATIVE), getString(StringKey.YOGA_CATEGORY_NEGATIVE_DESC))
             }
         },
         confirmButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Got it",
+                    text = getString(StringKey.OK),
                     color = AppTheme.AccentPrimary
                 )
             }

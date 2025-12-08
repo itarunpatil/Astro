@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.astro.storm.data.model.HouseSystem
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.repository.SavedChart
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 
 /**
@@ -136,7 +137,15 @@ fun SettingsTab(
         // Preferences Section
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            SettingsSectionHeader(title = "Preferences")
+            SettingsSectionHeader(title = getString(StringKey.SETTINGS_TITLE))
+        }
+
+        item {
+            LanguageSetting()
+        }
+
+        item {
+            DateSystemSetting()
         }
 
         item {
@@ -534,6 +543,205 @@ private fun HouseSystemSetting() {
                             text = system.displayName,
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (system == selectedSystem) AppTheme.TextPrimary else AppTheme.TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguageSetting() {
+    var expanded by remember { mutableStateOf(false) }
+    val currentLanguage by LocalizationManager.currentLanguage.collectAsState()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AppTheme.ChipBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Language,
+                        contentDescription = null,
+                        tint = AppTheme.AccentPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = getString(StringKey.SETTINGS_LANGUAGE),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = AppTheme.TextPrimary
+                    )
+                    Text(
+                        text = currentLanguage.displayName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTheme.AccentPrimary
+                    )
+                }
+
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = AppTheme.TextMuted
+                )
+            }
+
+            if (expanded) {
+                HorizontalDivider(color = AppTheme.DividerColor)
+
+                Language.entries.forEach { language ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                LocalizationManager.setLanguage(language)
+                                expanded = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = language == currentLanguage,
+                            onClick = {
+                                LocalizationManager.setLanguage(language)
+                                expanded = false
+                            },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = AppTheme.AccentPrimary,
+                                unselectedColor = AppTheme.TextMuted
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = language.displayName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (language == currentLanguage) AppTheme.TextPrimary else AppTheme.TextSecondary
+                            )
+                            Text(
+                                text = language.englishName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AppTheme.TextMuted
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DateSystemSetting() {
+    var expanded by remember { mutableStateOf(false) }
+    val currentDateSystem by LocalizationManager.currentDateSystem.collectAsState()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = AppTheme.CardBackground),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AppTheme.ChipBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CalendarMonth,
+                        contentDescription = null,
+                        tint = AppTheme.AccentPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = getString(StringKey.SETTINGS_DATE_SYSTEM),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = AppTheme.TextPrimary
+                    )
+                    Text(
+                        text = getString(currentDateSystem.displayKey),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTheme.AccentPrimary
+                    )
+                }
+
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = AppTheme.TextMuted
+                )
+            }
+
+            if (expanded) {
+                HorizontalDivider(color = AppTheme.DividerColor)
+
+                DateSystem.entries.forEach { dateSystem ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                LocalizationManager.setDateSystem(dateSystem)
+                                expanded = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = dateSystem == currentDateSystem,
+                            onClick = {
+                                LocalizationManager.setDateSystem(dateSystem)
+                                expanded = false
+                            },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = AppTheme.AccentPrimary,
+                                unselectedColor = AppTheme.TextMuted
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = getString(dateSystem.displayKey),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (dateSystem == currentDateSystem) AppTheme.TextPrimary else AppTheme.TextSecondary
                         )
                     }
                 }

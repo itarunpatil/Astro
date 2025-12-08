@@ -118,6 +118,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.PrashnaCalculator
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -202,7 +203,7 @@ fun PrashnaScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Prashna",
+                        getString(StringKey.PRASHNA_TITLE),
                         fontWeight = FontWeight.SemiBold,
                         color = AppTheme.TextPrimary
                     )
@@ -216,7 +217,7 @@ fun PrashnaScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back",
+                            contentDescription = getString(StringKey.BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -397,7 +398,7 @@ private fun PrashnaHeaderCard() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                "Ask your question and receive guidance based on the planetary positions at this very moment.",
+                getString(StringKey.PRASHNA_ASK_QUESTION),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppTheme.TextMuted,
                 textAlign = TextAlign.Center
@@ -444,7 +445,7 @@ private fun QuestionInputCard(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
-                        "Enter your question here...",
+                        getString(StringKey.PRASHNA_QUESTION_PLACEHOLDER),
                         color = AppTheme.TextSubtle
                     )
                 },
@@ -688,7 +689,7 @@ private fun AnalyzeButton(
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            "Analyze Question",
+            getString(StringKey.PRASHNA_GENERATE_CHART),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = if (enabled) AppTheme.ButtonText else AppTheme.ButtonText.copy(alpha = 0.5f)
@@ -1087,7 +1088,7 @@ private fun ScoreIndicator(score: Int) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "Unfavorable",
+                getString(StringKey.PRASHNA_UNFAVORABLE),
                 style = MaterialTheme.typography.labelSmall,
                 color = AppTheme.TextMuted
             )
@@ -1098,7 +1099,7 @@ private fun ScoreIndicator(score: Int) {
                 color = scoreColor
             )
             Text(
-                "Favorable",
+                getString(StringKey.PRASHNA_FAVORABLE),
                 style = MaterialTheme.typography.labelSmall,
                 color = AppTheme.TextMuted
             )
@@ -1224,7 +1225,7 @@ private fun MoonAnalysisCard(moonAnalysis: PrashnaCalculator.MoonAnalysis) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Moon Analysis",
+                    getString(StringKey.PRASHNA_ANALYSIS),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -1487,7 +1488,7 @@ private fun TimingPredictionCard(timing: PrashnaCalculator.TimingPrediction) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Timing Prediction",
+                    getString(StringKey.PRASHNA_TIMING),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary

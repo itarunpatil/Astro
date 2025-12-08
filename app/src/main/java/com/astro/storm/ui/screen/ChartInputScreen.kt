@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.astro.storm.data.model.BirthData
 import com.astro.storm.data.model.Gender
+import com.astro.storm.localization.*
 import com.astro.storm.ui.components.LocationSearchField
 import com.astro.storm.ui.viewmodel.ChartUiState
 import com.astro.storm.ui.viewmodel.ChartViewModel
@@ -242,14 +243,16 @@ fun ChartInputScreen(
         }
     }
 
+    val currentDateSystem by LocalizationManager.currentDateSystem.collectAsState()
+
     if (showDatePicker) {
-        ChartDatePickerDialog(
-            initialDateMillis = selectedDateMillis,
-            onDismiss = { showDatePicker = false },
-            onConfirm = { millis ->
-                selectedDateMillis = millis
-                showDatePicker = false
-            }
+        BSDatePickerDialog(
+            initialDate = selectedDate,
+            dateSystem = currentDateSystem,
+            onDateSelected = { date ->
+                selectedDateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            },
+            onDismiss = { showDatePicker = false }
         )
     }
 
@@ -271,7 +274,7 @@ fun ChartInputScreen(
             onDismissRequest = { showErrorDialog = false },
             title = {
                 Text(
-                    "Input Error",
+                    getString(StringKey.CHART_INPUT_ERROR_TITLE),
                     color = ChartInputTheme.TextPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -281,7 +284,7 @@ fun ChartInputScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showErrorDialog = false }) {
-                    Text("OK", color = ChartInputTheme.AccentColor)
+                    Text(getString(StringKey.OK), color = ChartInputTheme.AccentColor)
                 }
             },
             containerColor = ChartInputTheme.CardBackground,
@@ -304,6 +307,7 @@ private fun validateInput(latitude: String, longitude: String): String? {
 
 @Composable
 private fun ChartInputHeader(onNavigateBack: () -> Unit) {
+    val goBackText = getString(StringKey.CHART_INPUT_GO_BACK)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -312,7 +316,7 @@ private fun ChartInputHeader(onNavigateBack: () -> Unit) {
     ) {
         IconButton(
             onClick = onNavigateBack,
-            modifier = Modifier.semantics { contentDescription = "Go back" }
+            modifier = Modifier.semantics { contentDescription = goBackText }
         ) {
             Icon(
                 imageVector = Icons.Outlined.ArrowBack,
@@ -323,7 +327,7 @@ private fun ChartInputHeader(onNavigateBack: () -> Unit) {
         }
         Spacer(Modifier.width(12.dp))
         Text(
-            text = "New Birth Chart",
+            text = getString(StringKey.CHART_INPUT_NEW),
             fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold,
             color = ChartInputTheme.TextPrimary,
@@ -340,14 +344,15 @@ private fun IdentitySection(
     onGenderChange: (Gender) -> Unit,
     onFocusNext: () -> Unit
 ) {
+    val language = LocalLanguage.current
     Column {
-        SectionTitle("Identity")
+        SectionTitle(getString(StringKey.CHART_INPUT_IDENTITY))
         Spacer(modifier = Modifier.height(12.dp))
 
         ChartOutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            label = "Full name",
+            label = getString(StringKey.CHART_INPUT_NAME),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onFocusNext() })
         )
@@ -355,7 +360,7 @@ private fun IdentitySection(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Gender",
+            text = getString(StringKey.CHART_INPUT_GENDER),
             fontSize = 14.sp,
             color = ChartInputTheme.TextSecondary,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -366,8 +371,13 @@ private fun IdentitySection(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Gender.entries.forEach { gender ->
+                val genderText = when (gender) {
+                    Gender.MALE -> getString(StringKey.CHART_INPUT_GENDER_MALE)
+                    Gender.FEMALE -> getString(StringKey.CHART_INPUT_GENDER_FEMALE)
+                    Gender.OTHER -> getString(StringKey.CHART_INPUT_GENDER_OTHER)
+                }
                 GenderChip(
-                    text = gender.displayName,
+                    text = genderText,
                     isSelected = selectedGender == gender,
                     onClick = { onGenderChange(gender) },
                     modifier = Modifier.weight(1f)
@@ -390,8 +400,23 @@ private fun DateTimeSection(
     onTimezoneDropdownChange: (Boolean) -> Unit,
     onTimezoneSelected: (String) -> Unit
 ) {
+    val language = LocalLanguage.current
+    val dateSystem by LocalizationManager.currentDateSystem.collectAsState()
+
+    // Format date based on selected date system
+    val dateDisplayText = remember(selectedDate, dateSystem, language) {
+        when (dateSystem) {
+            DateSystem.BS -> {
+                BikramSambatConverter.adToBs(selectedDate)?.let { bsDate ->
+                    bsDate.format(language, "yyyy-MM-dd")
+                } ?: selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            }
+            DateSystem.AD -> selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        }
+    }
+
     Column {
-        SectionTitle("Date & Time")
+        SectionTitle(getString(StringKey.CHART_INPUT_DATE_TIME))
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
@@ -399,16 +424,16 @@ private fun DateTimeSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             DateTimeChip(
-                text = selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                text = dateDisplayText,
                 onClick = onShowDatePicker,
                 modifier = Modifier.weight(1f),
-                contentDescription = "Select date"
+                contentDescription = getString(StringKey.CHART_INPUT_SELECT_DATE)
             )
             DateTimeChip(
                 text = selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")),
                 onClick = onShowTimePicker,
                 modifier = Modifier.weight(0.7f),
-                contentDescription = "Select time"
+                contentDescription = getString(StringKey.CHART_INPUT_SELECT_TIME)
             )
         }
 
@@ -423,7 +448,7 @@ private fun DateTimeSection(
                 onValueChange = {},
                 readOnly = true,
                 label = {
-                    Text("Timezone", color = ChartInputTheme.TextSecondary, fontSize = 14.sp)
+                    Text(getString(StringKey.CHART_INPUT_TIMEZONE), color = ChartInputTheme.TextSecondary, fontSize = 14.sp)
                 },
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTimezoneDropdown)
@@ -471,7 +496,7 @@ private fun CoordinatesSection(
     onDone: () -> Unit
 ) {
     Column {
-        SectionTitle("Coordinates")
+        SectionTitle(getString(StringKey.CHART_INPUT_COORDINATES))
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
@@ -481,7 +506,7 @@ private fun CoordinatesSection(
             ChartOutlinedTextField(
                 value = latitude,
                 onValueChange = onLatitudeChange,
-                label = "Latitude",
+                label = getString(StringKey.CHART_INPUT_LATITUDE),
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(latitudeFocusRequester),
@@ -497,7 +522,7 @@ private fun CoordinatesSection(
             ChartOutlinedTextField(
                 value = longitude,
                 onValueChange = onLongitudeChange,
-                label = "Longitude",
+                label = getString(StringKey.CHART_INPUT_LONGITUDE),
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(longitudeFocusRequester),
@@ -516,7 +541,7 @@ private fun CoordinatesSection(
         ChartOutlinedTextField(
             value = altitude,
             onValueChange = onAltitudeChange,
-            label = "Altitude (m) - Optional",
+            label = getString(StringKey.CHART_INPUT_ALTITUDE_OPTIONAL),
             modifier = Modifier.focusRequester(altitudeFocusRequester),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
@@ -532,12 +557,13 @@ private fun GenerateButton(
     isCalculating: Boolean,
     onClick: () -> Unit
 ) {
+    val buttonText = getString(StringKey.CHART_INPUT_GENERATE_SAVE)
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .semantics { contentDescription = "Generate and save birth chart" },
+            .semantics { contentDescription = buttonText },
         shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = ChartInputTheme.ButtonBackground,
@@ -566,7 +592,7 @@ private fun GenerateButton(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Generate & Save",
+                        buttonText,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -651,7 +677,7 @@ private fun ChartTimePickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Select time",
+                    text = getString(StringKey.DATE_SELECT_TIME),
                     color = ChartInputTheme.TextSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier
@@ -686,13 +712,13 @@ private fun ChartTimePickerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = ChartInputTheme.TextSecondary)
+                        Text(getString(StringKey.CANCEL), color = ChartInputTheme.TextSecondary)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         onClick = { onConfirm(timePickerState.hour, timePickerState.minute) }
                     ) {
-                        Text("OK", color = ChartInputTheme.AccentColor)
+                        Text(getString(StringKey.OK), color = ChartInputTheme.AccentColor)
                     }
                 }
             }

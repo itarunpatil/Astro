@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.TransitAnalyzer
+import com.astro.storm.localization.*
 import com.astro.storm.ui.screen.chartdetail.tabs.TransitsTabContent
 import com.astro.storm.ui.theme.AppTheme
 import java.time.LocalDate
@@ -51,8 +52,8 @@ fun TransitsScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Transits",
-            message = "No chart data available. Please select or create a profile first.",
+            title = getString(StringKey.TRANSITS_TITLE),
+            message = getString(StringKey.ERROR_NO_DATA),
             onBack = onBack
         )
         return
@@ -108,7 +109,7 @@ private fun TransitsTopBar(
         title = {
             Column {
                 Text(
-                    text = "Transits",
+                    text = getString(StringKey.TRANSITS_TITLE),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -124,7 +125,7 @@ private fun TransitsTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = getString(StringKey.BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -133,7 +134,7 @@ private fun TransitsTopBar(
             IconButton(onClick = onRefresh) {
                 Icon(
                     imageVector = Icons.Outlined.Refresh,
-                    contentDescription = "Refresh Transits",
+                    contentDescription = getString(StringKey.TRANSITS_TITLE),
                     tint = AppTheme.TextPrimary
                 )
             }

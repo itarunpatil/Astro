@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
+import com.astro.storm.localization.*
 import com.astro.storm.ui.components.NakshatraDetailDialog
 import com.astro.storm.ui.components.PlanetDetailDialog
 import com.astro.storm.ui.components.ShadbalaDialog
@@ -51,8 +52,8 @@ fun PlanetsScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Planets",
-            message = "No chart data available. Please select or create a profile first.",
+            title = getString(StringKey.PLANETS_TITLE),
+            message = getString(StringKey.ERROR_NO_DATA),
             onBack = onBack
         )
         return
@@ -126,7 +127,7 @@ private fun PlanetsTopBar(
         title = {
             Column {
                 Text(
-                    text = "Planets",
+                    text = getString(StringKey.PLANETS_TITLE),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -142,7 +143,7 @@ private fun PlanetsTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = getString(StringKey.BACK),
                     tint = AppTheme.TextPrimary
                 )
             }

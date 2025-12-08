@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.astro.storm.data.model.VedicChart
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 
 private val GridSpacing = 12.dp
@@ -92,7 +93,7 @@ fun HomeTab(
     ) {
         item(key = "header_chart_analysis") {
             SectionHeader(
-                text = "Chart Analysis",
+                text = getString(StringKey.HOME_QUICK_ACCESS),
                 modifier = Modifier.padding(
                     start = 16.dp,
                     top = 16.dp,
@@ -220,11 +221,13 @@ private fun FeatureCard(
     val interactionSource = remember { MutableInteractionSource() }
     val rippleIndication = rememberRipple(color = feature.color)
 
+    val title = getString(feature.titleKey)
+
     Card(
         modifier = modifier
             .semantics(mergeDescendants = true) {
                 contentDescription = buildString {
-                    append(feature.title)
+                    append(title)
                     append(": ")
                     append(feature.description)
                     if (isDisabled) append(". Coming soon")
@@ -260,7 +263,7 @@ private fun FeatureCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = feature.title,
+                text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = titleColor,
@@ -336,112 +339,112 @@ private fun ComingSoonBadge(modifier: Modifier = Modifier) {
 
 @Stable
 enum class InsightFeature(
-    val title: String,
+    val titleKey: StringKey,
     val description: String,
     val icon: ImageVector,
     val color: Color,
     val isImplemented: Boolean
 ) {
     FULL_CHART(
-        title = "Birth Chart",
+        titleKey = StringKey.NAV_BIRTH_CHART,
         description = "View your complete Vedic birth chart",
         icon = Icons.Outlined.GridView,
         color = AppTheme.AccentPrimary,
         isImplemented = true
     ),
     PLANETS(
-        title = "Planets",
+        titleKey = StringKey.NAV_PLANETS,
         description = "Detailed planetary positions",
         icon = Icons.Outlined.Public,
         color = AppTheme.LifeAreaCareer,
         isImplemented = true
     ),
     YOGAS(
-        title = "Yogas",
+        titleKey = StringKey.NAV_YOGAS,
         description = "Planetary combinations & effects",
         icon = Icons.Outlined.AutoAwesome,
         color = AppTheme.AccentGold,
         isImplemented = true
     ),
     DASHAS(
-        title = "Dashas",
+        titleKey = StringKey.NAV_DASHAS,
         description = "Planetary period timeline",
         icon = Icons.Outlined.Timeline,
         color = AppTheme.LifeAreaSpiritual,
         isImplemented = true
     ),
     TRANSITS(
-        title = "Transits",
+        titleKey = StringKey.NAV_TRANSITS,
         description = "Current planetary movements",
         icon = Icons.Outlined.Sync,
         color = AppTheme.AccentTeal,
         isImplemented = true
     ),
     ASHTAKAVARGA(
-        title = "Ashtakavarga",
+        titleKey = StringKey.NAV_ASHTAKAVARGA,
         description = "Strength analysis by house",
         icon = Icons.Outlined.BarChart,
         color = AppTheme.SuccessColor,
         isImplemented = true
     ),
     PANCHANGA(
-        title = "Panchanga",
+        titleKey = StringKey.NAV_PANCHANGA,
         description = "Vedic calendar elements",
         icon = Icons.Outlined.CalendarMonth,
         color = AppTheme.LifeAreaFinance,
         isImplemented = true
     ),
     MATCHMAKING(
-        title = "Matchmaking",
+        titleKey = StringKey.NAV_MATCHMAKING,
         description = "Kundli Milan compatibility",
         icon = Icons.Outlined.Favorite,
         color = AppTheme.LifeAreaLove,
         isImplemented = true
     ),
     MUHURTA(
-        title = "Muhurta",
+        titleKey = StringKey.NAV_MUHURTA,
         description = "Auspicious timing finder",
         icon = Icons.Outlined.AccessTime,
         color = AppTheme.WarningColor,
         isImplemented = true
     ),
     REMEDIES(
-        title = "Remedies",
+        titleKey = StringKey.NAV_REMEDIES,
         description = "Personalized remedies",
         icon = Icons.Outlined.Spa,
         color = AppTheme.LifeAreaHealth,
         isImplemented = true
     ),
     VARSHAPHALA(
-        title = "Varshaphala",
+        titleKey = StringKey.NAV_VARSHAPHALA,
         description = "Solar return horoscope",
         icon = Icons.Outlined.Cake,
         color = AppTheme.LifeAreaCareer,
         isImplemented = true
     ),
     PRASHNA(
-        title = "Prashna",
+        titleKey = StringKey.NAV_PRASHNA,
         description = "Horary astrology",
         icon = Icons.Outlined.HelpOutline,
         color = AppTheme.AccentTeal,
         isImplemented = true
     ),
     CHART_COMPARISON(
-        title = "Synastry",
+        titleKey = StringKey.NAV_BIRTH_CHART, // Using BIRTH_CHART as placeholder for Synastry
         description = "Chart comparison",
         icon = Icons.Outlined.CompareArrows,
         color = AppTheme.LifeAreaFinance,
         isImplemented = false
     ),
     NAKSHATRA_ANALYSIS(
-        title = "Nakshatras",
+        titleKey = StringKey.BIRTH_CHART_NAKSHATRA, // Using this as closest match for Nakshatras
         description = "Deep nakshatra analysis",
         icon = Icons.Outlined.Stars,
         color = AppTheme.AccentGold,
         isImplemented = false
     ),
     SHADBALA(
-        title = "Shadbala",
+        titleKey = StringKey.ASHTAKAVARGA_TITLE, // Using this as placeholder for Shadbala
         description = "Six-fold strength",
         icon = Icons.Outlined.Speed,
         color = AppTheme.SuccessColor,
@@ -482,7 +485,7 @@ private fun EmptyHomeState(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "No Profile Selected",
+                text = getString(StringKey.HOME_NO_CHARTS),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary,
@@ -492,7 +495,7 @@ private fun EmptyHomeState(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Select or create a profile to view your personalized astrological insights.",
+                text = getString(StringKey.HOME_CREATE_FIRST_CHART),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppTheme.TextMuted,
                 textAlign = TextAlign.Center,

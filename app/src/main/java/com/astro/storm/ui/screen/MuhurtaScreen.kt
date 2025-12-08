@@ -114,6 +114,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.MuhurtaCalculator
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -201,14 +202,14 @@ fun MuhurtaScreen(
         loadMuhurtaData(selectedDate)
     }
 
-    val tabs = remember { listOf("Today", "Find Muhurta") }
+    val tabs = remember { listOf(getString(StringKey.MUHURTA_TODAY), "Find Muhurta") }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Muhurta",
+                        getString(StringKey.MUHURTA_TITLE),
                         fontWeight = FontWeight.SemiBold,
                         color = AppTheme.TextPrimary
                     )
@@ -222,7 +223,7 @@ fun MuhurtaScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back",
+                            contentDescription = getString(StringKey.BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -472,7 +473,7 @@ private fun DateSelectorBar(
                     )
                     if (isToday) {
                         Text(
-                            text = "Today",
+                            text = getString(StringKey.MUHURTA_TODAY),
                             style = MaterialTheme.typography.labelSmall,
                             color = AppTheme.AccentPrimary
                         )
@@ -652,7 +653,7 @@ private fun CurrentMuhurtaCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = if (muhurta.isAuspicious) "Auspicious Time" else "Average Time",
+                    text = if (muhurta.isAuspicious) getString(StringKey.MUHURTA_AUSPICIOUS) else getString(StringKey.MUHURTA_NEUTRAL),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = if (muhurta.isAuspicious) AppTheme.SuccessColor else AppTheme.WarningColor
@@ -799,7 +800,7 @@ private fun InauspiciousPeriodsCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Inauspicious Periods",
+                    getString(StringKey.MUHURTA_INAUSPICIOUS),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary

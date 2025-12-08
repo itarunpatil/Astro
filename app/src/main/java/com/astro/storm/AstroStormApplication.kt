@@ -3,6 +3,7 @@ package com.astro.storm
 import android.app.Application
 import android.util.Log
 import com.astro.storm.ephemeris.SwissEphemerisEngine
+import com.astro.storm.localization.LocalizationManager
 import com.astro.storm.util.GlobalExceptionHandler
 import java.io.IOException
 
@@ -14,6 +15,9 @@ class AstroStormApplication : Application() {
         super.onCreate()
         // Initialize the global exception handler
         GlobalExceptionHandler.initialize(this)
+
+        // Initialize localization manager for language and date system preferences
+        LocalizationManager.initialize(this)
 
         // Initialize the ephemeris engine on app startup
         // This also handles copying the necessary ephemeris files

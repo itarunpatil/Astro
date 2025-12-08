@@ -56,6 +56,7 @@ import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.DivisionalChartData
+import com.astro.storm.localization.*
 import com.astro.storm.ui.chart.ChartRenderer
 import com.astro.storm.ui.components.FullScreenChartDialog
 import com.astro.storm.ui.components.HouseDetailDialog
@@ -76,8 +77,8 @@ fun BirthChartScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Birth Chart",
-            message = "No chart data available. Please select or create a profile first.",
+            title = getString(StringKey.BIRTH_CHART_TITLE),
+            message = getString(StringKey.ERROR_NO_DATA),
             onBack = onBack
         )
         return
@@ -184,7 +185,7 @@ private fun BirthChartTopBar(
         title = {
             Column {
                 Text(
-                    text = "Birth Chart",
+                    text = getString(StringKey.BIRTH_CHART_TITLE),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -202,7 +203,7 @@ private fun BirthChartTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Navigate back",
+                    contentDescription = getString(StringKey.BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -252,7 +253,7 @@ fun EmptyChartScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back",
+                            contentDescription = getString(StringKey.BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -293,7 +294,7 @@ fun EmptyChartScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "No Chart Available",
+                    text = getString(StringKey.ERROR_NO_DATA),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary,

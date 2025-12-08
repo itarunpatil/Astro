@@ -47,6 +47,7 @@ import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.model.ZodiacSign
 import com.astro.storm.ephemeris.VarshaphalaCalculator
 import com.astro.storm.ephemeris.VarshaphalaCalculator.*
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -110,7 +111,7 @@ fun VarshaphalaScreen(
                 title = {
                     Column {
                         Text(
-                            "Varshaphala",
+                            getString(StringKey.VARSHAPHALA_TITLE),
                             fontWeight = FontWeight.SemiBold,
                             color = AppTheme.TextPrimary
                         )
@@ -127,7 +128,7 @@ fun VarshaphalaScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = getString(StringKey.BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -690,7 +691,7 @@ private fun YearLordMunthaCard(result: VarshaphalaResult) {
 
                     Column {
                         Text(
-                            "Year Lord",
+                            getString(StringKey.VARSHAPHALA_YEAR_LORD),
                             style = MaterialTheme.typography.labelSmall,
                             color = AppTheme.TextMuted
                         )
@@ -763,7 +764,7 @@ private fun YearLordMunthaCard(result: VarshaphalaResult) {
                     ) {
                         Column {
                             Text(
-                                "Muntha",
+                                getString(StringKey.VARSHAPHALA_MUNTHA),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = AppTheme.TextMuted
                             )
@@ -1057,7 +1058,7 @@ private fun SouthIndianChart(
         )
 
         val titleLayout = textMeasurer.measure(
-            text = "Varshaphala",
+            text = getString(StringKey.VARSHAPHALA_TITLE),
             style = TextStyle(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
@@ -1845,7 +1846,7 @@ private fun SahamsHeader() {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    "Sahams (Arabic Parts)",
+                    getString(StringKey.VARSHAPHALA_SAHAMS),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary

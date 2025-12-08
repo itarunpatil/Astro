@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.RemediesCalculator
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -115,7 +116,7 @@ fun RemediesScreen(
                             )
                         } else {
                             Text(
-                                "Remedies",
+                                getString(StringKey.REMEDIES_TITLE),
                                 fontWeight = FontWeight.SemiBold,
                                 color = AppTheme.TextPrimary
                             )
@@ -136,7 +137,7 @@ fun RemediesScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = getString(StringKey.BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -653,7 +654,7 @@ private fun EssentialRemedyRow(remedy: RemediesCalculator.Remedy) {
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                remedy.category.displayName,
+                getLocalizedCategoryName(remedy.category),
                 style = MaterialTheme.typography.labelSmall,
                 color = AppTheme.TextMuted
             )
@@ -1030,7 +1031,7 @@ private fun CategoryFilter(
                 onClick = { onCategoryChange(category) },
                 label = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(category.displayName)
+                        Text(getLocalizedCategoryName(category))
                         if (count > 0) {
                             Spacer(modifier = Modifier.width(4.dp))
                             Surface(
@@ -1134,7 +1135,7 @@ private fun RemedyCard(
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                remedy.category.displayName,
+                                getLocalizedCategoryName(remedy.category),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = AppTheme.TextMuted
                             )
@@ -1351,7 +1352,7 @@ private fun CautionsList(cautions: List<String>) {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
-                "Cautions",
+                getString(StringKey.REMEDIES_PRECAUTIONS),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.WarningColor
@@ -1922,5 +1923,20 @@ private fun getWeekdayForPlanet(planet: Planet): String {
         Planet.RAHU -> "Saturday"
         Planet.KETU -> "Tuesday"
         else -> "any day"
+    }
+}
+
+private fun getLocalizedCategoryName(category: RemediesCalculator.RemedyCategory): String {
+    return when (category) {
+        RemediesCalculator.RemedyCategory.GEMSTONE -> getString(StringKey.REMEDIES_GEMSTONES)
+        RemediesCalculator.RemedyCategory.MANTRA -> getString(StringKey.REMEDIES_MANTRAS)
+        RemediesCalculator.RemedyCategory.YANTRA -> getString(StringKey.REMEDIES_YANTRAS)
+        RemediesCalculator.RemedyCategory.CHARITY -> getString(StringKey.REMEDIES_DONATIONS)
+        RemediesCalculator.RemedyCategory.FASTING -> getString(StringKey.REMEDIES_FASTING)
+        RemediesCalculator.RemedyCategory.COLOR -> getString(StringKey.REMEDIES_COLOR)
+        RemediesCalculator.RemedyCategory.METAL -> getString(StringKey.REMEDIES_METAL)
+        RemediesCalculator.RemedyCategory.RUDRAKSHA -> getString(StringKey.REMEDIES_RITUALS)
+        RemediesCalculator.RemedyCategory.DEITY -> getString(StringKey.REMEDIES_DEITY)
+        RemediesCalculator.RemedyCategory.LIFESTYLE -> getString(StringKey.REMEDIES_LIFESTYLE)
     }
 }

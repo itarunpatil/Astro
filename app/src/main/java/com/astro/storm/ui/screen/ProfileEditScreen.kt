@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.astro.storm.data.model.BirthData
 import com.astro.storm.data.model.Gender
 import com.astro.storm.data.model.VedicChart
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 import com.astro.storm.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.launch
@@ -60,8 +61,8 @@ fun ProfileEditScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Edit Profile",
-            message = "No chart data available. Please select a profile to edit.",
+            title = getString(StringKey.PROFILE_EDIT_TITLE),
+            message = getString(StringKey.PROFILE_EDIT_NO_DATA),
             onBack = onBack
         )
         return
@@ -119,19 +120,19 @@ fun ProfileEditScreen(
             val lon = longitude.toDoubleOrNull()
 
             if (lat == null || lon == null) {
-                errorMessage = "Please enter valid latitude and longitude"
+                errorMessage = getString(StringKey.CHART_INPUT_ERROR_LATITUDE_LONGITUDE)
                 showError = true
                 return
             }
 
             if (lat < -90 || lat > 90) {
-                errorMessage = "Latitude must be between -90 and 90"
+                errorMessage = getString(StringKey.CHART_INPUT_ERROR_LATITUDE_RANGE)
                 showError = true
                 return
             }
 
             if (lon < -180 || lon > 180) {
-                errorMessage = "Longitude must be between -180 and 180"
+                errorMessage = getString(StringKey.CHART_INPUT_ERROR_LONGITUDE_RANGE)
                 showError = true
                 return
             }
@@ -154,7 +155,7 @@ fun ProfileEditScreen(
                 onSaveComplete()
             }
         } catch (e: Exception) {
-            errorMessage = "Please check your input values"
+            errorMessage = getString(StringKey.PROFILE_EDIT_SAVE_ERROR)
             showError = true
             isSaving = false
         }
@@ -183,13 +184,13 @@ fun ProfileEditScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 // Identity Section
-                SectionTitle("Identity")
+                SectionTitle(getString(StringKey.CHART_INPUT_IDENTITY))
                 Spacer(modifier = Modifier.height(12.dp))
 
                 StyledOutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = "Full name",
+                    label = getString(StringKey.CHART_INPUT_NAME),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
@@ -200,7 +201,7 @@ fun ProfileEditScreen(
 
                 // Gender Selection
                 Text(
-                    text = "Gender",
+                    text = getString(StringKey.CHART_INPUT_GENDER),
                     fontSize = 14.sp,
                     color = AppTheme.TextMuted,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -210,8 +211,13 @@ fun ProfileEditScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Gender.entries.forEach { gender ->
+                        val genderText = when (gender) {
+                            Gender.MALE -> getString(StringKey.CHART_INPUT_GENDER_MALE)
+                            Gender.FEMALE -> getString(StringKey.CHART_INPUT_GENDER_FEMALE)
+                            Gender.OTHER -> getString(StringKey.CHART_INPUT_GENDER_OTHER)
+                        }
                         GenderChip(
-                            text = gender.displayName,
+                            text = genderText,
                             isSelected = selectedGender == gender,
                             onClick = { selectedGender = gender },
                             modifier = Modifier.weight(1f)
@@ -224,7 +230,7 @@ fun ProfileEditScreen(
                 StyledOutlinedTextField(
                     value = locationLabel,
                     onValueChange = { locationLabel = it },
-                    label = "Location",
+                    label = getString(StringKey.CHART_INPUT_LOCATION),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
@@ -234,7 +240,7 @@ fun ProfileEditScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 // Date & Time Section
-                SectionTitle("Date & Time")
+                SectionTitle(getString(StringKey.CHART_INPUT_DATE_TIME))
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
@@ -265,7 +271,7 @@ fun ProfileEditScreen(
                         onValueChange = {},
                         readOnly = true,
                         label = {
-                            Text("Timezone", color = AppTheme.TextMuted, fontSize = 14.sp)
+                            Text(getString(StringKey.CHART_INPUT_TIMEZONE), color = AppTheme.TextMuted, fontSize = 14.sp)
                         },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTimezoneDropdown)
@@ -319,7 +325,7 @@ fun ProfileEditScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 // Coordinates Section
-                SectionTitle("Coordinates")
+                SectionTitle(getString(StringKey.CHART_INPUT_COORDINATES))
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
@@ -329,7 +335,7 @@ fun ProfileEditScreen(
                     StyledOutlinedTextField(
                         value = latitude,
                         onValueChange = { latitude = it },
-                        label = "Latitude",
+                        label = getString(StringKey.CHART_INPUT_LATITUDE),
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
@@ -342,7 +348,7 @@ fun ProfileEditScreen(
                     StyledOutlinedTextField(
                         value = longitude,
                         onValueChange = { longitude = it },
-                        label = "Longitude",
+                        label = getString(StringKey.CHART_INPUT_LONGITUDE),
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
@@ -379,12 +385,12 @@ fun ProfileEditScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK", color = AppTheme.AccentGold)
+                    Text(getString(StringKey.OK), color = AppTheme.AccentGold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel", color = AppTheme.TextMuted)
+                    Text(getString(StringKey.CANCEL), color = AppTheme.TextMuted)
                 }
             },
             colors = DatePickerDefaults.colors(containerColor = AppTheme.CardBackground)
@@ -434,14 +440,14 @@ fun ProfileEditScreen(
         AlertDialog(
             onDismissRequest = { showError = false },
             title = {
-                Text("Input Error", color = AppTheme.TextPrimary, fontWeight = FontWeight.SemiBold)
+                Text(getString(StringKey.CHART_INPUT_ERROR_TITLE), color = AppTheme.TextPrimary, fontWeight = FontWeight.SemiBold)
             },
             text = {
                 Text(errorMessage, color = AppTheme.TextMuted)
             },
             confirmButton = {
                 TextButton(onClick = { showError = false }) {
-                    Text("OK", color = AppTheme.AccentGold)
+                    Text(getString(StringKey.OK), color = AppTheme.AccentGold)
                 }
             },
             containerColor = AppTheme.CardBackground,
@@ -460,7 +466,7 @@ private fun ProfileEditTopBar(
     TopAppBar(
         title = {
             Text(
-                text = "Edit Profile",
+                text = getString(StringKey.PROFILE_EDIT_TITLE),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = AppTheme.TextPrimary
@@ -470,7 +476,7 @@ private fun ProfileEditTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = getString(StringKey.BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -486,7 +492,7 @@ private fun ProfileEditTopBar(
                 } else {
                     Icon(
                         imageVector = Icons.Outlined.Check,
-                        contentDescription = "Save",
+                        contentDescription = getString(StringKey.SAVE),
                         tint = AppTheme.AccentGold
                     )
                 }
@@ -616,7 +622,7 @@ private fun TimePickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Select time",
+                    text = getString(StringKey.DATE_SELECT_TIME),
                     color = AppTheme.TextMuted,
                     fontSize = 14.sp,
                     modifier = Modifier
@@ -651,11 +657,11 @@ private fun TimePickerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = AppTheme.TextMuted)
+                        Text(getString(StringKey.CANCEL), color = AppTheme.TextMuted)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = onConfirm) {
-                        Text("OK", color = AppTheme.AccentGold)
+                        Text(getString(StringKey.OK), color = AppTheme.AccentGold)
                     }
                 }
             }

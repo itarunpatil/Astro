@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.astro.storm.data.model.VedicChart
+import com.astro.storm.localization.*
 import com.astro.storm.ui.screen.chartdetail.tabs.AshtakavargaTabContent
 import com.astro.storm.ui.theme.AppTheme
 
@@ -47,8 +48,8 @@ fun AshtakavargaScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Ashtakavarga",
-            message = "No chart data available. Please select or create a profile first.",
+            title = getString(StringKey.ASHTAKAVARGA_TITLE),
+            message = getString(StringKey.ERROR_NO_DATA),
             onBack = onBack
         )
         return
@@ -92,7 +93,7 @@ private fun AshtakavargaTopBar(
         title = {
             Column {
                 Text(
-                    text = "Ashtakavarga",
+                    text = getString(StringKey.ASHTAKAVARGA_TITLE),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -108,7 +109,7 @@ private fun AshtakavargaTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = getString(StringKey.BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -117,7 +118,7 @@ private fun AshtakavargaTopBar(
             IconButton(onClick = onShowInfo) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
-                    contentDescription = "Ashtakavarga Information",
+                    contentDescription = getString(StringKey.ASHTAKAVARGA_INTERPRETATION),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -150,7 +151,7 @@ private fun AshtakavargaInfoDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 Text(
-                    text = "Sarvashtakavarga (SAV)",
+                    text = getString(StringKey.ASHTAKAVARGA_SARVASHTAKA),
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
                 )
@@ -176,7 +177,7 @@ private fun AshtakavargaInfoDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) {
-                Text("Close", color = AppTheme.AccentGold)
+                Text(getString(StringKey.BACK), color = AppTheme.AccentGold)
             }
         },
         containerColor = AppTheme.CardBackground

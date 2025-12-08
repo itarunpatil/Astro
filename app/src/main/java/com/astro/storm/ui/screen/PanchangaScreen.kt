@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.PanchangaCalculator
+import com.astro.storm.localization.*
 import com.astro.storm.ui.screen.chartdetail.tabs.PanchangaTabContent
 import com.astro.storm.ui.theme.AppTheme
 import java.time.format.DateTimeFormatter
@@ -48,7 +49,7 @@ fun PanchangaScreen(
 ) {
     if (chart == null) {
         EmptyChartScreen(
-            title = "Panchanga",
+            title = getString(StringKey.PANCHANGA_TITLE),
             message = "No chart data available. Please select or create a profile first.",
             onBack = onBack
         )
@@ -105,7 +106,7 @@ private fun PanchangaTopBar(
         title = {
             Column {
                 Text(
-                    text = "Panchanga",
+                    text = getString(StringKey.PANCHANGA_TITLE),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -121,7 +122,7 @@ private fun PanchangaTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = getString(StringKey.BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -130,7 +131,7 @@ private fun PanchangaTopBar(
             IconButton(onClick = { /* Reserved for future: current day panchanga */ }) {
                 Icon(
                     imageVector = Icons.Outlined.CalendarMonth,
-                    contentDescription = "Panchanga Calendar",
+                    contentDescription = getString(StringKey.PANCHANGA_TITLE),
                     tint = AppTheme.TextPrimary
                 )
             }

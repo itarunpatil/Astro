@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.astro.storm.data.local.ChartEntity
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.MatchmakingCalculator
+import com.astro.storm.localization.*
 import com.astro.storm.ui.theme.AppTheme
 import com.astro.storm.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +79,14 @@ fun MatchmakingScreen(
     var showShareSheet by remember { mutableStateOf(false) }
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Overview", "Gunas", "Doshas", "Nakshatras", "Remedies")
+
+    // Localized tab names
+    val tabOverview = getString(StringKey.MATCH_TAB_OVERVIEW)
+    val tabGunas = getString(StringKey.MATCH_TAB_GUNAS)
+    val tabDoshas = getString(StringKey.MATCH_TAB_DOSHAS)
+    val tabNakshatras = getString(StringKey.MATCH_TAB_NAKSHATRAS)
+    val tabRemedies = getString(StringKey.MATCH_TAB_REMEDIES)
+    val tabs = listOf(tabOverview, tabGunas, tabDoshas, tabNakshatras, tabRemedies)
 
     val animatedProgress by animateFloatAsState(
         targetValue = matchingResult?.let { (it.totalPoints / it.maxPoints).toFloat() } ?: 0f,
@@ -116,20 +124,23 @@ fun MatchmakingScreen(
         }
     }
 
+    // Localized strings for snackbar
+    val copiedToClipboardText = getString(StringKey.MATCH_COPIED_TO_CLIPBOARD)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text(
-                            "Kundli Milan",
+                            getString(StringKey.MATCH_TITLE),
                             fontWeight = FontWeight.SemiBold,
                             color = AppTheme.TextPrimary,
                             fontSize = 18.sp
                         )
                         AnimatedVisibility(visible = matchingResult != null) {
                             Text(
-                                "Ashtakoota Matching",
+                                getString(StringKey.MATCH_SUBTITLE),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AppTheme.TextMuted
                             )
@@ -143,7 +154,7 @@ fun MatchmakingScreen(
                     }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back",
+                            contentDescription = getString(StringKey.BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -157,7 +168,7 @@ fun MatchmakingScreen(
                             }) {
                                 Icon(
                                     Icons.Outlined.Share,
-                                    contentDescription = "Share report",
+                                    contentDescription = getString(StringKey.MATCH_SHARE_REPORT),
                                     tint = AppTheme.TextSecondary
                                 )
                             }
@@ -167,13 +178,13 @@ fun MatchmakingScreen(
                                     val report = generateTextReport(result, brideChart, groomChart)
                                     clipboardManager.setText(AnnotatedString(report))
                                     scope.launch {
-                                        snackbarHostState.showSnackbar("Report copied to clipboard")
+                                        snackbarHostState.showSnackbar(copiedToClipboardText)
                                     }
                                 }
                             }) {
                                 Icon(
                                     Icons.Outlined.ContentCopy,
-                                    contentDescription = "Copy report",
+                                    contentDescription = getString(StringKey.COPY),
                                     tint = AppTheme.TextSecondary
                                 )
                             }
