@@ -47,7 +47,7 @@ import java.util.Locale
 /**
  * Error type enum for tracking error state without calling @Composable in LaunchedEffect
  */
-private enum class SearchErrorType {
+enum class SearchErrorType {
     NONE,
     NETWORK,
     RATE_LIMIT,

@@ -42,6 +42,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.ephemeris.RemediesCalculator
@@ -68,7 +70,11 @@ fun RemediesScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
 
-    val tabs = remember { listOf("Overview", "Remedies", "Planets") }
+    val tabs = listOf(
+        stringResource(StringKey.TAB_OVERVIEW),
+        stringResource(StringKey.TAB_REMEDIES),
+        stringResource(StringKey.TAB_PLANETS)
+    )
 
     val overviewListState = rememberLazyListState()
     val remediesListState = rememberLazyListState()
@@ -115,7 +121,7 @@ fun RemediesScreen(
                             )
                         } else {
                             Text(
-                                "Remedies",
+                                stringResource(StringKey.REMEDY_TITLE),
                                 fontWeight = FontWeight.SemiBold,
                                 color = AppTheme.TextPrimary
                             )
@@ -136,7 +142,7 @@ fun RemediesScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(StringKey.BTN_BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -151,7 +157,7 @@ fun RemediesScreen(
                         ) {
                             Icon(
                                 Icons.Outlined.Search,
-                                contentDescription = "Search remedies",
+                                contentDescription = stringResource(StringKey.REMEDY_SEARCH),
                                 tint = AppTheme.TextPrimary
                             )
                         }
@@ -1010,7 +1016,7 @@ private fun CategoryFilter(
             FilterChip(
                 selected = selectedCategory == null,
                 onClick = { onCategoryChange(null) },
-                label = { Text("All") },
+                label = { Text(stringResource(StringKey.REMEDIES_FILTER_ALL)) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = AppTheme.AccentPrimary.copy(alpha = 0.2f),
                     selectedLabelColor = AppTheme.AccentPrimary,
@@ -1802,7 +1808,7 @@ private fun ErrorState(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Retry")
+                Text(stringResource(StringKey.BTN_RETRY))
             }
         }
     }

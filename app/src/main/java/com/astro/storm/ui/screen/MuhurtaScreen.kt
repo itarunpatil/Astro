@@ -113,6 +113,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.astro.storm.data.model.VedicChart
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.ephemeris.MuhurtaCalculator
 import com.astro.storm.ui.theme.AppTheme
 import kotlinx.coroutines.CancellationException
@@ -201,14 +203,17 @@ fun MuhurtaScreen(
         loadMuhurtaData(selectedDate)
     }
 
-    val tabs = remember { listOf("Today", "Find Muhurta") }
+    val tabs = listOf(
+        stringResource(StringKey.TAB_TODAY),
+        stringResource(StringKey.TAB_FIND_MUHURTA)
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Muhurta",
+                        stringResource(StringKey.MUHURTA_TITLE),
                         fontWeight = FontWeight.SemiBold,
                         color = AppTheme.TextPrimary
                     )
@@ -346,12 +351,12 @@ private fun MuhurtaDatePickerDialog(
                     }
                 }
             ) {
-                Text("OK", color = AppTheme.AccentPrimary)
+                Text(stringResource(StringKey.BTN_OK), color = AppTheme.AccentPrimary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = AppTheme.TextMuted)
+                Text(stringResource(StringKey.BTN_CANCEL), color = AppTheme.TextMuted)
             }
         },
         colors = DatePickerDefaults.colors(containerColor = AppTheme.CardBackground)
@@ -568,7 +573,7 @@ private fun ErrorContent(
             ) {
                 Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Retry", color = AppTheme.ButtonText)
+                Text(stringResource(StringKey.BTN_RETRY), color = AppTheme.ButtonText)
             }
         }
     }
@@ -645,14 +650,14 @@ private fun CurrentMuhurtaCard(muhurta: MuhurtaCalculator.MuhurtaDetails) {
                             fontWeight = FontWeight.Bold,
                             color = AppTheme.TextPrimary
                         )
-                        Text("Score", style = MaterialTheme.typography.labelSmall, color = AppTheme.TextMuted)
+                        Text(stringResource(StringKey.MUHURTA_SCORE), style = MaterialTheme.typography.labelSmall, color = AppTheme.TextMuted)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = if (muhurta.isAuspicious) "Auspicious Time" else "Average Time",
+                    text = if (muhurta.isAuspicious) stringResource(StringKey.MUHURTA_AUSPICIOUS_TIME) else stringResource(StringKey.MUHURTA_AVERAGE_TIME),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = if (muhurta.isAuspicious) AppTheme.SuccessColor else AppTheme.WarningColor
@@ -1577,7 +1582,7 @@ private fun SearchButton(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Searching...", color = AppTheme.ButtonText, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(StringKey.MUHURTA_SEARCHING), color = AppTheme.ButtonText, fontWeight = FontWeight.SemiBold)
                 } else {
                     Icon(
                         Icons.Filled.Search,
@@ -1586,7 +1591,7 @@ private fun SearchButton(
                         tint = AppTheme.ButtonText
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Find Auspicious Dates", color = AppTheme.ButtonText, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(StringKey.MUHURTA_FIND_DATES), color = AppTheme.ButtonText, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

@@ -117,6 +117,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.astro.storm.data.model.VedicChart
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.ephemeris.PrashnaCalculator
 import com.astro.storm.ui.theme.AppTheme
 import kotlinx.coroutines.CancellationException
@@ -871,7 +873,7 @@ private fun PrashnaErrorContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Try Again", color = AppTheme.ButtonText)
+                Text(stringResource(StringKey.BTN_TRY_AGAIN), color = AppTheme.ButtonText)
             }
         }
     }

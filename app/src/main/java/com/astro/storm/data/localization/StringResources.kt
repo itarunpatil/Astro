@@ -731,6 +731,7 @@ enum class StringKey(val en: String, val ne: String) {
     MUHURTA_FROM("From", "बाट"),
     MUHURTA_TO("To", "सम्म"),
     MUHURTA_SEARCHING("Searching...", "खोज्दै..."),
+    MUHURTA_FIND_DATES("Find Auspicious Dates", "शुभ मिति खोज्नुहोस्"),
     MUHURTA_FIND_AUSPICIOUS("Find Auspicious Dates", "शुभ मितिहरू खोज्नुहोस्"),
     MUHURTA_SEARCH_EMPTY("Search for Auspicious Times", "शुभ समय खोज्नुहोस्"),
     MUHURTA_SEARCH_HELP("Select an activity and date range to find the most favorable muhurtas", "सबैभन्दा अनुकूल मुहूर्तहरू खोज्न गतिविधि र मिति दायरा छान्नुहोस्"),
@@ -840,7 +841,701 @@ enum class StringKey(val en: String, val ne: String) {
     MISC_EXPAND("Expand", "विस्तार"),
     MISC_COLLAPSE("Collapse", "संकुचन"),
     MISC_MORE("More", "थप"),
-    MISC_LESS("Less", "कम");
+    MISC_LESS("Less", "कम"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - VARNA
+    // ============================================
+    VARNA_BRAHMIN("Brahmin", "ब्राह्मण"),
+    VARNA_KSHATRIYA("Kshatriya", "क्षत्रिय"),
+    VARNA_VAISHYA("Vaishya", "वैश्य"),
+    VARNA_SHUDRA("Shudra", "शूद्र"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - VASHYA
+    // ============================================
+    VASHYA_CHATUSHPADA("Quadruped", "चतुष्पद"),
+    VASHYA_MANAVA("Human", "मानव"),
+    VASHYA_JALACHARA("Aquatic", "जलचर"),
+    VASHYA_VANACHARA("Wild", "वनचर"),
+    VASHYA_KEETA("Insect", "कीट"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - GANA
+    // ============================================
+    GANA_DEVA("Deva", "देव"),
+    GANA_DEVA_DESC("Divine - Sattvik, gentle, spiritual", "दैवी - सात्त्विक, सौम्य, आध्यात्मिक"),
+    GANA_MANUSHYA("Manushya", "मनुष्य"),
+    GANA_MANUSHYA_DESC("Human - Rajasik, balanced, worldly", "मानव - राजसिक, सन्तुलित, सांसारिक"),
+    GANA_RAKSHASA("Rakshasa", "राक्षस"),
+    GANA_RAKSHASA_DESC("Demon - Tamasik, aggressive, dominant", "दानव - तामसिक, आक्रामक, प्रभावशाली"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - YONI ANIMALS
+    // ============================================
+    YONI_HORSE("Horse", "घोडा"),
+    YONI_ELEPHANT("Elephant", "हात्ती"),
+    YONI_SHEEP("Sheep", "भेडा"),
+    YONI_SERPENT("Serpent", "सर्प"),
+    YONI_DOG("Dog", "कुकुर"),
+    YONI_CAT("Cat", "बिरालो"),
+    YONI_RAT("Rat", "मुसो"),
+    YONI_COW("Cow", "गाई"),
+    YONI_BUFFALO("Buffalo", "भैंसी"),
+    YONI_TIGER("Tiger", "बाघ"),
+    YONI_DEER("Deer", "मृग"),
+    YONI_MONKEY("Monkey", "बाँदर"),
+    YONI_MONGOOSE("Mongoose", "न्यौरी"),
+    YONI_LION("Lion", "सिंह"),
+    YONI_MALE("Male", "पुरुष"),
+    YONI_FEMALE("Female", "स्त्री"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - NADI
+    // ============================================
+    NADI_ADI("Adi (Vata)", "आदि (वात)"),
+    NADI_ADI_DESC("Beginning - Wind element, controls movement and nervous system", "आदि - वायु तत्व, गति र स्नायु प्रणाली नियन्त्रण गर्छ"),
+    NADI_MADHYA("Madhya (Pitta)", "मध्य (पित्त)"),
+    NADI_MADHYA_DESC("Middle - Fire element, controls digestion and metabolism", "मध्य - अग्नि तत्व, पाचन र चयापचय नियन्त्रण गर्छ"),
+    NADI_ANTYA("Antya (Kapha)", "अन्त्य (कफ)"),
+    NADI_ANTYA_DESC("End - Water element, controls structure and lubrication", "अन्त्य - जल तत्व, संरचना र स्नेहन नियन्त्रण गर्छ"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - RAJJU
+    // ============================================
+    RAJJU_PADA("Pada Rajju", "पाद रज्जु"),
+    RAJJU_PADA_BODY("Feet", "पाउ"),
+    RAJJU_KATI("Kati Rajju", "कटि रज्जु"),
+    RAJJU_KATI_BODY("Waist", "कम्मर"),
+    RAJJU_NABHI("Nabhi Rajju", "नाभि रज्जु"),
+    RAJJU_NABHI_BODY("Navel", "नाभि"),
+    RAJJU_KANTHA("Kantha Rajju", "कण्ठ रज्जु"),
+    RAJJU_KANTHA_BODY("Neck", "घाँटी"),
+    RAJJU_SIRO("Siro Rajju", "शिरो रज्जु"),
+    RAJJU_SIRO_BODY("Head", "शिर"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - MANGLIK DOSHA
+    // ============================================
+    MANGLIK_NONE("No Manglik Dosha", "मांगलिक दोष छैन"),
+    MANGLIK_PARTIAL("Partial Manglik", "आंशिक मांगलिक"),
+    MANGLIK_FULL("Full Manglik", "पूर्ण मांगलिक"),
+    MANGLIK_DOUBLE("Double Manglik (Severe)", "दोहोरो मांगलिक (गम्भीर)"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - COMPATIBILITY RATINGS
+    // ============================================
+    COMPAT_EXCELLENT("Excellent Match", "उत्कृष्ट मिलान"),
+    COMPAT_EXCELLENT_DESC("Highly recommended for marriage. Strong compatibility across all factors with harmonious planetary alignments.", "विवाहको लागि अत्यधिक सिफारिस गरिएको। सबै कारकहरूमा बलियो अनुकूलता र सामञ्जस्यपूर्ण ग्रह संरेखण।"),
+    COMPAT_GOOD("Good Match", "राम्रो मिलान"),
+    COMPAT_GOOD_DESC("Recommended. Good overall compatibility with minor differences that can be easily managed.", "सिफारिस गरिएको। सजिलैसँग व्यवस्थापन गर्न सकिने सानातिना भिन्नताहरूसहित राम्रो समग्र अनुकूलता।"),
+    COMPAT_AVERAGE("Average Match", "औसत मिलान"),
+    COMPAT_AVERAGE_DESC("Acceptable with some remedies. Moderate compatibility requiring mutual understanding and effort.", "केही उपायहरूसहित स्वीकार्य। पारस्परिक बुझाइ र प्रयास आवश्यक पर्ने मध्यम अनुकूलता।"),
+    COMPAT_BELOW_AVERAGE("Below Average", "औसतमुनि"),
+    COMPAT_BELOW_AVERAGE_DESC("Caution advised. Several compatibility issues that need addressing through remedies and counseling.", "सावधानी आवश्यक। उपाय र परामर्शद्वारा सम्बोधन गर्नुपर्ने धेरै अनुकूलता समस्याहरू।"),
+    COMPAT_POOR("Poor Match", "कमजोर मिलान"),
+    COMPAT_POOR_DESC("Not recommended. Significant compatibility challenges that may cause ongoing difficulties.", "सिफारिस गरिएको छैन। निरन्तर कठिनाइहरू ल्याउन सक्ने महत्त्वपूर्ण अनुकूलता चुनौतीहरू।"),
+
+    // ============================================
+    // MATCHMAKING CALCULATOR - TARA NAMES
+    // ============================================
+    TARA_JANMA("Janma (Birth)", "जन्म"),
+    TARA_SAMPAT("Sampat (Wealth)", "सम्पत् (धन)"),
+    TARA_VIPAT("Vipat (Danger)", "विपत् (खतरा)"),
+    TARA_KSHEMA("Kshema (Wellbeing)", "क्षेम (कल्याण)"),
+    TARA_PRATYARI("Pratyari (Obstacle)", "प्रत्यरि (बाधा)"),
+    TARA_SADHANA("Sadhana (Achievement)", "साधना (उपलब्धि)"),
+    TARA_VADHA("Vadha (Death)", "वध (मृत्यु)"),
+    TARA_MITRA("Mitra (Friend)", "मित्र"),
+    TARA_PARAMA_MITRA("Parama Mitra (Best Friend)", "परम मित्र"),
+
+    // ============================================
+    // DASHA CALCULATOR - LEVELS
+    // ============================================
+    DASHA_LEVEL_MAHADASHA("Mahadasha", "महादशा"),
+    DASHA_LEVEL_ANTARDASHA("Antardasha", "अन्तर्दशा"),
+    DASHA_LEVEL_PRATYANTARDASHA("Pratyantardasha", "प्रत्यन्तर्दशा"),
+    DASHA_LEVEL_SOOKSHMADASHA("Sookshmadasha", "सूक्ष्मदशा"),
+    DASHA_LEVEL_PRANADASHA("Pranadasha", "प्राणदशा"),
+    DASHA_LEVEL_DEHADASHA("Dehadasha", "देहदशा"),
+
+    // ============================================
+    // DASHA CALCULATOR - YOGINI DASHAS
+    // ============================================
+    YOGINI_MANGALA("Mangala", "मंगला"),
+    YOGINI_PINGALA("Pingala", "पिंगला"),
+    YOGINI_DHANYA("Dhanya", "धान्य"),
+    YOGINI_BHRAMARI("Bhramari", "भ्रामरी"),
+    YOGINI_BHADRIKA("Bhadrika", "भद्रिका"),
+    YOGINI_ULKA("Ulka", "उल्का"),
+    YOGINI_SIDDHA("Siddha", "सिद्धा"),
+    YOGINI_SANKATA("Sankata", "संकटा"),
+
+    // ============================================
+    // ASHTAKAVARGA CALCULATOR - STRENGTH LEVELS
+    // ============================================
+    STRENGTH_STRONG("Strong", "बलियो"),
+    STRENGTH_GOOD("Good", "राम्रो"),
+    STRENGTH_AVERAGE("Average", "औसत"),
+    STRENGTH_WEAK("Weak", "कमजोर"),
+    STRENGTH_EXCELLENT("Excellent", "उत्कृष्ट"),
+    STRENGTH_CHALLENGING("Challenging", "चुनौतीपूर्ण"),
+    STRENGTH_DIFFICULT("Difficult", "कठिन"),
+    STRENGTH_ERROR("Error", "त्रुटि"),
+    STRENGTH_ASCENDANT("Ascendant", "लग्न"),
+
+    // ============================================
+    // ASPECT CALCULATOR - TYPES
+    // ============================================
+    ASPECT_CONJUNCTION("Conjunction", "युति"),
+    ASPECT_NATURE_HARMONIOUS("Harmonious", "सामञ्जस्यपूर्ण"),
+    ASPECT_NATURE_CHALLENGING("Challenging", "चुनौतीपूर्ण"),
+    ASPECT_NATURE_VARIABLE("Variable", "परिवर्तनशील"),
+    ASPECT_NATURE_SIGNIFICANT("Significant", "महत्त्वपूर्ण"),
+
+    // ============================================
+    // DIVISIONAL CHARTS - DESCRIPTIONS
+    // ============================================
+    VARGA_D1_DESC("Physical Body, General Life", "शारीरिक शरीर, सामान्य जीवन"),
+    VARGA_D2_DESC("Wealth, Prosperity", "धन, समृद्धि"),
+    VARGA_D3_DESC("Siblings, Courage", "भाइबहिनी, साहस"),
+    VARGA_D4_DESC("Fortune, Property", "भाग्य, सम्पत्ति"),
+    VARGA_D7_DESC("Children, Progeny", "सन्तान"),
+    VARGA_D9_DESC("Spouse, Dharma", "जीवनसाथी, धर्म"),
+    VARGA_D10_DESC("Career, Status", "क्यारियर, स्थिति"),
+    VARGA_D12_DESC("Parents, Heritage", "आमाबुबा, विरासत"),
+    VARGA_D16_DESC("Vehicles, Happiness", "सवारी, खुशी"),
+    VARGA_D20_DESC("Spiritual Progress", "आध्यात्मिक प्रगति"),
+    VARGA_D24_DESC("Education, Learning", "शिक्षा, सिकाइ"),
+    VARGA_D27_DESC("Strength, Stamina", "बल, सहनशक्ति"),
+    VARGA_D30_DESC("Misfortunes, Troubles", "दुर्भाग्य, समस्याहरू"),
+    VARGA_D40_DESC("Maternal Legacy", "मातृ विरासत"),
+    VARGA_D45_DESC("Paternal Legacy", "पैतृक विरासत"),
+    VARGA_D60_DESC("Past Life Karma", "पूर्वजन्मको कर्म"),
+
+    // ============================================
+    // HOROSCOPE CALCULATOR - LIFE AREAS
+    // ============================================
+    HORO_CAREER("Career", "क्यारियर"),
+    HORO_LOVE("Love & Relationships", "प्रेम र सम्बन्ध"),
+    HORO_HEALTH("Health & Vitality", "स्वास्थ्य र जीवनशक्ति"),
+    HORO_FINANCE("Finance & Wealth", "वित्त र धन"),
+    HORO_FAMILY("Family & Home", "परिवार र घर"),
+    HORO_SPIRITUALITY("Spiritual Growth", "आध्यात्मिक वृद्धि"),
+
+    // ============================================
+    // HOROSCOPE CALCULATOR - THEMES
+    // ============================================
+    THEME_BALANCE("Balance", "सन्तुलन"),
+    THEME_DYNAMIC_ACTION("Dynamic Action", "गतिशील कार्य"),
+    THEME_PRACTICAL_PROGRESS("Practical Progress", "व्यावहारिक प्रगति"),
+    THEME_SOCIAL_CONNECTIONS("Social Connections", "सामाजिक सम्बन्धहरू"),
+    THEME_EMOTIONAL_INSIGHT("Emotional Insight", "भावनात्मक अन्तर्दृष्टि"),
+    THEME_SELF_EXPRESSION("Self-Expression", "आत्म-अभिव्यक्ति"),
+    THEME_TRANSFORMATION("Transformation", "रूपान्तरण"),
+
+    // ============================================
+    // COLORS (FOR HOROSCOPE)
+    // ============================================
+    COLOR_RED("Red", "रातो"),
+    COLOR_ORANGE("Orange", "सुन्तला"),
+    COLOR_GOLD("Gold", "सुनौलो"),
+    COLOR_GREEN("Green", "हरियो"),
+    COLOR_BROWN("Brown", "खैरो"),
+    COLOR_WHITE("White", "सेतो"),
+    COLOR_BLUE("Blue", "नीलो"),
+    COLOR_LIGHT_BLUE("Light Blue", "हल्का नीलो"),
+    COLOR_SILVER("Silver", "चाँदी"),
+    COLOR_SEA_GREEN("Sea Green", "समुद्री हरियो"),
+    COLOR_YELLOW("Yellow", "पहेँलो"),
+    COLOR_PINK("Pink", "गुलाबी"),
+    COLOR_PURPLE("Purple", "बैजनी"),
+    COLOR_BLACK("Black", "कालो"),
+    COLOR_GREY("Grey", "खरानी"),
+    COLOR_CREAM("Cream", "क्रीम"),
+    COLOR_MAROON("Maroon", "मरुन"),
+    COLOR_INDIGO("Indigo", "इन्डिगो"),
+
+    // ============================================
+    // DIRECTIONS
+    // ============================================
+    DIR_EAST("East", "पूर्व"),
+    DIR_WEST("West", "पश्चिम"),
+    DIR_NORTH("North", "उत्तर"),
+    DIR_SOUTH("South", "दक्षिण"),
+    DIR_NORTH_EAST("North-East", "उत्तर-पूर्व"),
+    DIR_NORTH_WEST("North-West", "उत्तर-पश्चिम"),
+    DIR_SOUTH_EAST("South-East", "दक्षिण-पूर्व"),
+    DIR_SOUTH_WEST("South-West", "दक्षिण-पश्चिम"),
+
+    // ============================================
+    // ELEMENTS
+    // ============================================
+    ELEMENT_FIRE("Fire", "अग्नि"),
+    ELEMENT_EARTH("Earth", "पृथ्वी"),
+    ELEMENT_AIR("Air", "वायु"),
+    ELEMENT_WATER("Water", "जल"),
+
+    // ============================================
+    // PLANETARY RELATIONSHIPS
+    // ============================================
+    RELATION_FRIEND("Friend", "मित्र"),
+    RELATION_ENEMY("Enemy", "शत्रु"),
+    RELATION_NEUTRAL("Neutral", "तटस्थ"),
+    RELATION_MUTUAL_FRIENDS("Mutual Friends", "पारस्परिक मित्र"),
+    RELATION_MUTUAL_ENEMIES("Mutual Enemies", "पारस्परिक शत्रु"),
+    RELATION_ONE_FRIENDLY("One Friendly", "एक मैत्रीपूर्ण"),
+    RELATION_ONE_INIMICAL("One Inimical", "एक शत्रुतापूर्ण"),
+
+    // ============================================
+    // MUHURTA - EVENT TYPES
+    // ============================================
+    MUHURTA_EVENT_MARRIAGE("Marriage", "विवाह"),
+    MUHURTA_EVENT_ENGAGEMENT("Engagement", "सगाई"),
+    MUHURTA_EVENT_GRIHA_PRAVESH("Griha Pravesh", "गृह प्रवेश"),
+    MUHURTA_EVENT_BUSINESS_START("Business Start", "व्यापार शुरुआत"),
+    MUHURTA_EVENT_TRAVEL("Travel", "यात्रा"),
+    MUHURTA_EVENT_VEHICLE_PURCHASE("Vehicle Purchase", "सवारी खरिद"),
+    MUHURTA_EVENT_EDUCATION_START("Education Start", "शिक्षा शुरुआत"),
+    MUHURTA_EVENT_MEDICAL_TREATMENT("Medical Treatment", "चिकित्सा उपचार"),
+    MUHURTA_EVENT_CONSTRUCTION("Construction", "निर्माण"),
+    MUHURTA_EVENT_INVESTMENT("Investment", "लगानी"),
+    MUHURTA_EVENT_NAME_CEREMONY("Name Ceremony", "नामकरण"),
+    MUHURTA_EVENT_MUNDAN("Mundan", "चौलकर्म"),
+    MUHURTA_EVENT_UPANAYANA("Upanayana", "ब्रतबन्ध"),
+
+    // ============================================
+    // VARSHAPHALA - SAHAMS
+    // ============================================
+    SAHAM_KARYASIDDHI("Karyasiddhi Saham", "कार्यसिद्धि सहम"),
+    SAHAM_SUCCESS("Success", "सफलता"),
+    SAHAM_FORTUNE("Fortune Saham", "भाग्य सहम"),
+    SAHAM_WEALTH("Wealth Saham", "धन सहम"),
+    SAHAM_MARRIAGE("Marriage Saham", "विवाह सहम"),
+    SAHAM_CHILDREN("Children Saham", "सन्तान सहम"),
+    SAHAM_HEALTH("Health Saham", "स्वास्थ्य सहम"),
+    SAHAM_EDUCATION("Education Saham", "शिक्षा सहम"),
+    SAHAM_TRAVEL("Travel Saham", "यात्रा सहम"),
+    SAHAM_PROFESSION("Profession Saham", "पेशा सहम"),
+
+    // ============================================
+    // HOUSE SIGNIFICATIONS
+    // ============================================
+    HOUSE_DHARMA("Dharma (1, 5, 9)", "धर्म (१, ५, ९)"),
+    HOUSE_ARTHA("Artha (2, 6, 10)", "अर्थ (२, ६, १०)"),
+    HOUSE_KAMA("Kama (3, 7, 11)", "काम (३, ७, ११)"),
+    HOUSE_MOKSHA("Moksha (4, 8, 12)", "मोक्ष (४, ८, १२)"),
+
+    // ============================================
+    // PRASHNA CALCULATOR
+    // ============================================
+    PRASHNA_CAT_GENERAL("General", "सामान्य"),
+    PRASHNA_CAT_CAREER("Career & Profession", "क्यारियर र पेशा"),
+    PRASHNA_CAT_RELATIONSHIP("Relationships", "सम्बन्धहरू"),
+    PRASHNA_CAT_HEALTH("Health", "स्वास्थ्य"),
+    PRASHNA_CAT_FINANCE("Finance", "वित्त"),
+    PRASHNA_CAT_TRAVEL("Travel", "यात्रा"),
+    PRASHNA_CAT_EDUCATION("Education", "शिक्षा"),
+    PRASHNA_CAT_LEGAL("Legal Matters", "कानुनी मामिलाहरू"),
+    PRASHNA_CAT_PROPERTY("Property", "सम्पत्ति"),
+    PRASHNA_CAT_LOST_ITEM("Lost Items", "हराएका वस्तुहरू"),
+
+    // ============================================
+    // RAJJU ARUDHA
+    // ============================================
+    RAJJU_ASCENDING("Aarohana (Ascending)", "आरोहण"),
+    RAJJU_DESCENDING("Avarohana (Descending)", "अवरोहण"),
+
+    // ============================================
+    // YOGA CALCULATOR - CATEGORIES & STRENGTH
+    // ============================================
+    YOGA_CAT_RAJA("Raja Yoga", "राज योग"),
+    YOGA_CAT_RAJA_DESC("Power, authority, and leadership combinations", "शक्ति, अधिकार र नेतृत्व संयोजनहरू"),
+    YOGA_CAT_DHANA("Dhana Yoga", "धन योग"),
+    YOGA_CAT_DHANA_DESC("Wealth and prosperity combinations", "धन र समृद्धि संयोजनहरू"),
+    YOGA_CAT_PANCHA_MAHAPURUSHA("Pancha Mahapurusha Yoga", "पञ्च महापुरुष योग"),
+    YOGA_CAT_PANCHA_MAHAPURUSHA_DESC("Five great person combinations", "पाँच महान व्यक्ति संयोजनहरू"),
+    YOGA_CAT_NABHASA("Nabhasa Yoga", "नाभस योग"),
+    YOGA_CAT_NABHASA_DESC("Pattern-based planetary combinations", "ढाँचामा आधारित ग्रह संयोजनहरू"),
+    YOGA_CAT_CHANDRA("Chandra Yoga", "चन्द्र योग"),
+    YOGA_CAT_CHANDRA_DESC("Moon-based combinations", "चन्द्रमामा आधारित संयोजनहरू"),
+    YOGA_CAT_SOLAR("Solar Yoga", "सूर्य योग"),
+    YOGA_CAT_SOLAR_DESC("Sun-based combinations", "सूर्यमा आधारित संयोजनहरू"),
+    YOGA_CAT_NEGATIVE("Negative Yoga", "नकारात्मक योग"),
+    YOGA_CAT_NEGATIVE_DESC("Challenging combinations", "चुनौतीपूर्ण संयोजनहरू"),
+    YOGA_CAT_SPECIAL("Special Yoga", "विशेष योग"),
+    YOGA_CAT_SPECIAL_DESC("Other significant combinations", "अन्य महत्त्वपूर्ण संयोजनहरू"),
+
+    YOGA_STRENGTH_EXTREMELY_STRONG("Extremely Strong", "अत्यन्त बलियो"),
+    YOGA_STRENGTH_STRONG("Strong", "बलियो"),
+    YOGA_STRENGTH_MODERATE("Moderate", "मध्यम"),
+    YOGA_STRENGTH_WEAK("Weak", "कमजोर"),
+    YOGA_STRENGTH_VERY_WEAK("Very Weak", "धेरै कमजोर"),
+
+    // ============================================
+    // REMEDIES CALCULATOR - CATEGORIES & STRENGTH
+    // ============================================
+    REMEDY_CAT_GEMSTONE("Gemstone", "रत्न"),
+    REMEDY_CAT_MANTRA("Mantra", "मन्त्र"),
+    REMEDY_CAT_YANTRA("Yantra", "यन्त्र"),
+    REMEDY_CAT_CHARITY("Charity", "दान"),
+    REMEDY_CAT_FASTING("Fasting", "उपवास"),
+    REMEDY_CAT_COLOR("Color Therapy", "रंग चिकित्सा"),
+    REMEDY_CAT_METAL("Metal", "धातु"),
+    REMEDY_CAT_RUDRAKSHA("Rudraksha", "रुद्राक्ष"),
+    REMEDY_CAT_DEITY("Deity Worship", "देवता पूजा"),
+    REMEDY_CAT_LIFESTYLE("Lifestyle", "जीवनशैली"),
+
+    REMEDY_PRIORITY_ESSENTIAL("Essential", "आवश्यक"),
+    REMEDY_PRIORITY_HIGHLY_RECOMMENDED("Highly Recommended", "अत्यधिक सिफारिस"),
+    REMEDY_PRIORITY_RECOMMENDED("Recommended", "सिफारिस गरिएको"),
+    REMEDY_PRIORITY_OPTIONAL("Optional", "वैकल्पिक"),
+
+    PLANETARY_STRENGTH_VERY_STRONG("Very Strong", "धेरै बलियो"),
+    PLANETARY_STRENGTH_STRONG("Strong", "बलियो"),
+    PLANETARY_STRENGTH_MODERATE("Moderate", "मध्यम"),
+    PLANETARY_STRENGTH_WEAK("Weak", "कमजोर"),
+    PLANETARY_STRENGTH_VERY_WEAK("Very Weak", "धेरै कमजोर"),
+    PLANETARY_STRENGTH_AFFLICTED("Afflicted", "पीडित"),
+
+    // ============================================
+    // HOUSE SIGNIFICATIONS (Localized)
+    // ============================================
+    HOUSE_1_SIGNIFICATION("self-effort and personality", "आत्म-प्रयास र व्यक्तित्व"),
+    HOUSE_2_SIGNIFICATION("family wealth and speech", "पारिवारिक धन र वाणी"),
+    HOUSE_3_SIGNIFICATION("courage and communication", "साहस र सञ्चार"),
+    HOUSE_4_SIGNIFICATION("property and domestic comfort", "सम्पत्ति र घरेलु सुविधा"),
+    HOUSE_5_SIGNIFICATION("speculation and creative ventures", "अनुमान र सिर्जनात्मक उद्यमहरू"),
+    HOUSE_6_SIGNIFICATION("service and defeating competition", "सेवा र प्रतिस्पर्धा जित्नु"),
+    HOUSE_7_SIGNIFICATION("partnership and business", "साझेदारी र व्यापार"),
+    HOUSE_8_SIGNIFICATION("inheritance and unexpected gains", "विरासत र अप्रत्याशित लाभ"),
+    HOUSE_9_SIGNIFICATION("fortune and higher pursuits", "भाग्य र उच्च खोजीहरू"),
+    HOUSE_10_SIGNIFICATION("career and public recognition", "क्यारियर र सार्वजनिक मान्यता"),
+    HOUSE_11_SIGNIFICATION("gains and social networks", "लाभ र सामाजिक सञ्जालहरू"),
+    HOUSE_12_SIGNIFICATION("foreign connections and spiritual pursuits", "विदेशी सम्बन्ध र आध्यात्मिक खोजीहरू"),
+
+    // ============================================
+    // REPORT HEADERS & SECTIONS
+    // ============================================
+    REPORT_YOGA_ANALYSIS("YOGA ANALYSIS REPORT", "योग विश्लेषण रिपोर्ट"),
+    REPORT_TOTAL_YOGAS("Total Yogas Found", "कुल योगहरू फेला परेको"),
+    REPORT_OVERALL_STRENGTH("Overall Yoga Strength", "समग्र योग बल"),
+    REPORT_DOMINANT_CATEGORY("Dominant Category", "प्रमुख वर्ग"),
+    REPORT_PLANETS("Planets", "ग्रहहरू"),
+    REPORT_HOUSES("Houses", "भावहरू"),
+    REPORT_EFFECTS("Effects", "प्रभावहरू"),
+    REPORT_ACTIVATION("Activation", "सक्रियता"),
+    REPORT_PATTERN("Pattern", "ढाँचा"),
+    REPORT_CANCELLATION_FACTORS("Cancellation Factors", "रद्द गर्ने कारकहरू"),
+    REPORT_AUSPICIOUS("Auspicious", "शुभ"),
+    REPORT_INAUSPICIOUS("Inauspicious", "अशुभ"),
+
+    REPORT_REMEDIES("VEDIC ASTROLOGY REMEDIES REPORT", "वैदिक ज्योतिष उपाय रिपोर्ट"),
+    REPORT_PLANETARY_STRENGTH_ANALYSIS("PLANETARY STRENGTH ANALYSIS", "ग्रह बल विश्लेषण"),
+    REPORT_PLANETS_REQUIRING_ATTENTION("PLANETS REQUIRING ATTENTION", "ध्यान आवश्यक ग्रहहरू"),
+    REPORT_RECOMMENDED_REMEDIES("RECOMMENDED REMEDIES", "सिफारिस गरिएका उपायहरू"),
+    REPORT_GENERAL_RECOMMENDATIONS("GENERAL RECOMMENDATIONS", "सामान्य सिफारिसहरू"),
+    REPORT_SUMMARY("SUMMARY", "सारांश"),
+    REPORT_GENERATED_BY("Generated by AstroStorm - Ultra-Precision Vedic Astrology", "AstroStorm द्वारा उत्पन्न - अति-सटीक वैदिक ज्योतिष"),
+    REPORT_CATEGORY("Category", "वर्ग"),
+    REPORT_PLANET("Planet", "ग्रह"),
+    REPORT_METHOD("Method", "विधि"),
+    REPORT_TIMING("Timing", "समय"),
+
+    REPORT_MATCHMAKING("KUNDLI MILAN (MATCHMAKING) REPORT", "कुण्डली मिलान रिपोर्ट"),
+    REPORT_BRIDE("BRIDE", "वधू"),
+    REPORT_GROOM("GROOM", "वर"),
+    REPORT_ASHTAKOOTA("ASHTAKOOTA ANALYSIS", "अष्टकूट विश्लेषण"),
+    REPORT_GUNA("GUNA", "गुण"),
+    REPORT_MAX("MAX", "अधिकतम"),
+    REPORT_OBTAINED("OBTAINED", "प्राप्त"),
+    REPORT_STATUS("STATUS", "स्थिति"),
+    REPORT_TOTAL("TOTAL", "कुल"),
+    REPORT_OVERALL_RATING("OVERALL RATING", "समग्र मूल्याङ्कन"),
+    REPORT_ADDITIONAL_FACTORS("ADDITIONAL FACTORS", "थप कारकहरू"),
+    REPORT_MANGLIK_ANALYSIS("MANGLIK ANALYSIS", "मांगलिक विश्लेषण"),
+    REPORT_SPECIAL_CONSIDERATIONS("SPECIAL CONSIDERATIONS", "विशेष विचारहरू"),
+    REPORT_SUGGESTED_REMEDIES("SUGGESTED REMEDIES", "सुझाव गरिएका उपायहरू"),
+    REPORT_COMPATIBILITY("Compatibility", "अनुकूलता"),
+    REPORT_NOT_PRESENT("Not Present", "उपस्थित छैन"),
+    REPORT_COMPATIBLE("Compatible", "अनुकूल"),
+    REPORT_SATISFIED("Satisfied", "सन्तुष्ट"),
+    REPORT_NOT_SATISFIED("Not satisfied", "सन्तुष्ट छैन"),
+    REPORT_NOT_APPLICABLE("Not applicable", "लागू हुँदैन"),
+
+    // ============================================
+    // SPECIFIC YOGA NAMES (For display)
+    // ============================================
+    YOGA_KENDRA_TRIKONA("Kendra-Trikona Raja Yoga", "केन्द्र-त्रिकोण राज योग"),
+    YOGA_PARIVARTANA("Parivartana Raja Yoga", "परिवर्तन राज योग"),
+    YOGA_VIPARITA("Viparita Raja Yoga", "विपरीत राज योग"),
+    YOGA_NEECHA_BHANGA("Neecha Bhanga Raja Yoga", "नीच भंग राज योग"),
+    YOGA_MAHA_RAJA("Maha Raja Yoga", "महा राज योग"),
+    YOGA_LAKSHMI("Lakshmi Yoga", "लक्ष्मी योग"),
+    YOGA_KUBERA("Kubera Yoga", "कुबेर योग"),
+    YOGA_CHANDRA_MANGALA("Chandra-Mangala Yoga", "चन्द्र-मंगल योग"),
+    YOGA_LABHA("Labha Yoga", "लाभ योग"),
+    YOGA_RUCHAKA("Ruchaka Yoga", "रुचक योग"),
+    YOGA_BHADRA("Bhadra Yoga", "भद्र योग"),
+    YOGA_HAMSA("Hamsa Yoga", "हंस योग"),
+    YOGA_MALAVYA("Malavya Yoga", "मालव्य योग"),
+    YOGA_SASA("Sasa Yoga", "शश योग"),
+    YOGA_SUNAFA("Sunafa Yoga", "सुनफा योग"),
+    YOGA_ANAFA("Anafa Yoga", "अनफा योग"),
+    YOGA_DURUDHARA("Durudhara Yoga", "दुरुधरा योग"),
+    YOGA_GAJA_KESARI("Gaja-Kesari Yoga", "गज-केसरी योग"),
+    YOGA_ADHI("Adhi Yoga", "अधि योग"),
+    YOGA_VESI("Vesi Yoga", "वेशी योग"),
+    YOGA_VOSI("Vosi Yoga", "वोशी योग"),
+    YOGA_UBHAYACHARI("Ubhayachari Yoga", "उभयचारी योग"),
+    YOGA_KEMADRUMA("Kemadruma Yoga", "केमद्रुम योग"),
+    YOGA_DARIDRA("Daridra Yoga", "दरिद्र योग"),
+    YOGA_SHAKATA("Shakata Yoga", "शकट योग"),
+    YOGA_GURU_CHANDAL("Guru-Chandal Yoga", "गुरु-चांडाल योग"),
+    YOGA_BUDHA_ADITYA("Budha-Aditya Yoga", "बुध-आदित्य योग"),
+    YOGA_AMALA("Amala Yoga", "अमला योग"),
+    YOGA_SARASWATI("Saraswati Yoga", "सरस्वती योग"),
+    YOGA_PARVATA("Parvata Yoga", "पर्वत योग"),
+    YOGA_KAHALA("Kahala Yoga", "कहल योग"),
+    YOGA_YAVA("Yava Yoga", "यव योग"),
+    YOGA_SHRINGATAKA("Shringataka Yoga", "शृंगाटक योग"),
+    YOGA_GADA("Gada Yoga", "गदा योग"),
+    YOGA_RAJJU("Rajju Yoga", "रज्जु योग"),
+    YOGA_MUSALA("Musala Yoga", "मुसल योग"),
+    YOGA_NALA("Nala Yoga", "नल योग"),
+    YOGA_KEDARA("Kedara Yoga", "केदार योग"),
+    YOGA_SHOOLA("Shoola Yoga", "शूल योग"),
+    YOGA_YUGA("Yuga Yoga", "युग योग"),
+    YOGA_GOLA("Gola Yoga", "गोल योग"),
+    YOGA_VEENA("Veena Yoga", "वीणा योग"),
+    YOGA_DASA_MULA("Dasa-Mula Yoga", "दश-मूल योग"),
+    YOGA_VARGOTTAMA_STRENGTH("Vargottama Strength", "वर्गोत्तम बल"),
+
+    // ============================================
+    // CHOGHADIYA NAMES
+    // ============================================
+    CHOGHADIYA_AMRIT("Amrit", "अमृत"),
+    CHOGHADIYA_SHUBH("Shubh", "शुभ"),
+    CHOGHADIYA_LABH("Labh", "लाभ"),
+    CHOGHADIYA_CHAR("Char", "चर"),
+    CHOGHADIYA_ROG("Rog", "रोग"),
+    CHOGHADIYA_KAAL("Kaal", "काल"),
+    CHOGHADIYA_UDVEG("Udveg", "उद्वेग"),
+
+    // ============================================
+    // ADDITIONAL UI STRINGS
+    // ============================================
+    UI_CONJUNCTION("conjunction", "युति"),
+    UI_ASPECT("aspect", "दृष्टि"),
+    UI_EXCHANGE("exchange", "परिवर्तन"),
+    UI_THROUGHOUT_LIFE("Throughout life", "जीवनभर"),
+    UI_NONE("None", "कुनै पनि छैन"),
+    UI_PRESENT("Present", "उपस्थित"),
+    UI_ASCENDING("Ascending", "आरोही"),
+    UI_DESCENDING("Descending", "अवरोही"),
+    UI_NAKSHATRAS("nakshatras", "नक्षत्रहरू"),
+
+    // ============================================
+    // SCREEN TAB NAMES
+    // ============================================
+    TAB_OVERVIEW("Overview", "सिंहावलोकन"),
+    TAB_REMEDIES("Remedies", "उपायहरू"),
+    TAB_PLANETS("Planets", "ग्रहहरू"),
+    TAB_TODAY("Today", "आज"),
+    TAB_FIND_MUHURTA("Find Muhurta", "मुहूर्त खोज्नुहोस्"),
+    TAB_TAJIKA("Tajika", "ताजिक"),
+    TAB_SAHAMS("Sahams", "सहमहरू"),
+    TAB_DASHA("Dasha", "दशा"),
+    TAB_HOUSES("Houses", "भावहरू"),
+    TAB_ANALYSIS("Analysis", "विश्लेषण"),
+    TAB_DETAILS("Details", "विवरणहरू"),
+    TAB_TRANSITS("Transits", "गोचर"),
+    TAB_ASPECTS("Aspects", "दृष्टि"),
+    TAB_STRENGTH("Strength", "बल"),
+    TAB_DIGNITIES("Dignities", "मर्यादाहरू"),
+
+    // ============================================
+    // REMEDIES SCREEN SPECIFIC
+    // ============================================
+    REMEDY_TITLE("Remedies", "उपायहरू"),
+    REMEDY_SEARCH("Search remedies", "उपायहरू खोज्नुहोस्"),
+    REMEDY_CALCULATION_FAILED("Failed to calculate remedies: %s", "उपायहरू गणना गर्न असफल: %s"),
+    REMEDY_COPY("Copy", "कपी गर्नुहोस्"),
+    REMEDY_SHARE("Share", "साझा गर्नुहोस्"),
+    REMEDY_PLANETARY_ANALYSIS("Planetary Analysis", "ग्रह विश्लेषण"),
+    REMEDY_ESSENTIAL_COUNT("%d Essential Remedies", "%d आवश्यक उपायहरू"),
+    REMEDY_ALL_STRONG("All planets are in good condition", "सबै ग्रह राम्रो अवस्थामा छन्"),
+
+    // ============================================
+    // MUHURTA SCREEN SPECIFIC
+    // ============================================
+    MUHURTA_TITLE("Muhurta", "मुहूर्त"),
+    MUHURTA_TODAY_PANCHANGA("Today's Panchanga", "आजको पञ्चाङ्ग"),
+    MUHURTA_DAILY_TIMINGS("Daily Muhurta Timings", "दैनिक मुहूर्त समय"),
+    MUHURTA_FIND_AUSPICIOUS("Find Auspicious Muhurta", "शुभ मुहूर्त खोज्नुहोस्"),
+    MUHURTA_CHOGHADIYA("Choghadiya", "चौघडिया"),
+    MUHURTA_RAHU_KAAL("Rahu Kaal", "राहुकाल"),
+    MUHURTA_YAMA_GHANTAKA("Yama Ghantaka", "यम घण्टक"),
+    MUHURTA_GULIKA_KAAL("Gulika Kaal", "गुलिका काल"),
+    MUHURTA_ABHIJIT("Abhijit Muhurta", "अभिजित मुहूर्त"),
+    MUHURTA_BRAHMA("Brahma Muhurta", "ब्रह्म मुहूर्त"),
+    MUHURTA_SELECT_EVENT("Select Event Type", "कार्यक्रम प्रकार चयन गर्नुहोस्"),
+    MUHURTA_SELECT_DATE("Select Date", "मिति चयन गर्नुहोस्"),
+    MUHURTA_SEARCH_RESULTS("Search Results", "खोज परिणामहरू"),
+    MUHURTA_NO_RESULTS("No auspicious muhurta found for selected criteria", "चयन गरिएको मापदण्डको लागि कुनै शुभ मुहूर्त फेला परेन"),
+
+    // ============================================
+    // VARSHAPHALA SCREEN SPECIFIC
+    // ============================================
+    VARSHAPHALA_TITLE("Varshaphala", "वर्षफल"),
+    VARSHAPHALA_ANNUAL_CHART("Annual Chart", "वार्षिक चार्ट"),
+    VARSHAPHALA_YEAR_LORD("Year Lord", "वर्षेश"),
+    VARSHAPHALA_MUNTHA("Muntha", "मुन्था"),
+    VARSHAPHALA_SAHAMS("Sahams", "सहमहरू"),
+    VARSHAPHALA_TAJIKA("Tajika Aspects", "ताजिक दृष्टि"),
+    VARSHAPHALA_YOGAS("Tajika Yogas", "ताजिक योग"),
+    VARSHAPHALA_PREDICTIONS("Year Predictions", "वर्ष भविष्यवाणी"),
+    VARSHAPHALA_SELECT_YEAR("Select Year", "वर्ष चयन गर्नुहोस्"),
+    VARSHAPHALA_SOLAR_RETURN("Solar Return", "सौर प्रत्यागमन"),
+    VARSHAPHALA_AGE("Annual Horoscope • Age %d", "वार्षिक कुण्डली • उमेर %d"),
+    VARSHAPHALA_YEAR_OF_LIFE("Year %d of life", "जीवनको वर्ष %d"),
+
+    // ============================================
+    // PANCHANGA DETAILS
+    // ============================================
+    PANCHANGA_TITHI_SHUKLA("Shukla", "शुक्ल"),
+    PANCHANGA_TITHI_KRISHNA("Krishna", "कृष्ण"),
+    PANCHANGA_PAKSHA("Paksha", "पक्ष"),
+    PANCHANGA_MASA("Masa", "मास"),
+    PANCHANGA_LUNAR_PHASE("Lunar Phase", "चन्द्र कला"),
+    PANCHANGA_NEW_MOON("New Moon", "अमावस्या"),
+    PANCHANGA_FULL_MOON("Full Moon", "पूर्णिमा"),
+    PANCHANGA_WAXING("Waxing", "बढ्दो"),
+    PANCHANGA_WANING("Waning", "घट्दो"),
+    PANCHANGA_FAVORABLE("Favorable", "अनुकूल"),
+    PANCHANGA_UNFAVORABLE("Unfavorable", "प्रतिकूल"),
+    PANCHANGA_ACTIVITIES("Favorable Activities", "अनुकूल गतिविधिहरू"),
+    PANCHANGA_AVOID("Activities to Avoid", "टाढा रहनु पर्ने गतिविधिहरू"),
+
+    // ============================================
+    // TITHI NAMES
+    // ============================================
+    TITHI_PRATIPADA("Pratipada", "प्रतिपदा"),
+    TITHI_DWITIYA("Dwitiya", "द्वितीया"),
+    TITHI_TRITIYA("Tritiya", "तृतीया"),
+    TITHI_CHATURTHI("Chaturthi", "चतुर्थी"),
+    TITHI_PANCHAMI("Panchami", "पञ्चमी"),
+    TITHI_SHASHTHI("Shashthi", "षष्ठी"),
+    TITHI_SAPTAMI("Saptami", "सप्तमी"),
+    TITHI_ASHTAMI("Ashtami", "अष्टमी"),
+    TITHI_NAVAMI("Navami", "नवमी"),
+    TITHI_DASHAMI("Dashami", "दशमी"),
+    TITHI_EKADASHI("Ekadashi", "एकादशी"),
+    TITHI_DWADASHI("Dwadashi", "द्वादशी"),
+    TITHI_TRAYODASHI("Trayodashi", "त्रयोदशी"),
+    TITHI_CHATURDASHI("Chaturdashi", "चतुर्दशी"),
+    TITHI_PURNIMA("Purnima", "पूर्णिमा"),
+    TITHI_AMAVASYA("Amavasya", "अमावस्या"),
+
+    // ============================================
+    // KARANA NAMES
+    // ============================================
+    KARANA_BAVA("Bava", "बव"),
+    KARANA_BALAVA("Balava", "बालव"),
+    KARANA_KAULAVA("Kaulava", "कौलव"),
+    KARANA_TAITILA("Taitila", "तैतिल"),
+    KARANA_GARA("Gara", "गर"),
+    KARANA_VANIJA("Vanija", "वणिज"),
+    KARANA_VISHTI("Vishti (Bhadra)", "विष्टि (भद्रा)"),
+    KARANA_SHAKUNI("Shakuni", "शकुनि"),
+    KARANA_CHATUSHPADA("Chatushpada", "चतुष्पद"),
+    KARANA_NAGA("Naga", "नाग"),
+    KARANA_KIMSTUGHNA("Kimstughna", "किंस्तुघ्न"),
+
+    // ============================================
+    // DAILY YOGA NAMES (PANCHANGA)
+    // ============================================
+    DAILY_YOGA_VISHKUMBHA("Vishkumbha", "विष्कम्भ"),
+    DAILY_YOGA_PRITI("Priti", "प्रीति"),
+    DAILY_YOGA_AYUSHMAN("Ayushman", "आयुष्मान"),
+    DAILY_YOGA_SAUBHAGYA("Saubhagya", "सौभाग्य"),
+    DAILY_YOGA_SHOBHANA("Shobhana", "शोभन"),
+    DAILY_YOGA_ATIGANDA("Atiganda", "अतिगण्ड"),
+    DAILY_YOGA_SUKARMA("Sukarma", "सुकर्म"),
+    DAILY_YOGA_DHRITI("Dhriti", "धृति"),
+    DAILY_YOGA_SHOOLA("Shoola", "शूल"),
+    DAILY_YOGA_GANDA("Ganda", "गण्ड"),
+    DAILY_YOGA_VRIDDHI("Vriddhi", "वृद्धि"),
+    DAILY_YOGA_DHRUVA("Dhruva", "ध्रुव"),
+    DAILY_YOGA_VYAGHATA("Vyaghata", "व्याघात"),
+    DAILY_YOGA_HARSHANA("Harshana", "हर्षण"),
+    DAILY_YOGA_VAJRA("Vajra", "वज्र"),
+    DAILY_YOGA_SIDDHI("Siddhi", "सिद्धि"),
+    DAILY_YOGA_VYATIPATA("Vyatipata", "व्यतीपात"),
+    DAILY_YOGA_VARIYANA("Variyana", "वरीयान"),
+    DAILY_YOGA_PARIGHA("Parigha", "परिघ"),
+    DAILY_YOGA_SHIVA("Shiva", "शिव"),
+    DAILY_YOGA_SIDDHA("Siddha", "सिद्ध"),
+    DAILY_YOGA_SADHYA("Sadhya", "साध्य"),
+    DAILY_YOGA_SHUBHA("Shubha", "शुभ"),
+    DAILY_YOGA_SHUKLA("Shukla", "शुक्ल"),
+    DAILY_YOGA_BRAHMA("Brahma", "ब्रह्म"),
+    DAILY_YOGA_INDRA("Indra", "इन्द्र"),
+    DAILY_YOGA_VAIDHRITI("Vaidhriti", "वैधृति"),
+
+    // ============================================
+    // VARA (WEEKDAY) DESCRIPTIONS
+    // ============================================
+    VARA_SUNDAY_DESC("Ruled by Sun - Good for government work, authority, spiritual practices", "सूर्य द्वारा शासित - सरकारी काम, अधिकार, आध्यात्मिक अभ्यासको लागि राम्रो"),
+    VARA_MONDAY_DESC("Ruled by Moon - Good for travel, public dealings, emotional matters", "चन्द्रमा द्वारा शासित - यात्रा, सार्वजनिक व्यवहार, भावनात्मक मामिलाहरूको लागि राम्रो"),
+    VARA_TUESDAY_DESC("Ruled by Mars - Good for property, surgery, competitive activities", "मंगल द्वारा शासित - सम्पत्ति, शल्यक्रिया, प्रतिस्पर्धात्मक गतिविधिहरूको लागि राम्रो"),
+    VARA_WEDNESDAY_DESC("Ruled by Mercury - Good for education, communication, business", "बुध द्वारा शासित - शिक्षा, सञ्चार, व्यापारको लागि राम्रो"),
+    VARA_THURSDAY_DESC("Ruled by Jupiter - Good for religious ceremonies, marriage, education", "बृहस्पति द्वारा शासित - धार्मिक समारोह, विवाह, शिक्षाको लागि राम्रो"),
+    VARA_FRIDAY_DESC("Ruled by Venus - Good for romance, marriage, arts, luxury", "शुक्र द्वारा शासित - प्रेम, विवाह, कला, विलासिताको लागि राम्रो"),
+    VARA_SATURDAY_DESC("Ruled by Saturn - Good for property, agriculture, spiritual discipline", "शनि द्वारा शासित - सम्पत्ति, कृषि, आध्यात्मिक अनुशासनको लागि राम्रो"),
+
+    // ============================================
+    // COMMON ACTION LABELS
+    // ============================================
+    ACTION_NEW_BEGINNINGS("New beginnings", "नयाँ सुरुवातहरू"),
+    ACTION_STARTING_VENTURES("Starting ventures", "उद्यमहरू सुरु गर्दै"),
+    ACTION_TRAVEL("Travel", "यात्रा"),
+    ACTION_MARRIAGE("Marriage", "विवाह"),
+    ACTION_EDUCATION("Education", "शिक्षा"),
+    ACTION_BUSINESS("Business", "व्यापार"),
+    ACTION_SPIRITUAL_PRACTICES("Spiritual practices", "आध्यात्मिक अभ्यास"),
+    ACTION_WORSHIP("Worship", "पूजा"),
+    ACTION_CHARITY("Charity", "दान"),
+    ACTION_FASTING("Fasting", "उपवास"),
+    ACTION_MEDITATION("Meditation", "ध्यान"),
+    ACTION_SURGERY("Surgery", "शल्यक्रिया"),
+    ACTION_CREATIVE_WORK("Creative work", "सिर्जनात्मक काम"),
+    ACTION_GOVERNMENT_WORK("Government work", "सरकारी काम"),
+    ACTION_PROPERTY_MATTERS("Property matters", "सम्पत्ति मामिलाहरू"),
+    ACTION_FINANCIAL_MATTERS("Financial matters", "वित्तीय मामिलाहरू"),
+    ACTION_LEGAL_MATTERS("Legal matters", "कानुनी मामिलाहरू"),
+
+    // ============================================
+    // NAVIGATION & COMMON UI ACTIONS
+    // ============================================
+    NAV_BACK("Back", "पछाडि"),
+    NAV_NAVIGATE_BACK("Navigate back", "पछाडि जानुहोस्"),
+    NAV_PREVIOUS("Previous", "अघिल्लो"),
+    NAV_NEXT("Next", "अर्को"),
+    NAV_PREVIOUS_YEAR("Previous year", "अघिल्लो वर्ष"),
+    NAV_NEXT_YEAR("Next year", "अर्को वर्ष"),
+    NAV_PREVIOUS_DAY("Previous day", "अघिल्लो दिन"),
+    NAV_NEXT_DAY("Next day", "अर्को दिन"),
+
+    ACTION_EXPORT("Export", "निर्यात गर्नुहोस्"),
+    ACTION_CLEAR("Clear", "खाली गर्नुहोस्"),
+    ACTION_CLEAR_SEARCH("Clear search", "खोज खाली गर्नुहोस्"),
+    ACTION_COPY("Copy", "कपी गर्नुहोस्"),
+    ACTION_COPY_MANTRA("Copy mantra", "मन्त्र कपी गर्नुहोस्"),
+    ACTION_VIEW_DETAILS("View details", "विवरणहरू हेर्नुहोस्"),
+    ACTION_VIEW_FULLSCREEN("View fullscreen", "पूर्ण स्क्रिनमा हेर्नुहोस्"),
+    ACTION_NEW_QUESTION("New question", "नयाँ प्रश्न"),
+    ACTION_SEARCH("Search", "खोज्नुहोस्");
 
     companion object {
         /**

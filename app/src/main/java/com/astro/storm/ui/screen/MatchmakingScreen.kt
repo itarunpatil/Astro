@@ -2730,13 +2730,13 @@ private fun generateTextReport(
         appendLine("─────────────────────────────────────")
         brideChart?.let {
             appendLine("Bride: ${it.birthData.name ?: "N/A"}")
-            appendLine("  Moon Sign: ${getRashiName(it)}")
-            appendLine("  Nakshatra: ${getNakshatraName(it)} (${getPada(it)})")
+            appendLine("  Moon Sign: ${getRashiNameForReport(it)}")
+            appendLine("  Nakshatra: ${getNakshatraNameForReport(it)} (${getPadaForReport(it)})")
         }
         groomChart?.let {
             appendLine("Groom: ${it.birthData.name ?: "N/A"}")
-            appendLine("  Moon Sign: ${getRashiName(it)}")
-            appendLine("  Nakshatra: ${getNakshatraName(it)} (${getPada(it)})")
+            appendLine("  Moon Sign: ${getRashiNameForReport(it)}")
+            appendLine("  Nakshatra: ${getNakshatraNameForReport(it)} (${getPadaForReport(it)})")
         }
         appendLine()
         
@@ -2892,6 +2892,21 @@ private fun getManglikQuickStatus(result: MatchmakingCalculator.MatchmakingResul
 
 private fun getMoonPosition(chart: VedicChart) = chart.planetPositions.find {
     it.planet == com.astro.storm.data.model.Planet.MOON
+}
+
+// Non-composable versions for text report generation
+private fun getNakshatraNameForReport(chart: VedicChart): String {
+    return getMoonPosition(chart)?.nakshatra?.displayName ?: "N/A"
+}
+
+private fun getRashiNameForReport(chart: VedicChart): String {
+    val moonPosition = getMoonPosition(chart) ?: return "N/A"
+    return moonPosition.sign.displayName
+}
+
+private fun getPadaForReport(chart: VedicChart): String {
+    val moonPosition = getMoonPosition(chart) ?: return "N/A"
+    return "Pada ${moonPosition.nakshatraPada}"
 }
 
 @Composable
