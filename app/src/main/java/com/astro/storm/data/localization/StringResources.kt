@@ -1453,7 +1453,6 @@ enum class StringKey(val en: String, val ne: String) {
     PANCHANGA_FAVORABLE("Favorable", "अनुकूल"),
     PANCHANGA_UNFAVORABLE("Unfavorable", "प्रतिकूल"),
     PANCHANGA_ACTIVITIES("Favorable Activities", "अनुकूल गतिविधिहरू"),
-    PANCHANGA_AVOID("Activities to Avoid", "टाढा रहनु पर्ने गतिविधिहरू"),
 
     // ============================================
     // TITHI NAMES
@@ -1630,7 +1629,7 @@ enum class StringKey(val en: String, val ne: String) {
     PANCHANGA_CHARACTERISTICS("Characteristics", "विशेषताहरू"),
     PANCHANGA_EFFECTS("Effects", "प्रभावहरू"),
     PANCHANGA_FAVORABLE_ACTIVITIES("Favorable Activities", "अनुकूल गतिविधिहरू"),
-    PANCHANGA_AVOID("Avoid", "बच्नुहोस्"),
+    PANCHANGA_AVOID("Activities to Avoid", "टाढा रहनु पर्ने गतिविधिहरू"),
     PANCHANGA_TITHI_SUBTITLE("Lunar Day • तिथि", "चन्द्र दिन • तिथि"),
     PANCHANGA_NAKSHATRA_SUBTITLE("Lunar Mansion • नक्षत्र", "चन्द्र नक्षत्र • नक्षत्र"),
     PANCHANGA_YOGA_SUBTITLE("Luni-Solar Combination • योग", "चन्द्र-सूर्य संयोजन • योग"),
@@ -1680,6 +1679,12 @@ enum class StringKey(val en: String, val ne: String) {
     CHART_DATE("Date", "मिति"),
     CHART_TIME("Time", "समय"),
     CHART_AYANAMSA("Ayanamsa", "अयनांश"),
+    CHART_LOCATION("Location", "स्थान"),
+
+    // Common Birth Data Labels
+    HOUSE("House", "भाव"),
+    LOCATION("Location", "स्थान"),
+    ASCENDANT("Ascendant", "लग्न"),
 
     // Chart Type Labels
     CHART_LAGNA("Lagna", "लग्न"),
@@ -1706,7 +1711,6 @@ enum class StringKey(val en: String, val ne: String) {
     DIALOG_CHESTA_BALA("Chesta Bala (Motional)", "चेष्टा बल"),
     DIALOG_NAISARGIKA_BALA("Naisargika Bala (Natural)", "नैसर्गिक बल"),
     DIALOG_DRIK_BALA("Drik Bala (Aspectual)", "दृग्बल"),
-    DIALOG_SIGNIFICATIONS("Significations & Nature", "करकत्व र प्रकृति"),
     DIALOG_NATURE("Nature", "प्रकृति"),
     DIALOG_BENEFIC("Benefic", "शुभ"),
     DIALOG_MALEFIC("Malefic", "पापी"),
@@ -1786,7 +1790,7 @@ enum class StringKey(val en: String, val ne: String) {
 
     // House Dialog
     DIALOG_HOUSE_INFO("House Information", "भाव जानकारी"),
-    DIALOG_SIGNIFICATIONS("Significations", "करकत्व"),
+    DIALOG_SIGNIFICATIONS("Significations & Nature", "करकत्व र प्रकृति"),
     DIALOG_PLANETS_IN_HOUSE("Planets in House", "भावमा ग्रहहरू"),
     DIALOG_DETAILED_INTERPRETATION("Detailed Interpretation", "विस्तृत व्याख्या"),
     DIALOG_CUSP_DEGREE("Cusp Degree", "सन्धि अंश"),
