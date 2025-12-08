@@ -89,7 +89,13 @@ fun VarshaphalaScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    val tabs = listOf("Overview", "Tajika", "Sahams", "Dasha", "Houses")
+    val tabs = listOf(
+        stringResource(StringKey.TAB_OVERVIEW),
+        stringResource(StringKey.TAB_TAJIKA),
+        stringResource(StringKey.TAB_SAHAMS),
+        stringResource(StringKey.TAB_DASHA),
+        stringResource(StringKey.TAB_HOUSES)
+    )
 
     LaunchedEffect(chart, selectedYear) {
         if (chart != null && selectedYear >= birthYear) {
@@ -112,13 +118,13 @@ fun VarshaphalaScreen(
                 title = {
                     Column {
                         Text(
-                            "Varshaphala",
+                            stringResource(StringKey.VARSHAPHALA_TITLE),
                             fontWeight = FontWeight.SemiBold,
                             color = AppTheme.TextPrimary
                         )
                         varshaphalaResult?.let {
                             Text(
-                                "Annual Horoscope • Age ${it.age}",
+                                stringResource(StringKey.VARSHAPHALA_AGE, it.age),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = AppTheme.TextMuted
                             )
@@ -129,7 +135,7 @@ fun VarshaphalaScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(StringKey.NAV_BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -307,7 +313,7 @@ private fun YearSelector(
                 ) {
                     Icon(
                         Icons.Filled.ChevronLeft,
-                        contentDescription = "Previous year",
+                        contentDescription = stringResource(StringKey.NAV_PREVIOUS_YEAR),
                         tint = if (currentYear > birthYear) AppTheme.TextPrimary else AppTheme.TextSubtle
                     )
                 }
@@ -320,7 +326,7 @@ private fun YearSelector(
                         color = AppTheme.TextPrimary
                     )
                     Text(
-                        "Year ${currentYear - birthYear + 1} of life",
+                        stringResource(StringKey.VARSHAPHALA_YEAR_OF_LIFE, currentYear - birthYear + 1),
                         style = MaterialTheme.typography.labelSmall,
                         color = AppTheme.TextMuted
                     )
@@ -332,7 +338,7 @@ private fun YearSelector(
                 ) {
                     Icon(
                         Icons.Filled.ChevronRight,
-                        contentDescription = "Next year",
+                        contentDescription = stringResource(StringKey.NAV_NEXT_YEAR),
                         tint = if (currentYear < maxYear) AppTheme.TextPrimary else AppTheme.TextSubtle
                     )
                 }

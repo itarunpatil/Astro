@@ -203,14 +203,17 @@ fun MuhurtaScreen(
         loadMuhurtaData(selectedDate)
     }
 
-    val tabs = remember { listOf("Today", "Find Muhurta") }
+    val tabs = listOf(
+        stringResource(StringKey.TAB_TODAY),
+        stringResource(StringKey.TAB_FIND_MUHURTA)
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Muhurta",
+                        stringResource(StringKey.MUHURTA_TITLE),
                         fontWeight = FontWeight.SemiBold,
                         color = AppTheme.TextPrimary
                     )

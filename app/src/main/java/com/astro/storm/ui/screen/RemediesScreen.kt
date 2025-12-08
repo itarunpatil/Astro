@@ -70,7 +70,11 @@ fun RemediesScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
 
-    val tabs = remember { listOf("Overview", "Remedies", "Planets") }
+    val tabs = listOf(
+        stringResource(StringKey.TAB_OVERVIEW),
+        stringResource(StringKey.TAB_REMEDIES),
+        stringResource(StringKey.TAB_PLANETS)
+    )
 
     val overviewListState = rememberLazyListState()
     val remediesListState = rememberLazyListState()
@@ -117,7 +121,7 @@ fun RemediesScreen(
                             )
                         } else {
                             Text(
-                                "Remedies",
+                                stringResource(StringKey.REMEDY_TITLE),
                                 fontWeight = FontWeight.SemiBold,
                                 color = AppTheme.TextPrimary
                             )
@@ -138,7 +142,7 @@ fun RemediesScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(StringKey.BTN_BACK),
                             tint = AppTheme.TextPrimary
                         )
                     }
@@ -153,7 +157,7 @@ fun RemediesScreen(
                         ) {
                             Icon(
                                 Icons.Outlined.Search,
-                                contentDescription = "Search remedies",
+                                contentDescription = stringResource(StringKey.REMEDY_SEARCH),
                                 tint = AppTheme.TextPrimary
                             )
                         }
