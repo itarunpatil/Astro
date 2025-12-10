@@ -25,6 +25,7 @@ import com.astro.storm.data.repository.SavedChart
 import com.astro.storm.ui.components.ProfileHeaderRow
 import com.astro.storm.ui.components.ProfileSwitcherBottomSheet
 import com.astro.storm.ui.theme.AppTheme
+import com.astro.storm.ui.viewmodel.ChartUiState
 import com.astro.storm.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.launch
 
@@ -68,11 +69,78 @@ fun MainScreen(
     var selectedTab by remember { mutableStateOf(MainTab.HOME) }
     var showProfileSwitcher by remember { mutableStateOf(false) }
     val profileSheetState = rememberModalBottomSheetState()
+    val language = LocalLanguage.current
+
+    // Observe UI state for export feedback
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Track the last export state for proper snackbar styling
+    var lastExportState by remember { mutableStateOf<ChartUiState?>(null) }
+
+    // Show snackbar for export states
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is ChartUiState.Exporting -> {
+                lastExportState = state
+                snackbarHostState.showSnackbar(
+                    message = state.message,
+                    duration = SnackbarDuration.Indefinite
+                )
+            }
+            is ChartUiState.Exported -> {
+                lastExportState = state
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(
+                    message = state.message,
+                    duration = SnackbarDuration.Short
+                )
+                // Reset state after showing the snackbar (delay to avoid race condition)
+                kotlinx.coroutines.delay(100)
+                viewModel.resetState()
+            }
+            is ChartUiState.Error -> {
+                lastExportState = state
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(
+                    message = state.message,
+                    duration = SnackbarDuration.Long
+                )
+            }
+            else -> {
+                // Dismiss any existing snackbar when state changes to something else
+                snackbarHostState.currentSnackbarData?.dismiss()
+                // Clear last export state when we're back to normal
+                if (uiState is ChartUiState.Success || uiState is ChartUiState.Initial) {
+                    lastExportState = null
+                }
+            }
+        }
+    }
 
     // Find the current SavedChart for display
     val currentSavedChart = savedCharts.find { it.id == selectedChartId }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                // Use lastExportState for styling to avoid race conditions with state reset
+                val effectiveState = lastExportState ?: uiState
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = when (effectiveState) {
+                        is ChartUiState.Error -> AppTheme.ErrorColor
+                        is ChartUiState.Exported -> AppTheme.SuccessColor
+                        else -> AppTheme.CardBackground
+                    },
+                    contentColor = when (effectiveState) {
+                        is ChartUiState.Error, is ChartUiState.Exported -> AppTheme.TextPrimary
+                        else -> AppTheme.TextSecondary
+                    },
+                    actionColor = AppTheme.AccentPrimary
+                )
+            }
+        },
         containerColor = AppTheme.ScreenBackground,
         topBar = {
             MainTopBar(

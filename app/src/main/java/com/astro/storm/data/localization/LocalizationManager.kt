@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 
 /**
  * Localization Manager for AstroStorm
@@ -32,13 +33,17 @@ class LocalizationManager private constructor(context: Context) {
     private val _language = MutableStateFlow(getPersistedLanguage())
     val language: StateFlow<Language> = _language.asStateFlow()
 
+    // Keep track of the derived date system that updates when language changes
+    private val _dateSystem = MutableStateFlow(getDateSystemForLanguage(_language.value))
+
     /**
      * Date system is now derived from language automatically
      * - English → AD (Gregorian)
      * - Nepali → BS (Bikram Sambat)
+     *
+     * This StateFlow properly reacts to language changes.
      */
-    val dateSystem: StateFlow<DateSystem>
-        get() = MutableStateFlow(getDateSystemForLanguage(_language.value)).asStateFlow()
+    val dateSystem: StateFlow<DateSystem> = _dateSystem.asStateFlow()
 
     /**
      * Set the language and persist it.
@@ -47,7 +52,8 @@ class LocalizationManager private constructor(context: Context) {
     fun setLanguage(language: Language) {
         prefs.edit().putString(KEY_LANGUAGE, language.code).apply()
         _language.value = language
-        // Note: Date system is now derived from language, no need to persist separately
+        // Update the derived date system
+        _dateSystem.value = getDateSystemForLanguage(language)
     }
 
     /**

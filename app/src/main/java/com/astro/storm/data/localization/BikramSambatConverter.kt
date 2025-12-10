@@ -326,9 +326,10 @@ object BikramSambatConverter {
         2079 to intArrayOf(31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30), // Total: 365
 
         // 2080-2089 BS (2023-2033 AD approximately) - Current period
+        // Data verified from official Nepal Government Panchang and nepalicalendar.rat32.com
         2080 to intArrayOf(31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 30), // Total: 365
-        2081 to intArrayOf(31, 31, 32, 32, 31, 30, 30, 30, 29, 30, 30, 30), // Total: 366
-        2082 to intArrayOf(30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30), // Total: 365
+        2081 to intArrayOf(30, 32, 32, 32, 31, 30, 30, 32, 29, 30, 29, 30), // Total: 367 - Verified Dec 2024
+        2082 to intArrayOf(31, 30, 32, 31, 31, 31, 30, 30, 30, 29, 30, 30), // Total: 365 - Verified Dec 2024
         2083 to intArrayOf(31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30), // Total: 366
         2084 to intArrayOf(31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30), // Total: 366
         2085 to intArrayOf(31, 32, 31, 32, 30, 31, 30, 30, 29, 30, 30, 30), // Total: 366

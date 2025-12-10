@@ -308,10 +308,25 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Reset UI state
+     * Reset UI state to previous chart state if available, otherwise Initial
+     * This is used after export operations to restore the normal UI state
      */
     fun resetState() {
-        _uiState.value = ChartUiState.Initial
+        // If we had a chart loaded, restore to Success state
+        val currentState = _uiState.value
+        when (currentState) {
+            is ChartUiState.Exported, is ChartUiState.Error, is ChartUiState.Exporting -> {
+                // Try to reload the current chart if one was selected
+                _selectedChartId.value?.let { chartId ->
+                    loadChart(chartId)
+                } ?: run {
+                    _uiState.value = ChartUiState.Initial
+                }
+            }
+            else -> {
+                // Keep current state for Success, Calculating, Loading, etc.
+            }
+        }
     }
 
     override fun onCleared() {

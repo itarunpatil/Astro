@@ -444,6 +444,18 @@ private fun YearSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    // Calculate total years and initial index for scrolling
+    val totalYears = maxYear - minYear + 1
+    val selectedIndex = maxYear - selectedYear // descending order index
+
+    // Pre-calculate selected year text to avoid recalculation
+    val selectedYearText = remember(selectedYear, language) {
+        when (language) {
+            Language.ENGLISH -> selectedYear.toString()
+            Language.NEPALI -> BikramSambatConverter.toNepaliNumerals(selectedYear)
+        }
+    }
+
     Column(modifier = modifier) {
         Text(
             text = stringResource(StringKey.BS_YEAR),
@@ -453,28 +465,35 @@ private fun YearSelector(
         )
 
         DropdownSelector(
-            text = when (language) {
-                Language.ENGLISH -> selectedYear.toString()
-                Language.NEPALI -> BikramSambatConverter.toNepaliNumerals(selectedYear)
-            },
+            text = selectedYearText,
             expanded = expanded,
             onExpandedChange = { expanded = it }
         ) {
-            val years = (maxYear downTo minYear).toList()
+            // Use remember for list state to maintain scroll position
             val listState = rememberLazyListState(
-                initialFirstVisibleItemIndex = years.indexOf(selectedYear).coerceAtLeast(0)
+                initialFirstVisibleItemIndex = selectedIndex.coerceIn(0, totalYears - 1)
             )
 
             LazyColumn(
                 state = listState,
-                modifier = Modifier.heightIn(max = 200.dp)
+                modifier = Modifier.heightIn(max = 250.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)
             ) {
-                items(years) { year ->
-                    DropdownItem(
-                        text = when (language) {
+                // Use itemsIndexed pattern with range for better performance
+                // This avoids creating a full list of 131 integers
+                items(
+                    count = totalYears,
+                    key = { index -> maxYear - index } // stable keys for recomposition
+                ) { index ->
+                    val year = maxYear - index // descending order
+                    val yearText = remember(year, language) {
+                        when (language) {
                             Language.ENGLISH -> year.toString()
                             Language.NEPALI -> BikramSambatConverter.toNepaliNumerals(year)
-                        },
+                        }
+                    }
+                    DropdownItem(
+                        text = yearText,
                         isSelected = year == selectedYear,
                         onClick = {
                             onYearChange(year)
@@ -496,6 +515,11 @@ private fun MonthSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    // Cache the selected month text
+    val selectedMonthText = remember(selectedMonth, language) {
+        BSMonth.fromIndex(selectedMonth).getName(language)
+    }
+
     Column(modifier = modifier) {
         Text(
             text = stringResource(StringKey.BS_MONTH),
@@ -505,16 +529,29 @@ private fun MonthSelector(
         )
 
         DropdownSelector(
-            text = BSMonth.fromIndex(selectedMonth).getName(language),
+            text = selectedMonthText,
             expanded = expanded,
             onExpandedChange = { expanded = it }
         ) {
+            // Use list state to scroll to selected month
+            val listState = rememberLazyListState(
+                initialFirstVisibleItemIndex = (selectedMonth - 1).coerceIn(0, 11)
+            )
+
             LazyColumn(
-                modifier = Modifier.heightIn(max = 250.dp)
+                state = listState,
+                modifier = Modifier.heightIn(max = 300.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)
             ) {
-                items(BSMonth.entries) { month ->
+                items(
+                    items = BSMonth.entries,
+                    key = { it.index }
+                ) { month ->
+                    val monthText = remember(month, language) {
+                        month.getName(language)
+                    }
                     DropdownItem(
-                        text = month.getName(language),
+                        text = monthText,
                         isSelected = month.index == selectedMonth,
                         onClick = {
                             onMonthChange(month.index)
