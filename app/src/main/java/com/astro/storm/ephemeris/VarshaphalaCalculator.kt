@@ -465,55 +465,69 @@ class VarshaphalaCalculator(context: Context) {
         val keyDates: List<KeyDate>,
         val timestamp: Long = System.currentTimeMillis()
     ) {
-        fun toPlainText(): String = buildString {
+        fun toPlainText(language: Language = Language.ENGLISH): String = buildString {
+            val reportTitle = StringResources.get(StringKey.VARSHA_REPORT_TITLE, language)
+            val yearLordSection = StringResources.get(StringKey.VARSHA_REPORT_SECTION_YEARLORD, language)
+            val munthaSection = StringResources.get(StringKey.VARSHA_REPORT_SECTION_MUNTHA, language)
+            val themesSection = StringResources.get(StringKey.VARSHA_REPORT_SECTION_THEMES, language)
+            val muddaDashaSection = StringResources.get(StringKey.VARSHA_REPORT_SECTION_MUDDA, language)
+            val predictionSection = StringResources.get(StringKey.VARSHA_REPORT_SECTION_PREDICTION, language)
+            val currentMarker = StringResources.get(StringKey.VARSHA_REPORT_CURRENT_MARKER, language)
+            val footer = StringResources.get(StringKey.VARSHA_REPORT_FOOTER, language)
+
             appendLine("═══════════════════════════════════════════════════════════")
-            appendLine("            VARSHAPHALA (ANNUAL HOROSCOPE) REPORT")
+            appendLine("            $reportTitle")
             appendLine("═══════════════════════════════════════════════════════════")
             appendLine()
-            appendLine("Name: ${natalChart.birthData.name}")
-            appendLine("Year: $year (Age: $age)")
-            appendLine("Solar Return: ${solarReturnChart.solarReturnTime}")
-            appendLine("Year Rating: ${String.format("%.1f", yearRating)}/5.0")
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_NAME, language, natalChart.birthData.name))
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_YEAR, language, year, age))
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_SOLAR_RETURN, language, solarReturnChart.solarReturnTime.toString()))
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_YEAR_RATING, language, String.format("%.1f", yearRating)))
             appendLine()
             appendLine("─────────────────────────────────────────────────────────")
-            appendLine("                      YEAR LORD")
+            appendLine("                      $yearLordSection")
             appendLine("─────────────────────────────────────────────────────────")
-            appendLine("Year Lord: ${yearLord.displayName} ($yearLordStrength)")
-            appendLine("Position: House $yearLordHouse")
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_YEARLORD_LINE, language, yearLord.getLocalizedName(language), yearLordStrength))
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_POSITION, language, yearLordHouse))
             appendLine(yearLordDignity)
             appendLine()
             appendLine("─────────────────────────────────────────────────────────")
-            appendLine("                       MUNTHA")
+            appendLine("                       $munthaSection")
             appendLine("─────────────────────────────────────────────────────────")
-            appendLine("Muntha Position: ${String.format("%.2f", muntha.degree)}° ${muntha.sign.displayName}")
-            appendLine("Muntha House: ${muntha.house}")
-            appendLine("Muntha Lord: ${muntha.lord.displayName} in House ${muntha.lordHouse}")
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_MUNTHA_POSITION, language, String.format("%.2f", muntha.degree), muntha.sign.getLocalizedName(language)))
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_MUNTHA_HOUSE, language, muntha.house))
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_MUNTHA_LORD, language, muntha.lord.getLocalizedName(language), muntha.lordHouse))
             appendLine(muntha.interpretation)
             appendLine()
             appendLine("─────────────────────────────────────────────────────────")
-            appendLine("                    MAJOR THEMES")
+            appendLine("                    $themesSection")
             appendLine("─────────────────────────────────────────────────────────")
             majorThemes.forEach { appendLine("• $it") }
             appendLine()
             appendLine("─────────────────────────────────────────────────────────")
-            appendLine("                   MUDDA DASHA PERIODS")
+            appendLine("                   $muddaDashaSection")
             appendLine("─────────────────────────────────────────────────────────")
             muddaDasha.forEach { period ->
-                val marker = if (period.isCurrent) " [CURRENT]" else ""
-                appendLine("${period.planet.displayName}: ${period.startDate} to ${period.endDate} (${period.days} days)$marker")
+                val marker = if (period.isCurrent) currentMarker else ""
+                appendLine(StringResources.get(StringKey.VARSHA_REPORT_DASHA_LINE, language,
+                    period.planet.getLocalizedName(language),
+                    period.startDate.toString(),
+                    period.endDate.toString(),
+                    period.days,
+                    marker))
             }
             appendLine()
             appendLine("─────────────────────────────────────────────────────────")
-            appendLine("              FAVORABLE MONTHS: ${favorableMonths.joinToString()}")
-            appendLine("            CHALLENGING MONTHS: ${challengingMonths.joinToString()}")
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_FAVORABLE_MONTHS, language, favorableMonths.joinToString()))
+            appendLine(StringResources.get(StringKey.VARSHA_REPORT_CHALLENGING_MONTHS, language, challengingMonths.joinToString()))
             appendLine("─────────────────────────────────────────────────────────")
             appendLine()
-            appendLine("                   OVERALL PREDICTION")
+            appendLine("                   $predictionSection")
             appendLine("─────────────────────────────────────────────────────────")
             appendLine(overallPrediction)
             appendLine()
             appendLine("═══════════════════════════════════════════════════════════")
-            appendLine("Generated by AstroStorm - Ultra-Precision Vedic Astrology")
+            appendLine(footer)
             appendLine("═══════════════════════════════════════════════════════════")
         }
     }

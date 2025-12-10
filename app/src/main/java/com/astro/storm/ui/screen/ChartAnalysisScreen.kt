@@ -24,6 +24,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
@@ -198,7 +200,7 @@ private fun ChartAnalysisTopBar(
         title = {
             Column {
                 Text(
-                    text = "Chart Analysis",
+                    text = stringResource(StringKey.ANALYSIS_CHART_ANALYSIS),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = AppTheme.TextPrimary
@@ -214,7 +216,7 @@ private fun ChartAnalysisTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(StringKey.NAV_BACK),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -223,7 +225,7 @@ private fun ChartAnalysisTopBar(
             IconButton(onClick = onExport) {
                 Icon(
                     imageVector = Icons.Outlined.Share,
-                    contentDescription = "Export",
+                    contentDescription = stringResource(StringKey.ACTION_EXPORT),
                     tint = AppTheme.TextPrimary
                 )
             }
@@ -257,7 +259,7 @@ private fun AnalysisTabBar(
                 onClick = { onTabSelected(tab) },
                 label = {
                     Text(
-                        text = tab.title,
+                        text = tab.localizedTitle(),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     )
@@ -292,17 +294,23 @@ private fun AnalysisTabBar(
  * Analysis tabs available in the chart analysis screen
  */
 enum class AnalysisTab(
-    val title: String,
+    val stringKey: StringKey,
     val icon: ImageVector
 ) {
-    CHART("Chart", Icons.Outlined.GridView),
-    PLANETS("Planets", Icons.Outlined.Public),
-    YOGAS("Yogas", Icons.Outlined.AutoAwesome),
-    DASHAS("Dashas", Icons.Outlined.Timeline),
-    TRANSITS("Transits", Icons.Outlined.Sync),
-    ASHTAKAVARGA("Ashtakavarga", Icons.Outlined.BarChart),
-    PANCHANGA("Panchanga", Icons.Outlined.CalendarMonth)
+    CHART(StringKey.ANALYSIS_TAB_CHART, Icons.Outlined.GridView),
+    PLANETS(StringKey.ANALYSIS_TAB_PLANETS, Icons.Outlined.Public),
+    YOGAS(StringKey.ANALYSIS_TAB_YOGAS, Icons.Outlined.AutoAwesome),
+    DASHAS(StringKey.ANALYSIS_TAB_DASHAS, Icons.Outlined.Timeline),
+    TRANSITS(StringKey.ANALYSIS_TAB_TRANSITS, Icons.Outlined.Sync),
+    ASHTAKAVARGA(StringKey.ANALYSIS_TAB_ASHTAKAVARGA, Icons.Outlined.BarChart),
+    PANCHANGA(StringKey.ANALYSIS_TAB_PANCHANGA, Icons.Outlined.CalendarMonth)
 }
+
+/**
+ * Get localized title for analysis tab
+ */
+@Composable
+fun AnalysisTab.localizedTitle(): String = stringResource(stringKey)
 
 private fun mapFeatureToTab(feature: InsightFeature): AnalysisTab {
     return when (feature) {

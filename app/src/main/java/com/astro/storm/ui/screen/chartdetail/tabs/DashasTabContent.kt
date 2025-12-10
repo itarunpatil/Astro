@@ -1100,12 +1100,6 @@ private fun DashaTimelineCard(timeline: DashaCalculator.DashaTimeline) {
     }
 }
 
-private fun formatDurationYears(years: Double, language: Language = Language.ENGLISH): String {
-    val wholeYears = years.toInt()
-    val months = ((years - wholeYears) * 12).toInt()
-    return formatDurationYearsMonths(wholeYears, months, language)
-}
-
 @Composable
 private fun MahadashaCard(
     mahadasha: DashaCalculator.Mahadasha,
@@ -1203,7 +1197,7 @@ private fun MahadashaCard(
                         }
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "${formatDurationYears(mahadasha.durationYears)} • ${formatDate(mahadasha.startDate, LocalDateSystem.current, LocalLanguage.current, DateFormat.FULL)} – ${formatDate(mahadasha.endDate, LocalDateSystem.current, LocalLanguage.current, DateFormat.FULL)}",
+                            text = "${formatDurationYearsLocalized(mahadasha.durationYears, language)} • ${formatDate(mahadasha.startDate, LocalDateSystem.current, LocalLanguage.current, DateFormat.FULL)} – ${formatDate(mahadasha.endDate, LocalDateSystem.current, LocalLanguage.current, DateFormat.FULL)}",
                             fontSize = 11.sp,
                             color = ChartDetailColors.TextMuted,
                             maxLines = 1,
@@ -1295,6 +1289,7 @@ private fun AntardashaRow(
     val planetColor = ChartDetailColors.getPlanetColor(antardasha.planet)
     val today = LocalDate.now()
     val isPast = antardasha.endDate.isBefore(today)
+    val language = LocalLanguage.current
 
     Row(
         modifier = modifier
@@ -1334,7 +1329,6 @@ private fun AntardashaRow(
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
-            val language = LocalLanguage.current
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(

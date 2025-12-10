@@ -2569,7 +2569,130 @@ enum class StringKey(val en: String, val ne: String) {
     DASHA_INTERP_ANTARDASHA_DEFAULT(
         "Current sub-period brings mixed planetary influences requiring careful navigation.",
         "हालको उप-अवधिले सावधानीपूर्वक मार्गदर्शन चाहिने मिश्रित ग्रहीय प्रभावहरू ल्याउँछ।"
-    );
+    ),
+
+    // ============================================
+    // CHART ANALYSIS SCREEN - TABS & UI
+    // ============================================
+    ANALYSIS_CHART_ANALYSIS("Chart Analysis", "कुण्डली विश्लेषण"),
+    ANALYSIS_TAB_CHART("Chart", "कुण्डली"),
+    ANALYSIS_TAB_PLANETS("Planets", "ग्रहहरू"),
+    ANALYSIS_TAB_YOGAS("Yogas", "योगहरू"),
+    ANALYSIS_TAB_DASHAS("Dashas", "दशाहरू"),
+    ANALYSIS_TAB_TRANSITS("Transits", "गोचरहरू"),
+    ANALYSIS_TAB_ASHTAKAVARGA("Ashtakavarga", "अष्टकवर्ग"),
+    ANALYSIS_TAB_PANCHANGA("Panchanga", "पञ्चाङ्ग"),
+
+    // ============================================
+    // DIVISIONAL CHARTS - NAMES & DESCRIPTIONS
+    // ============================================
+    VARGA_D1_NAME("Lagna Chart (Rashi)", "लग्न कुण्डली (राशि)"),
+    VARGA_D2_NAME("Hora Chart", "होरा कुण्डली"),
+    VARGA_D3_NAME("Drekkana Chart", "द्रेक्काण कुण्डली"),
+    VARGA_D4_NAME("Chaturthamsa Chart", "चतुर्थांश कुण्डली"),
+    VARGA_D7_NAME("Saptamsa Chart", "सप्तांश कुण्डली"),
+    VARGA_D9_NAME("Navamsa Chart", "नवांश कुण्डली"),
+    VARGA_D10_NAME("Dasamsa Chart", "दशांश कुण्डली"),
+    VARGA_D12_NAME("Dwadasamsa Chart", "द्वादशांश कुण्डली"),
+    VARGA_D16_NAME("Shodasamsa Chart", "षोडशांश कुण्डली"),
+    VARGA_D20_NAME("Vimsamsa Chart", "विंशांश कुण्डली"),
+    VARGA_D24_NAME("Siddhamsa Chart", "चतुर्विंशांश कुण्डली"),
+    VARGA_D27_NAME("Bhamsa Chart", "सप्तविंशांश कुण्डली"),
+    VARGA_D30_NAME("Trimsamsa Chart", "त्रिंशांश कुण्डली"),
+    VARGA_D60_NAME("Shashtiamsa Chart", "षष्टिांश कुण्डली"),
+
+    VARGA_D3_DESC_FULL("Siblings, Courage, Vitality", "भाइबहिनी, साहस, जीवनशक्ति"),
+    VARGA_D9_DESC_FULL("Marriage, Dharma, Fortune", "विवाह, धर्म, भाग्य"),
+    VARGA_D10_DESC_FULL("Career, Profession", "क्यारियर, पेशा"),
+    VARGA_D12_DESC_FULL("Parents, Ancestry", "आमाबुबा, पुर्खा"),
+    VARGA_D16_DESC_FULL("Vehicles, Pleasures", "सवारी, आनन्द"),
+    VARGA_D20_DESC_FULL("Spiritual Life", "आध्यात्मिक जीवन"),
+    VARGA_D24_DESC_FULL("Education, Learning", "शिक्षा, सिकाइ"),
+    VARGA_D27_DESC_FULL("Strength, Weakness", "बल, कमजोरी"),
+    VARGA_D30_DESC_FULL("Evils, Misfortunes", "दुर्भाग्य, विपत्ति"),
+    VARGA_D60_DESC_FULL("Past Life Karma", "पूर्वजन्मको कर्म"),
+
+    // Divisional chart selector labels
+    VARGA_LAGNA("Lagna", "लग्न"),
+    VARGA_HORA("Hora", "होरा"),
+    VARGA_DREKKANA("Drekkana", "द्रेक्काण"),
+    VARGA_SAPTAMSA("Saptamsa", "सप्तांश"),
+    VARGA_NAVAMSA("Navamsa", "नवांश"),
+    VARGA_DASAMSA("Dasamsa", "दशांश"),
+    VARGA_BHAMSA("Bhamsa", "भांश"),
+
+    // ============================================
+    // PLANETS TAB - HARDCODED STRINGS
+    // ============================================
+    PLANETS_CONDITIONS("Planetary Conditions", "ग्रह अवस्थाहरू"),
+    PLANETS_RETROGRADE("Retrograde", "वक्री"),
+    PLANETS_COMBUST("Combust", "अस्त"),
+    PLANETS_AT_WAR("At War", "युद्धमा"),
+    PLANETS_PLANETARY_WAR("Planetary War", "ग्रहयुद्ध"),
+    PLANETS_SHADBALA_SUMMARY("Shadbala Summary", "षड्बल सारांश"),
+    PLANETS_OVERALL("Overall", "समग्र"),
+    PLANETS_VIEW_DETAILS("View Details", "विवरण हेर्नुहोस्"),
+    PLANETS_TAP_FOR_DETAILS("Tap for details", "विवरणको लागि ट्याप गर्नुहोस्"),
+    PLANETS_SHADBALA("Shadbala", "षड्बल"),
+    PLANETS_RUPAS("%s / %s rupas (%s%%)", "%s / %s रुपा (%s%%)"),
+    PLANETS_HOUSE_FORMAT("House %d", "भाव %d"),
+
+    // Dignity status
+    DIGNITY_EXALTED_STATUS("Exalted", "उच्च"),
+    DIGNITY_DEBILITATED_STATUS("Debilitated", "नीच"),
+    DIGNITY_OWN_SIGN_STATUS("Own Sign", "स्वराशि"),
+    DIGNITY_NEUTRAL_STATUS("Neutral", "तटस्थ"),
+
+    // ============================================
+    // ASHTAKAVARGA TAB - HARDCODED STRINGS
+    // ============================================
+    ASHTAK_SUMMARY("Ashtakavarga Summary", "अष्टकवर्ग सारांश"),
+    ASHTAK_TOTAL_SAV("Total SAV", "कुल SAV"),
+    ASHTAK_STRONGEST("Strongest", "सबैभन्दा बलियो"),
+    ASHTAK_WEAKEST("Weakest", "सबैभन्दा कमजोर"),
+    ASHTAK_QUICK_ANALYSIS("Quick Analysis", "द्रुत विश्लेषण"),
+    ASHTAK_FAVORABLE_SIGNS("Favorable Signs (28+):", "अनुकूल राशिहरू (२८+):"),
+    ASHTAK_CHALLENGING_SIGNS("Challenging Signs (<25):", "चुनौतीपूर्ण राशिहरू (<२५):"),
+    ASHTAK_SIGNS_COUNT("%d signs", "%d राशिहरू"),
+
+    // Sarvashtakavarga
+    ASHTAK_SAV_TITLE("Sarvashtakavarga (SAV)", "सर्वाष्टकवर्ग (SAV)"),
+    ASHTAK_SAV_COMBINED_DESC("Combined strength of all planets in each sign", "प्रत्येक राशिमा सबै ग्रहहरूको संयुक्त बल"),
+
+    // Bhinnashtakavarga
+    ASHTAK_BAV_TITLE("Bhinnashtakavarga (BAV)", "भिन्नाष्टकवर्ग (BAV)"),
+    ASHTAK_BAV_INDIVIDUAL_DESC("Individual planet strength in each sign (0-8 bindus)", "प्रत्येक राशिमा व्यक्तिगत ग्रहको बल (०-८ बिन्दु)"),
+    ASHTAK_TOTAL("Total", "कुल"),
+
+    // SAV Legend
+    ASHTAK_SAV_EXCELLENT("30+ (Excellent)", "३०+ (उत्कृष्ट)"),
+    ASHTAK_SAV_GOOD("28-29 (Good)", "२८-२९ (राम्रो)"),
+    ASHTAK_SAV_AVERAGE("25-27 (Average)", "२५-२७ (औसत)"),
+    ASHTAK_SAV_WEAK("<25 (Weak)", "<२५ (कमजोर)"),
+
+    // BAV Legend
+    ASHTAK_BAV_STRONG("5+ (Strong)", "५+ (बलियो)"),
+    ASHTAK_BAV_GOOD("4 (Good)", "४ (राम्रो)"),
+    ASHTAK_BAV_AVERAGE("3 (Average)", "३ (औसत)"),
+    ASHTAK_BAV_WEAK("0-2 (Weak)", "०-२ (कमजोर)"),
+
+    // Interpretation Guide
+    ASHTAK_GUIDE_TITLE("Interpretation Guide", "व्याख्या गाइड"),
+    ASHTAK_GUIDE_SAV_TITLE("Sarvashtakavarga (SAV)", "सर्वाष्टकवर्ग (SAV)"),
+    ASHTAK_GUIDE_SAV_30("30+ bindus: Excellent for transits - major positive events", "३०+ बिन्दु: गोचरको लागि उत्कृष्ट - प्रमुख सकारात्मक घटनाहरू"),
+    ASHTAK_GUIDE_SAV_28("28-29 bindus: Good for transits - favorable outcomes", "२८-२९ बिन्दु: गोचरको लागि राम्रो - अनुकूल परिणामहरू"),
+    ASHTAK_GUIDE_SAV_25("25-27 bindus: Average - mixed results expected", "२५-२७ बिन्दु: औसत - मिश्रित परिणामहरू अपेक्षित"),
+    ASHTAK_GUIDE_SAV_BELOW("Below 25: Challenging - caution during transits", "२५ भन्दा कम: चुनौतीपूर्ण - गोचरमा सावधानी"),
+    ASHTAK_GUIDE_BAV_TITLE("Bhinnashtakavarga (BAV)", "भिन्नाष्टकवर्ग (BAV)"),
+    ASHTAK_GUIDE_BAV_5("5+ bindus: Planet transit highly beneficial", "५+ बिन्दु: ग्रह गोचर अत्यधिक लाभदायक"),
+    ASHTAK_GUIDE_BAV_4("4 bindus: Good results from transit", "४ बिन्दु: गोचरबाट राम्रो परिणाम"),
+    ASHTAK_GUIDE_BAV_3("3 bindus: Average, neutral results", "३ बिन्दु: औसत, तटस्थ परिणामहरू"),
+    ASHTAK_GUIDE_BAV_02("0-2 bindus: Difficult transit period", "०-२ बिन्दु: कठिन गोचर अवधि"),
+    ASHTAK_GUIDE_TRANSIT_TITLE("Transit Application", "गोचर अनुप्रयोग"),
+    ASHTAK_GUIDE_TRANSIT_1("Check SAV of the sign a planet transits", "ग्रहले गोचर गर्ने राशिको SAV जाँच गर्नुहोस्"),
+    ASHTAK_GUIDE_TRANSIT_2("Check BAV score of that planet in transited sign", "गोचर गरिएको राशिमा त्यो ग्रहको BAV स्कोर जाँच गर्नुहोस्"),
+    ASHTAK_GUIDE_TRANSIT_3("High combined scores = favorable transit", "उच्च संयुक्त स्कोर = अनुकूल गोचर"),
+    ASHTAK_GUIDE_TRANSIT_4("Use for timing important decisions", "महत्त्वपूर्ण निर्णयहरूको समयको लागि प्रयोग गर्नुहोस्");
 
     companion object {
         /**

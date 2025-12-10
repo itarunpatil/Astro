@@ -1,5 +1,9 @@
 package com.astro.storm.data.model
 
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.StringResources
+
 /**
  * Represents planets used in Vedic astrology
  *
@@ -23,6 +27,27 @@ enum class Planet(val swissEphId: Int, val displayName: String, val symbol: Stri
     URANUS(7, "Uranus", "Ur"),
     NEPTUNE(8, "Neptune", "Ne"),
     PLUTO(9, "Pluto", "Pl");
+
+    /**
+     * Get localized planet name based on current language
+     */
+    fun getLocalizedName(language: Language): String {
+        val key = when (this) {
+            SUN -> StringKey.PLANET_SUN
+            MOON -> StringKey.PLANET_MOON
+            MERCURY -> StringKey.PLANET_MERCURY
+            VENUS -> StringKey.PLANET_VENUS
+            MARS -> StringKey.PLANET_MARS
+            JUPITER -> StringKey.PLANET_JUPITER
+            SATURN -> StringKey.PLANET_SATURN
+            RAHU -> StringKey.PLANET_RAHU
+            KETU -> StringKey.PLANET_KETU
+            URANUS -> StringKey.PLANET_URANUS
+            NEPTUNE -> StringKey.PLANET_NEPTUNE
+            PLUTO -> StringKey.PLANET_PLUTO
+        }
+        return StringResources.get(key, language)
+    }
 
     companion object {
         /**

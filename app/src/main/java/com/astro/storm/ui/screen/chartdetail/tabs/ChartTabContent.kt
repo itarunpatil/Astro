@@ -95,9 +95,7 @@ fun ChartTabContent(
         getChartDataForType(selectedChartType, divisionalCharts)
     }
 
-    val chartInfo = remember(selectedChartType) {
-        getChartInfo(selectedChartType)
-    }
+    val chartInfo = getLocalizedChartInfo(selectedChartType)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -203,54 +201,77 @@ private fun getChartDataForType(
     }
 }
 
-private fun getChartInfo(type: String): Triple<String, String, String> {
+/**
+ * Get chart info with StringKey pairs for localization
+ * Returns Triple of (nameKey, descriptionKey, code)
+ */
+private fun getChartInfoKeys(type: String): Triple<StringKey?, StringKey?, String> {
     return when (type) {
-        "D1" -> Triple("Lagna Chart (Rashi)", "Physical Body, General Life", "D1")
-        "D2" -> Triple("Hora Chart", "Wealth, Prosperity", "D2")
-        "D3" -> Triple("Drekkana Chart", "Siblings, Courage, Vitality", "D3")
-        "D4" -> Triple("Chaturthamsa Chart", "Fortune, Property", "D4")
-        "D7" -> Triple("Saptamsa Chart", "Children, Progeny", "D7")
-        "D9" -> Triple("Navamsa Chart", "Marriage, Dharma, Fortune", "D9")
-        "D10" -> Triple("Dasamsa Chart", "Career, Profession", "D10")
-        "D12" -> Triple("Dwadasamsa Chart", "Parents, Ancestry", "D12")
-        "D16" -> Triple("Shodasamsa Chart", "Vehicles, Pleasures", "D16")
-        "D20" -> Triple("Vimsamsa Chart", "Spiritual Life", "D20")
-        "D24" -> Triple("Siddhamsa Chart", "Education, Learning", "D24")
-        "D27" -> Triple("Bhamsa Chart", "Strength, Weakness", "D27")
-        "D30" -> Triple("Trimsamsa Chart", "Evils, Misfortunes", "D30")
-        "D60" -> Triple("Shashtiamsa Chart", "Past Life Karma", "D60")
-        else -> Triple("Chart", "", type)
+        "D1" -> Triple(StringKey.VARGA_D1_NAME, StringKey.VARGA_D1_DESC, "D1")
+        "D2" -> Triple(StringKey.VARGA_D2_NAME, StringKey.VARGA_D2_DESC, "D2")
+        "D3" -> Triple(StringKey.VARGA_D3_NAME, StringKey.VARGA_D3_DESC_FULL, "D3")
+        "D4" -> Triple(StringKey.VARGA_D4_NAME, StringKey.VARGA_D4_DESC, "D4")
+        "D7" -> Triple(StringKey.VARGA_D7_NAME, StringKey.VARGA_D7_DESC, "D7")
+        "D9" -> Triple(StringKey.VARGA_D9_NAME, StringKey.VARGA_D9_DESC_FULL, "D9")
+        "D10" -> Triple(StringKey.VARGA_D10_NAME, StringKey.VARGA_D10_DESC_FULL, "D10")
+        "D12" -> Triple(StringKey.VARGA_D12_NAME, StringKey.VARGA_D12_DESC_FULL, "D12")
+        "D16" -> Triple(StringKey.VARGA_D16_NAME, StringKey.VARGA_D16_DESC_FULL, "D16")
+        "D20" -> Triple(StringKey.VARGA_D20_NAME, StringKey.VARGA_D20_DESC_FULL, "D20")
+        "D24" -> Triple(StringKey.VARGA_D24_NAME, StringKey.VARGA_D24_DESC_FULL, "D24")
+        "D27" -> Triple(StringKey.VARGA_D27_NAME, StringKey.VARGA_D27_DESC_FULL, "D27")
+        "D30" -> Triple(StringKey.VARGA_D30_NAME, StringKey.VARGA_D30_DESC_FULL, "D30")
+        "D60" -> Triple(StringKey.VARGA_D60_NAME, StringKey.VARGA_D60_DESC_FULL, "D60")
+        else -> Triple(null, null, type)
     }
 }
+
+/**
+ * Composable helper to get localized chart info
+ */
+@Composable
+private fun getLocalizedChartInfo(type: String): Triple<String, String, String> {
+    val keys = getChartInfoKeys(type)
+    val name = keys.first?.let { stringResource(it) } ?: "Chart"
+    val desc = keys.second?.let { stringResource(it) } ?: ""
+    return Triple(name, desc, keys.third)
+}
+
+/**
+ * Chart type selector chip data with localization support
+ */
+private data class ChartTypeChip(
+    val code: String,
+    val stringKey: StringKey
+)
+
+private val chartTypeChips = listOf(
+    ChartTypeChip("D1", StringKey.VARGA_LAGNA),
+    ChartTypeChip("D2", StringKey.VARGA_HORA),
+    ChartTypeChip("D3", StringKey.VARGA_DREKKANA),
+    ChartTypeChip("D4", StringKey.VARGA_D4_NAME),
+    ChartTypeChip("D7", StringKey.VARGA_SAPTAMSA),
+    ChartTypeChip("D9", StringKey.VARGA_NAVAMSA),
+    ChartTypeChip("D10", StringKey.VARGA_DASAMSA),
+    ChartTypeChip("D12", StringKey.VARGA_D12_NAME),
+    ChartTypeChip("D16", StringKey.VARGA_D16_NAME),
+    ChartTypeChip("D20", StringKey.VARGA_D20_NAME),
+    ChartTypeChip("D24", StringKey.VARGA_D24_NAME),
+    ChartTypeChip("D27", StringKey.VARGA_BHAMSA),
+    ChartTypeChip("D30", StringKey.VARGA_D30_NAME),
+    ChartTypeChip("D60", StringKey.VARGA_D60_NAME)
+)
 
 @Composable
 private fun ChartTypeSelector(
     selectedType: String,
     onTypeSelected: (String) -> Unit
 ) {
-    val chartTypes = listOf(
-        "D1" to "Lagna",
-        "D2" to "Hora",
-        "D3" to "Drekkana",
-        "D4" to "D4",
-        "D7" to "Saptamsa",
-        "D9" to "Navamsa",
-        "D10" to "Dasamsa",
-        "D12" to "D12",
-        "D16" to "D16",
-        "D20" to "D20",
-        "D24" to "D24",
-        "D27" to "Bhamsa",
-        "D30" to "D30",
-        "D60" to "D60"
-    )
-
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(chartTypes) { (type, name) ->
+        items(chartTypeChips) { chip ->
             FilterChip(
-                selected = selectedType == type,
-                onClick = { onTypeSelected(type) },
-                label = { Text(text = name, fontSize = 12.sp) },
+                selected = selectedType == chip.code,
+                onClick = { onTypeSelected(chip.code) },
+                label = { Text(text = stringResource(chip.stringKey), fontSize = 12.sp) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = ChartDetailColors.AccentGold.copy(alpha = 0.2f),
                     selectedLabelColor = ChartDetailColors.AccentGold,
@@ -261,7 +282,7 @@ private fun ChartTypeSelector(
                     borderColor = ChartDetailColors.DividerColor,
                     selectedBorderColor = ChartDetailColors.AccentGold,
                     enabled = true,
-                    selected = selectedType == type
+                    selected = selectedType == chip.code
                 )
             )
         }

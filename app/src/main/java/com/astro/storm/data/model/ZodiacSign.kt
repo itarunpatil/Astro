@@ -1,5 +1,9 @@
 package com.astro.storm.data.model
 
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.StringResources
+
 /**
  * Vedic zodiac signs (Rashis)
  */
@@ -26,6 +30,27 @@ enum class ZodiacSign(
 
     val startDegree: Double get() = (number - 1) * ZODIAC_SIGN_SPAN
     val endDegree: Double get() = number * ZODIAC_SIGN_SPAN
+
+    /**
+     * Get localized sign name based on current language
+     */
+    fun getLocalizedName(language: Language): String {
+        val key = when (this) {
+            ARIES -> StringKey.SIGN_ARIES
+            TAURUS -> StringKey.SIGN_TAURUS
+            GEMINI -> StringKey.SIGN_GEMINI
+            CANCER -> StringKey.SIGN_CANCER
+            LEO -> StringKey.SIGN_LEO
+            VIRGO -> StringKey.SIGN_VIRGO
+            LIBRA -> StringKey.SIGN_LIBRA
+            SCORPIO -> StringKey.SIGN_SCORPIO
+            SAGITTARIUS -> StringKey.SIGN_SAGITTARIUS
+            CAPRICORN -> StringKey.SIGN_CAPRICORN
+            AQUARIUS -> StringKey.SIGN_AQUARIUS
+            PISCES -> StringKey.SIGN_PISCES
+        }
+        return StringResources.get(key, language)
+    }
 
     companion object {
         private const val ZODIAC_SIGN_SPAN = 30.0

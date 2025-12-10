@@ -51,6 +51,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.model.ZodiacSign
@@ -140,7 +142,7 @@ private fun AshtakavargaSummaryCard(ashtakavarga: AshtakavargaCalculator.Ashtaka
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Ashtakavarga Summary",
+                    text = stringResource(StringKey.ASHTAK_SUMMARY),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = ChartDetailColors.TextPrimary
@@ -152,17 +154,17 @@ private fun AshtakavargaSummaryCard(ashtakavarga: AshtakavargaCalculator.Ashtaka
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 SummaryItem(
-                    label = "Total SAV",
+                    label = stringResource(StringKey.ASHTAK_TOTAL_SAV),
                     value = ashtakavarga.sarvashtakavarga.totalBindus.toString(),
                     color = ChartDetailColors.AccentGold
                 )
                 SummaryItem(
-                    label = "Strongest",
+                    label = stringResource(StringKey.ASHTAK_STRONGEST),
                     value = ashtakavarga.sarvashtakavarga.strongestSign.abbreviation,
                     color = ChartDetailColors.SuccessColor
                 )
                 SummaryItem(
-                    label = "Weakest",
+                    label = stringResource(StringKey.ASHTAK_WEAKEST),
                     value = ashtakavarga.sarvashtakavarga.weakestSign.abbreviation,
                     color = ChartDetailColors.ErrorColor
                 )
@@ -174,7 +176,7 @@ private fun AshtakavargaSummaryCard(ashtakavarga: AshtakavargaCalculator.Ashtaka
             )
 
             Text(
-                text = "Quick Analysis",
+                text = stringResource(StringKey.ASHTAK_QUICK_ANALYSIS),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = ChartDetailColors.TextSecondary,
@@ -193,12 +195,12 @@ private fun AshtakavargaSummaryCard(ashtakavarga: AshtakavargaCalculator.Ashtaka
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Favorable Signs (28+):",
+                    text = stringResource(StringKey.ASHTAK_FAVORABLE_SIGNS),
                     fontSize = 13.sp,
                     color = ChartDetailColors.TextMuted
                 )
                 Text(
-                    text = "$strongSignCount signs",
+                    text = stringResource(StringKey.ASHTAK_SIGNS_COUNT, strongSignCount),
                     fontSize = 13.sp,
                     color = ChartDetailColors.SuccessColor
                 )
@@ -209,12 +211,12 @@ private fun AshtakavargaSummaryCard(ashtakavarga: AshtakavargaCalculator.Ashtaka
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Challenging Signs (<25):",
+                    text = stringResource(StringKey.ASHTAK_CHALLENGING_SIGNS),
                     fontSize = 13.sp,
                     color = ChartDetailColors.TextMuted
                 )
                 Text(
-                    text = "$weakSignCount signs",
+                    text = stringResource(StringKey.ASHTAK_SIGNS_COUNT, weakSignCount),
                     fontSize = 13.sp,
                     color = ChartDetailColors.WarningColor
                 )
@@ -281,7 +283,7 @@ private fun SarvashtakavargaCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Sarvashtakavarga (SAV)",
+                        text = stringResource(StringKey.ASHTAK_SAV_TITLE),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = ChartDetailColors.TextPrimary
@@ -302,7 +304,7 @@ private fun SarvashtakavargaCard(
             ) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
                     Text(
-                        text = "Combined strength of all planets in each sign",
+                        text = stringResource(StringKey.ASHTAK_SAV_COMBINED_DESC),
                         fontSize = 12.sp,
                         color = ChartDetailColors.TextMuted,
                         modifier = Modifier.padding(bottom = 12.dp)
@@ -380,19 +382,19 @@ private fun SAVLegend() {
     ) {
         LegendItem(
             color = ChartDetailColors.SuccessColor,
-            label = "30+ (Excellent)"
+            label = stringResource(StringKey.ASHTAK_SAV_EXCELLENT)
         )
         LegendItem(
             color = ChartDetailColors.AccentTeal,
-            label = "28-29 (Good)"
+            label = stringResource(StringKey.ASHTAK_SAV_GOOD)
         )
         LegendItem(
             color = ChartDetailColors.TextMuted,
-            label = "25-27 (Average)"
+            label = stringResource(StringKey.ASHTAK_SAV_AVERAGE)
         )
         LegendItem(
             color = ChartDetailColors.ErrorColor,
-            label = "<25 (Weak)"
+            label = stringResource(StringKey.ASHTAK_SAV_WEAK)
         )
     }
 }
@@ -451,7 +453,7 @@ private fun BhinnashtakavargaCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Bhinnashtakavarga (BAV)",
+                        text = stringResource(StringKey.ASHTAK_BAV_TITLE),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = ChartDetailColors.TextPrimary
@@ -472,7 +474,7 @@ private fun BhinnashtakavargaCard(
             ) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
                     Text(
-                        text = "Individual planet strength in each sign (0-8 bindus)",
+                        text = stringResource(StringKey.ASHTAK_BAV_INDIVIDUAL_DESC),
                         fontSize = 12.sp,
                         color = ChartDetailColors.TextMuted,
                         modifier = Modifier.padding(bottom = 12.dp)
@@ -533,7 +535,7 @@ private fun BAVTable(ashtakavarga: AshtakavargaCalculator.AshtakavargaAnalysis) 
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Total",
+                    text = stringResource(StringKey.ASHTAK_TOTAL),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = ChartDetailColors.AccentGold
@@ -621,19 +623,19 @@ private fun BAVLegend() {
     ) {
         LegendItem(
             color = ChartDetailColors.SuccessColor,
-            label = "5+ (Strong)"
+            label = stringResource(StringKey.ASHTAK_BAV_STRONG)
         )
         LegendItem(
             color = ChartDetailColors.AccentTeal,
-            label = "4 (Good)"
+            label = stringResource(StringKey.ASHTAK_BAV_GOOD)
         )
         LegendItem(
             color = ChartDetailColors.TextMuted,
-            label = "3 (Average)"
+            label = stringResource(StringKey.ASHTAK_BAV_AVERAGE)
         )
         LegendItem(
             color = ChartDetailColors.ErrorColor,
-            label = "0-2 (Weak)"
+            label = stringResource(StringKey.ASHTAK_BAV_WEAK)
         )
     }
 }
@@ -671,7 +673,7 @@ private fun InterpretationGuideCard(isExpanded: Boolean, onToggleExpand: (Boolea
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Interpretation Guide",
+                        text = stringResource(StringKey.ASHTAK_GUIDE_TITLE),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = ChartDetailColors.TextPrimary
@@ -692,36 +694,36 @@ private fun InterpretationGuideCard(isExpanded: Boolean, onToggleExpand: (Boolea
             ) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
                     GuideSection(
-                        title = "Sarvashtakavarga (SAV)",
+                        title = stringResource(StringKey.ASHTAK_SAV_TITLE),
                         points = listOf(
-                            "30+ bindus: Excellent for transits - major positive events",
-                            "28-29 bindus: Good for transits - favorable outcomes",
-                            "25-27 bindus: Average - mixed results expected",
-                            "Below 25: Challenging - caution during transits"
+                            stringResource(StringKey.ASHTAK_GUIDE_SAV_30),
+                            stringResource(StringKey.ASHTAK_GUIDE_SAV_28),
+                            stringResource(StringKey.ASHTAK_GUIDE_SAV_25),
+                            stringResource(StringKey.ASHTAK_GUIDE_SAV_BELOW)
                         )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     GuideSection(
-                        title = "Bhinnashtakavarga (BAV)",
+                        title = stringResource(StringKey.ASHTAK_BAV_TITLE),
                         points = listOf(
-                            "5+ bindus: Planet transit highly beneficial",
-                            "4 bindus: Good results from transit",
-                            "3 bindus: Average, neutral results",
-                            "0-2 bindus: Difficult transit period"
+                            stringResource(StringKey.ASHTAK_GUIDE_BAV_5),
+                            stringResource(StringKey.ASHTAK_GUIDE_BAV_4),
+                            stringResource(StringKey.ASHTAK_GUIDE_BAV_3),
+                            stringResource(StringKey.ASHTAK_GUIDE_BAV_02)
                         )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     GuideSection(
-                        title = "Transit Application",
+                        title = stringResource(StringKey.ASHTAK_GUIDE_TRANSIT_TITLE),
                         points = listOf(
-                            "Check SAV of the sign a planet transits",
-                            "Check BAV score of that planet in transited sign",
-                            "High combined scores = favorable transit",
-                            "Use for timing important decisions"
+                            stringResource(StringKey.ASHTAK_GUIDE_TRANSIT_1),
+                            stringResource(StringKey.ASHTAK_GUIDE_TRANSIT_2),
+                            stringResource(StringKey.ASHTAK_GUIDE_TRANSIT_3),
+                            stringResource(StringKey.ASHTAK_GUIDE_TRANSIT_4)
                         )
                     )
                 }

@@ -1,5 +1,9 @@
 package com.astro.storm.data.model
 
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.StringResources
+
 /**
  * 27 Nakshatras in Vedic astrology
  */
@@ -70,6 +74,42 @@ enum class Nakshatra(
 
     val startDegree: Double get() = (number - 1) * NAKSHATRA_SPAN
     val endDegree: Double get() = number * NAKSHATRA_SPAN
+
+    /**
+     * Get localized nakshatra name based on current language
+     */
+    fun getLocalizedName(language: Language): String {
+        val key = when (this) {
+            ASHWINI -> StringKey.NAKSHATRA_ASHWINI
+            BHARANI -> StringKey.NAKSHATRA_BHARANI
+            KRITTIKA -> StringKey.NAKSHATRA_KRITTIKA
+            ROHINI -> StringKey.NAKSHATRA_ROHINI
+            MRIGASHIRA -> StringKey.NAKSHATRA_MRIGASHIRA
+            ARDRA -> StringKey.NAKSHATRA_ARDRA
+            PUNARVASU -> StringKey.NAKSHATRA_PUNARVASU
+            PUSHYA -> StringKey.NAKSHATRA_PUSHYA
+            ASHLESHA -> StringKey.NAKSHATRA_ASHLESHA
+            MAGHA -> StringKey.NAKSHATRA_MAGHA
+            PURVA_PHALGUNI -> StringKey.NAKSHATRA_PURVA_PHALGUNI
+            UTTARA_PHALGUNI -> StringKey.NAKSHATRA_UTTARA_PHALGUNI
+            HASTA -> StringKey.NAKSHATRA_HASTA
+            CHITRA -> StringKey.NAKSHATRA_CHITRA
+            SWATI -> StringKey.NAKSHATRA_SWATI
+            VISHAKHA -> StringKey.NAKSHATRA_VISHAKHA
+            ANURADHA -> StringKey.NAKSHATRA_ANURADHA
+            JYESHTHA -> StringKey.NAKSHATRA_JYESHTHA
+            MULA -> StringKey.NAKSHATRA_MULA
+            PURVA_ASHADHA -> StringKey.NAKSHATRA_PURVA_ASHADHA
+            UTTARA_ASHADHA -> StringKey.NAKSHATRA_UTTARA_ASHADHA
+            SHRAVANA -> StringKey.NAKSHATRA_SHRAVANA
+            DHANISHTHA -> StringKey.NAKSHATRA_DHANISHTHA
+            SHATABHISHA -> StringKey.NAKSHATRA_SHATABHISHA
+            PURVA_BHADRAPADA -> StringKey.NAKSHATRA_PURVA_BHADRAPADA
+            UTTARA_BHADRAPADA -> StringKey.NAKSHATRA_UTTARA_BHADRAPADA
+            REVATI -> StringKey.NAKSHATRA_REVATI
+        }
+        return StringResources.get(key, language)
+    }
 
     companion object {
         private const val NAKSHATRA_SPAN = 360.0 / 27.0 // ~13.333 degrees

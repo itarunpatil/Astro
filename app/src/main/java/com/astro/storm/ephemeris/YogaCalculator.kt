@@ -5,6 +5,9 @@ import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.ZodiacSign
+import com.astro.storm.data.localization.Language
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.StringResources
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -41,7 +44,41 @@ object YogaCalculator {
         CHANDRA_YOGA("Chandra Yoga", "Moon-based combinations"),
         SOLAR_YOGA("Solar Yoga", "Sun-based combinations"),
         NEGATIVE_YOGA("Negative Yoga", "Challenging combinations"),
-        SPECIAL_YOGA("Special Yoga", "Other significant combinations")
+        SPECIAL_YOGA("Special Yoga", "Other significant combinations");
+
+        /**
+         * Get localized display name
+         */
+        fun getLocalizedName(language: Language): String {
+            val key = when (this) {
+                RAJA_YOGA -> StringKey.YOGA_CAT_RAJA
+                DHANA_YOGA -> StringKey.YOGA_CAT_DHANA
+                MAHAPURUSHA_YOGA -> StringKey.YOGA_CAT_PANCHA_MAHAPURUSHA
+                NABHASA_YOGA -> StringKey.YOGA_CAT_NABHASA
+                CHANDRA_YOGA -> StringKey.YOGA_CAT_CHANDRA
+                SOLAR_YOGA -> StringKey.YOGA_CAT_SOLAR
+                NEGATIVE_YOGA -> StringKey.YOGA_CAT_NEGATIVE
+                SPECIAL_YOGA -> StringKey.YOGA_CAT_SPECIAL
+            }
+            return StringResources.get(key, language)
+        }
+
+        /**
+         * Get localized description
+         */
+        fun getLocalizedDescription(language: Language): String {
+            val key = when (this) {
+                RAJA_YOGA -> StringKey.YOGA_CAT_RAJA_DESC
+                DHANA_YOGA -> StringKey.YOGA_CAT_DHANA_DESC
+                MAHAPURUSHA_YOGA -> StringKey.YOGA_CAT_PANCHA_MAHAPURUSHA_DESC
+                NABHASA_YOGA -> StringKey.YOGA_CAT_NABHASA_DESC
+                CHANDRA_YOGA -> StringKey.YOGA_CAT_CHANDRA_DESC
+                SOLAR_YOGA -> StringKey.YOGA_CAT_SOLAR_DESC
+                NEGATIVE_YOGA -> StringKey.YOGA_CAT_NEGATIVE_DESC
+                SPECIAL_YOGA -> StringKey.YOGA_CAT_SPECIAL_DESC
+            }
+            return StringResources.get(key, language)
+        }
     }
 
     /**
@@ -52,7 +89,21 @@ object YogaCalculator {
         STRONG("Strong", 4),
         MODERATE("Moderate", 3),
         WEAK("Weak", 2),
-        VERY_WEAK("Very Weak", 1)
+        VERY_WEAK("Very Weak", 1);
+
+        /**
+         * Get localized display name
+         */
+        fun getLocalizedName(language: Language): String {
+            val key = when (this) {
+                EXTREMELY_STRONG -> StringKey.YOGA_STRENGTH_EXTREMELY_STRONG
+                STRONG -> StringKey.YOGA_STRENGTH_STRONG
+                MODERATE -> StringKey.YOGA_STRENGTH_MODERATE
+                WEAK -> StringKey.YOGA_STRENGTH_WEAK
+                VERY_WEAK -> StringKey.YOGA_STRENGTH_VERY_WEAK
+            }
+            return StringResources.get(key, language)
+        }
     }
 
     /**
@@ -91,105 +142,119 @@ object YogaCalculator {
         val overallYogaStrength: Double,
         val timestamp: Long = System.currentTimeMillis()
     ) {
-        fun toPlainText(): String = buildString {
+        fun toPlainText(language: Language = Language.ENGLISH): String = buildString {
+            val reportTitle = StringResources.get(StringKey.REPORT_YOGA_ANALYSIS, language)
+            val totalYogasLabel = StringResources.get(StringKey.REPORT_TOTAL_YOGAS, language)
+            val overallStrengthLabel = StringResources.get(StringKey.REPORT_OVERALL_STRENGTH, language)
+            val dominantCategoryLabel = StringResources.get(StringKey.REPORT_DOMINANT_CATEGORY, language)
+            val planetsLabel = StringResources.get(StringKey.REPORT_PLANETS, language)
+            val housesLabel = StringResources.get(StringKey.REPORT_HOUSES, language)
+            val strengthLabel = StringResources.get(StringKey.TAB_STRENGTH, language)
+            val effectsLabel = StringResources.get(StringKey.REPORT_EFFECTS, language)
+            val activationLabel = StringResources.get(StringKey.REPORT_ACTIVATION, language)
+            val patternLabel = StringResources.get(StringKey.REPORT_PATTERN, language)
+            val cancellationLabel = StringResources.get(StringKey.REPORT_CANCELLATION_FACTORS, language)
+            val auspiciousText = StringResources.get(StringKey.REPORT_AUSPICIOUS, language)
+            val inauspiciousText = StringResources.get(StringKey.REPORT_INAUSPICIOUS, language)
+
             appendLine("═══════════════════════════════════════════════════════════")
-            appendLine("                    YOGA ANALYSIS REPORT")
+            appendLine("                    $reportTitle")
             appendLine("═══════════════════════════════════════════════════════════")
             appendLine()
-            appendLine("Total Yogas Found: ${allYogas.size}")
-            appendLine("Overall Yoga Strength: ${String.format("%.1f", overallYogaStrength)}%")
-            appendLine("Dominant Category: ${dominantYogaCategory.displayName}")
+            appendLine("$totalYogasLabel: ${allYogas.size}")
+            appendLine("$overallStrengthLabel: ${String.format("%.1f", overallYogaStrength)}%")
+            appendLine("$dominantCategoryLabel: ${dominantYogaCategory.getLocalizedName(language)}")
             appendLine()
 
             if (mahapurushaYogas.isNotEmpty()) {
-                appendLine("PANCHA MAHAPURUSHA YOGAS")
+                appendLine(YogaCategory.MAHAPURUSHA_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 mahapurushaYogas.forEach { yoga ->
                     appendLine("★ ${yoga.name} (${yoga.sanskritName})")
-                    appendLine("  Planets: ${yoga.planets.joinToString { it.displayName }}")
-                    appendLine("  Strength: ${yoga.strength.displayName} (${String.format("%.0f", yoga.strengthPercentage)}%)")
-                    appendLine("  Effects: ${yoga.effects}")
+                    appendLine("  $planetsLabel: ${yoga.planets.joinToString { it.getLocalizedName(language) }}")
+                    appendLine("  $strengthLabel: ${yoga.strength.getLocalizedName(language)} (${String.format("%.0f", yoga.strengthPercentage)}%)")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
                     appendLine()
                 }
             }
 
             if (rajaYogas.isNotEmpty()) {
-                appendLine("RAJA YOGAS")
+                appendLine(YogaCategory.RAJA_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 rajaYogas.forEach { yoga ->
                     appendLine("★ ${yoga.name} (${yoga.sanskritName})")
-                    appendLine("  Planets: ${yoga.planets.joinToString { it.displayName }}")
-                    appendLine("  Houses: ${yoga.houses.joinToString()}")
-                    appendLine("  Strength: ${yoga.strength.displayName} (${String.format("%.0f", yoga.strengthPercentage)}%)")
-                    appendLine("  Effects: ${yoga.effects}")
-                    appendLine("  Activation: ${yoga.activationPeriod}")
+                    appendLine("  $planetsLabel: ${yoga.planets.joinToString { it.getLocalizedName(language) }}")
+                    appendLine("  $housesLabel: ${yoga.houses.joinToString()}")
+                    appendLine("  $strengthLabel: ${yoga.strength.getLocalizedName(language)} (${String.format("%.0f", yoga.strengthPercentage)}%)")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
+                    appendLine("  $activationLabel: ${yoga.activationPeriod}")
                     appendLine()
                 }
             }
 
             if (dhanaYogas.isNotEmpty()) {
-                appendLine("DHANA YOGAS (Wealth)")
+                appendLine(YogaCategory.DHANA_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 dhanaYogas.forEach { yoga ->
                     appendLine("★ ${yoga.name} (${yoga.sanskritName})")
-                    appendLine("  Planets: ${yoga.planets.joinToString { it.displayName }}")
-                    appendLine("  Strength: ${yoga.strength.displayName}")
-                    appendLine("  Effects: ${yoga.effects}")
+                    appendLine("  $planetsLabel: ${yoga.planets.joinToString { it.getLocalizedName(language) }}")
+                    appendLine("  $strengthLabel: ${yoga.strength.getLocalizedName(language)}")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
                     appendLine()
                 }
             }
 
             if (chandraYogas.isNotEmpty()) {
-                appendLine("CHANDRA YOGAS (Moon-based)")
+                appendLine(YogaCategory.CHANDRA_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 chandraYogas.forEach { yoga ->
-                    val auspicious = if (yoga.isAuspicious) "Auspicious" else "Inauspicious"
+                    val auspicious = if (yoga.isAuspicious) auspiciousText else inauspiciousText
                     appendLine("★ ${yoga.name} - $auspicious")
-                    appendLine("  Effects: ${yoga.effects}")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
                     appendLine()
                 }
             }
 
             if (solarYogas.isNotEmpty()) {
-                appendLine("SOLAR YOGAS (Sun-based)")
+                appendLine(YogaCategory.SOLAR_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 solarYogas.forEach { yoga ->
                     appendLine("★ ${yoga.name} (${yoga.sanskritName})")
-                    appendLine("  Effects: ${yoga.effects}")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
                     appendLine()
                 }
             }
 
             if (nabhasaYogas.isNotEmpty()) {
-                appendLine("NABHASA YOGAS (Pattern-based)")
+                appendLine(YogaCategory.NABHASA_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 nabhasaYogas.forEach { yoga ->
                     appendLine("★ ${yoga.name} (${yoga.sanskritName})")
-                    appendLine("  Pattern: ${yoga.description}")
-                    appendLine("  Effects: ${yoga.effects}")
+                    appendLine("  $patternLabel: ${yoga.description}")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
                     appendLine()
                 }
             }
 
             if (negativeYogas.isNotEmpty()) {
-                appendLine("NEGATIVE YOGAS (Challenges)")
+                appendLine(YogaCategory.NEGATIVE_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 negativeYogas.forEach { yoga ->
                     appendLine("⚠ ${yoga.name} (${yoga.sanskritName})")
-                    appendLine("  Effects: ${yoga.effects}")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
                     if (yoga.cancellationFactors.isNotEmpty()) {
-                        appendLine("  Cancellation Factors: ${yoga.cancellationFactors.joinToString("; ")}")
+                        appendLine("  $cancellationLabel: ${yoga.cancellationFactors.joinToString("; ")}")
                     }
                     appendLine()
                 }
             }
 
             if (specialYogas.isNotEmpty()) {
-                appendLine("SPECIAL YOGAS")
+                appendLine(YogaCategory.SPECIAL_YOGA.getLocalizedName(language).uppercase())
                 appendLine("─────────────────────────────────────────────────────────")
                 specialYogas.forEach { yoga ->
                     appendLine("★ ${yoga.name}")
-                    appendLine("  Effects: ${yoga.effects}")
+                    appendLine("  $effectsLabel: ${yoga.effects}")
                     appendLine()
                 }
             }

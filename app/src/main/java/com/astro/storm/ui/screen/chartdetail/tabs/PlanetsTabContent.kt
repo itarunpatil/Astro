@@ -52,6 +52,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.astro.storm.data.localization.StringKey
+import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.Nakshatra
 import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.PlanetPosition
@@ -68,14 +70,20 @@ import com.astro.storm.ui.screen.chartdetail.components.StyledDivider
 import java.text.DecimalFormat
 
 @Immutable
-enum class DignityStatus(val displayName: String) {
-    EXALTED("Exalted"),
-    DEBILITATED("Debilitated"),
-    OWN_SIGN("Own Sign"),
-    NEUTRAL("Neutral");
+enum class DignityStatus(val stringKey: StringKey) {
+    EXALTED(StringKey.DIGNITY_EXALTED_STATUS),
+    DEBILITATED(StringKey.DIGNITY_DEBILITATED_STATUS),
+    OWN_SIGN(StringKey.DIGNITY_OWN_SIGN_STATUS),
+    NEUTRAL(StringKey.DIGNITY_NEUTRAL_STATUS);
 
     val isSignificant: Boolean get() = this != NEUTRAL
 }
+
+/**
+ * Get localized display name for dignity status
+ */
+@Composable
+fun DignityStatus.localizedDisplayName(): String = stringResource(stringKey)
 
 private object PlanetaryDignityCalculator {
 
@@ -211,7 +219,7 @@ private fun PlanetaryConditionsSummary(
         Column(modifier = Modifier.padding(16.dp)) {
             SectionHeader(
                 icon = Icons.Outlined.Info,
-                title = "Planetary Conditions",
+                title = stringResource(StringKey.PLANETS_CONDITIONS),
                 iconTint = ChartDetailColors.AccentPurple
             )
 
@@ -223,17 +231,17 @@ private fun PlanetaryConditionsSummary(
             ) {
                 ConditionStatBadge(
                     count = conditions.retrogradePlanets.size,
-                    label = "Retrograde",
+                    label = stringResource(StringKey.PLANETS_RETROGRADE),
                     color = ChartDetailColors.WarningColor
                 )
                 ConditionStatBadge(
                     count = conditions.combustPlanets.size,
-                    label = "Combust",
+                    label = stringResource(StringKey.PLANETS_COMBUST),
                     color = ChartDetailColors.ErrorColor
                 )
                 ConditionStatBadge(
                     count = conditions.planetaryWars.size,
-                    label = "At War",
+                    label = stringResource(StringKey.PLANETS_AT_WAR),
                     color = ChartDetailColors.AccentPurple
                 )
             }
@@ -333,7 +341,7 @@ private fun ShadbalaOverviewCard(
             ) {
                 SectionHeader(
                     icon = Icons.Outlined.TrendingUp,
-                    title = "Shadbala Summary",
+                    title = stringResource(StringKey.PLANETS_SHADBALA_SUMMARY),
                     iconTint = ChartDetailColors.AccentGold
                 )
                 ViewDetailsIndicator()
@@ -347,17 +355,17 @@ private fun ShadbalaOverviewCard(
             ) {
                 StatColumn(
                     value = "$formattedScore%",
-                    label = "Overall",
+                    label = stringResource(StringKey.PLANETS_OVERALL),
                     valueColor = ChartDetailColors.getStrengthColor(shadbala.overallStrengthScore)
                 )
                 StatColumn(
                     value = shadbala.strongestPlanet.symbol,
-                    label = "Strongest",
+                    label = stringResource(StringKey.ASHTAK_STRONGEST),
                     valueColor = ChartDetailColors.SuccessColor
                 )
                 StatColumn(
                     value = shadbala.weakestPlanet.symbol,
-                    label = "Weakest",
+                    label = stringResource(StringKey.ASHTAK_WEAKEST),
                     valueColor = ChartDetailColors.ErrorColor
                 )
             }
@@ -367,12 +375,13 @@ private fun ShadbalaOverviewCard(
 
 @Composable
 private fun ViewDetailsIndicator(
-    text: String = "View Details",
+    text: String = "",
     color: Color = ChartDetailColors.AccentGold
 ) {
+    val displayText = text.ifEmpty { stringResource(StringKey.PLANETS_VIEW_DETAILS) }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = text,
+            text = displayText,
             fontSize = 12.sp,
             color = color
         )
@@ -597,7 +606,7 @@ private fun ShadbalaProgressSection(shadbala: PlanetaryShadbala) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Shadbala",
+                text = stringResource(StringKey.PLANETS_SHADBALA),
                 fontSize = 12.sp,
                 color = ChartDetailColors.TextSecondary
             )
@@ -654,14 +663,14 @@ private fun ConditionChipsSection(
     ) {
         if (showDignity) {
             ConditionChip(
-                label = dignityStatus.displayName,
+                label = dignityStatus.localizedDisplayName(),
                 color = PlanetaryDignityCalculator.getColor(dignityStatus)
             )
         }
 
         if (showRetrograde) {
             ConditionChip(
-                label = "Retrograde",
+                label = stringResource(StringKey.PLANETS_RETROGRADE),
                 color = ChartDetailColors.WarningColor
             )
         }
@@ -675,7 +684,7 @@ private fun ConditionChipsSection(
 
         if (showWar) {
             ConditionChip(
-                label = "Planetary War",
+                label = stringResource(StringKey.PLANETS_PLANETARY_WAR),
                 color = ChartDetailColors.AccentPurple
             )
         }
@@ -692,7 +701,7 @@ private fun TapForDetailsHint() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Tap for details",
+            text = stringResource(StringKey.PLANETS_TAP_FOR_DETAILS),
             fontSize = 11.sp,
             color = ChartDetailColors.TextMuted
         )
