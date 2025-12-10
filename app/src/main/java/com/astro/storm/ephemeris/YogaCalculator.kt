@@ -34,6 +34,44 @@ import kotlin.math.min
 object YogaCalculator {
 
     /**
+     * LRU Cache for Yoga analysis to avoid recalculating for the same chart.
+     * Key is the chart's birth data hash (unique identifier for a birth moment and location).
+     * Using a thread-safe cache with capacity limit to prevent memory issues.
+     */
+    private val analysisCache = object : LinkedHashMap<String, YogaAnalysis>(16, 0.75f, true) {
+        private val maxCacheSize = 10
+        override fun removeEldestEntry(eldest: Map.Entry<String, YogaAnalysis>): Boolean {
+            return size > maxCacheSize
+        }
+    }
+
+    @Synchronized
+    private fun getCachedAnalysis(cacheKey: String): YogaAnalysis? {
+        return analysisCache[cacheKey]
+    }
+
+    @Synchronized
+    private fun putCachedAnalysis(cacheKey: String, analysis: YogaAnalysis) {
+        analysisCache[cacheKey] = analysis
+    }
+
+    /**
+     * Generate a unique cache key for a chart based on its birth data
+     */
+    private fun generateCacheKey(chart: VedicChart): String {
+        val birthData = chart.birthData
+        return "yoga_${birthData.dateTime}_${birthData.latitude}_${birthData.longitude}_${birthData.timezone}"
+    }
+
+    /**
+     * Clear the analysis cache. Call this if memory needs to be freed.
+     */
+    @Synchronized
+    fun clearCache() {
+        analysisCache.clear()
+    }
+
+    /**
      * Yoga category enumeration
      */
     enum class YogaCategory(val displayName: String, val description: String) {
@@ -284,9 +322,34 @@ object YogaCalculator {
     }
 
     /**
-     * Calculate all Yogas in a chart
+     * Calculate all Yogas in a chart.
+     * Results are cached by chart identity to avoid recalculation.
+     *
+     * @param chart The Vedic chart to analyze
+     * @return Complete YogaAnalysis with all identified yogas
      */
     fun calculateYogas(chart: VedicChart): YogaAnalysis {
+        val cacheKey = generateCacheKey(chart)
+
+        // Check cache first
+        getCachedAnalysis(cacheKey)?.let { cached ->
+            return cached
+        }
+
+        // Calculate fresh analysis
+        val analysis = computeYogaAnalysis(chart)
+
+        // Cache the result
+        putCachedAnalysis(cacheKey, analysis)
+
+        return analysis
+    }
+
+    /**
+     * Internal method to compute Yoga analysis without caching.
+     * Separated from calculateYogas for cleaner code structure.
+     */
+    private fun computeYogaAnalysis(chart: VedicChart): YogaAnalysis {
         val allYogas = mutableListOf<Yoga>()
 
         // Calculate each category

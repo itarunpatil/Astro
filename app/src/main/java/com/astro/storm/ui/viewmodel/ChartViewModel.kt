@@ -2,6 +2,7 @@ package com.astro.storm.ui.viewmodel
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,25 +19,52 @@ import com.astro.storm.util.ExportUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import android.content.Context
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * ViewModel for chart operations
+ * ViewModel for chart operations.
+ *
+ * Manages the lifecycle of chart calculations, storage, and exports.
+ * Uses proper coroutine handling to prevent memory leaks and race conditions.
  */
 class ChartViewModel(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        private const val TAG = "ChartViewModel"
+        private const val PREFS_NAME = "chart_prefs"
+        private const val PREF_LAST_SELECTED_CHART = "last_selected_chart_id"
+        private const val EXECUTOR_SHUTDOWN_TIMEOUT_MS = 500L
+    }
 
     private val repository: ChartRepository
     private val ephemerisEngine: SwissEphemerisEngine
     private val chartRenderer = ChartRenderer()
-    private val prefs = application.getSharedPreferences("chart_prefs", Context.MODE_PRIVATE)
+    private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val chartExporter: ChartExporter
 
-    // Single-threaded dispatcher for sequential state updates
-    private val singleThreadContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    // Executor for single-threaded state updates with proper naming for debugging
+    private val executor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "ChartViewModel-StateUpdater").apply {
+            isDaemon = true
+        }
+    }
+    private val singleThreadContext = executor.asCoroutineDispatcher()
+
+    // Mutex to prevent race conditions during chart operations
+    private val chartOperationMutex = Mutex()
+
+    // Track if resources have been cleaned up
+    private val isCleared = AtomicBoolean(false)
 
     private val _uiState = MutableStateFlow<ChartUiState>(ChartUiState.Initial)
     val uiState: StateFlow<ChartUiState> = _uiState.asStateFlow()
@@ -59,16 +87,46 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadSavedCharts() {
         viewModelScope.launch {
             repository.getAllCharts().collect { charts ->
+                if (isCleared.get()) return@collect
+
                 _savedCharts.value = charts
-                if (_selectedChartId.value == null) {
-                    val lastSelectedId = prefs.getLong("last_selected_chart_id", -1)
-                    if (lastSelectedId != -1L && charts.any { it.id == lastSelectedId }) {
-                        loadChart(lastSelectedId)
-                    } else if (charts.isNotEmpty()) {
-                        loadChart(charts.first().id)
+
+                // Use mutex to prevent race conditions during initial chart selection
+                chartOperationMutex.withLock {
+                    if (_selectedChartId.value == null) {
+                        val lastSelectedId = prefs.getLong(PREF_LAST_SELECTED_CHART, -1)
+                        val chartToLoad = when {
+                            lastSelectedId != -1L && charts.any { it.id == lastSelectedId } -> lastSelectedId
+                            charts.isNotEmpty() -> charts.first().id
+                            else -> null
+                        }
+                        chartToLoad?.let { loadChartInternal(it) }
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Internal chart loading without mutex acquisition (for use within mutex-protected blocks)
+     */
+    private suspend fun loadChartInternal(chartId: Long) {
+        if (isCleared.get()) return
+
+        _uiState.value = ChartUiState.Loading
+
+        try {
+            val chart = repository.getChartById(chartId)
+            if (chart != null) {
+                _uiState.value = ChartUiState.Success(chart)
+                _selectedChartId.value = chartId
+                prefs.edit().putLong(PREF_LAST_SELECTED_CHART, chartId).apply()
+            } else {
+                _uiState.value = ChartUiState.Error("Chart not found")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load chart $chartId", e)
+            _uiState.value = ChartUiState.Error(e.message ?: "Failed to load chart")
         }
     }
 
@@ -94,23 +152,16 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Load a saved chart
+     * Load a saved chart by ID.
+     *
+     * @param chartId The database ID of the chart to load
      */
     fun loadChart(chartId: Long) {
-        viewModelScope.launch(singleThreadContext) {
-            _uiState.value = ChartUiState.Loading
+        if (isCleared.get()) return
 
-            try {
-                val chart = repository.getChartById(chartId)
-                if (chart != null) {
-                    _uiState.value = ChartUiState.Success(chart)
-                    _selectedChartId.value = chartId
-                    prefs.edit().putLong("last_selected_chart_id", chartId).apply()
-                } else {
-                    _uiState.value = ChartUiState.Error("Chart not found")
-                }
-            } catch (e: Exception) {
-                _uiState.value = ChartUiState.Error(e.message ?: "Failed to load chart")
+        viewModelScope.launch(singleThreadContext) {
+            chartOperationMutex.withLock {
+                loadChartInternal(chartId)
             }
         }
     }
@@ -130,19 +181,26 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Delete a saved chart
+     * Delete a saved chart.
+     *
+     * @param chartId The database ID of the chart to delete
      */
     fun deleteChart(chartId: Long) {
+        if (isCleared.get()) return
+
         viewModelScope.launch(singleThreadContext) {
-            try {
-                repository.deleteChart(chartId)
-                if (_selectedChartId.value == chartId) {
-                    prefs.edit().remove("last_selected_chart_id").apply()
-                    _selectedChartId.value = null
-                    _uiState.value = ChartUiState.Initial
+            chartOperationMutex.withLock {
+                try {
+                    repository.deleteChart(chartId)
+                    if (_selectedChartId.value == chartId) {
+                        prefs.edit().remove(PREF_LAST_SELECTED_CHART).apply()
+                        _selectedChartId.value = null
+                        _uiState.value = ChartUiState.Initial
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to delete chart $chartId", e)
+                    _uiState.value = ChartUiState.Error("Failed to delete chart: ${e.message}")
                 }
-            } catch (e: Exception) {
-                _uiState.value = ChartUiState.Error("Failed to delete chart: ${e.message}")
             }
         }
     }
@@ -331,8 +389,34 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
-        ephemerisEngine.close()
-        singleThreadContext.close()
+
+        // Mark as cleared to prevent any further operations
+        isCleared.set(true)
+
+        // Close ephemeris engine first (this may take time)
+        try {
+            ephemerisEngine.close()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error closing ephemeris engine", e)
+        }
+
+        // Shutdown executor gracefully
+        try {
+            singleThreadContext.close()
+            executor.shutdown()
+            if (!executor.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                executor.shutdownNow()
+                Log.w(TAG, "Executor did not terminate gracefully, forced shutdown")
+            }
+        } catch (e: InterruptedException) {
+            executor.shutdownNow()
+            Thread.currentThread().interrupt()
+            Log.w(TAG, "Executor shutdown interrupted", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error shutting down executor", e)
+        }
+
+        Log.d(TAG, "ChartViewModel cleared successfully")
     }
 }
 

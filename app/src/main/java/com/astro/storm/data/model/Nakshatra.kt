@@ -112,22 +112,89 @@ enum class Nakshatra(
     }
 
     companion object {
-        private const val NAKSHATRA_SPAN = 360.0 / 27.0 // ~13.333 degrees
+        /**
+         * Precise nakshatra span using BigDecimal for maximum accuracy.
+         * Each nakshatra spans exactly 360/27 = 13.333... degrees (13°20').
+         * Using BigDecimal avoids floating-point precision errors that could
+         * cause incorrect nakshatra determination at boundary degrees.
+         */
+        private val NAKSHATRA_SPAN_BD = java.math.BigDecimal("360")
+            .divide(java.math.BigDecimal("27"), java.math.MathContext(20, java.math.RoundingMode.HALF_EVEN))
 
+        /**
+         * Each pada (quarter) spans exactly 1/4 of a nakshatra = 3.333... degrees (3°20').
+         */
+        private val PADA_SPAN_BD = NAKSHATRA_SPAN_BD
+            .divide(java.math.BigDecimal("4"), java.math.MathContext(20, java.math.RoundingMode.HALF_EVEN))
+
+        private val CIRCLE_BD = java.math.BigDecimal("360")
+
+        // Cache entries for fast lookup
+        private val NAKSHATRA_ENTRIES = entries.toTypedArray()
+
+        /**
+         * Determines the nakshatra and pada for a given sidereal longitude.
+         *
+         * Uses high-precision BigDecimal arithmetic to ensure accurate
+         * determination even at nakshatra boundaries where floating-point
+         * errors could cause incorrect results.
+         *
+         * @param longitude Sidereal longitude in degrees (0-360)
+         * @return Pair of (Nakshatra, pada) where pada is 1-4
+         */
         fun fromLongitude(longitude: Double): Pair<Nakshatra, Int> {
-            val longitudeBd = longitude.toBigDecimal()
-            val circleBd = 360.toBigDecimal()
-            val nakshatraSpanBd = NAKSHATRA_SPAN.toBigDecimal()
-            val padaSpanBd = nakshatraSpanBd / 4.toBigDecimal()
+            // Handle edge cases
+            if (longitude.isNaN() || longitude.isInfinite()) {
+                return ASHWINI to 1
+            }
 
-            val normalizedLongitude = (longitudeBd % circleBd + circleBd) % circleBd
+            // Convert to BigDecimal for precise calculation
+            val longitudeBd = java.math.BigDecimal(longitude.toString())
 
-            val nakshatraIndex = (normalizedLongitude / nakshatraSpanBd).toInt().coerceIn(0, 26)
-            val nakshatra = values()[nakshatraIndex]
+            // Normalize to 0-360 range using proper modulo
+            var normalizedLongitude = longitudeBd.remainder(CIRCLE_BD, java.math.MathContext.DECIMAL128)
+            if (normalizedLongitude < java.math.BigDecimal.ZERO) {
+                normalizedLongitude = normalizedLongitude.add(CIRCLE_BD)
+            }
 
-            val positionInNakshatra = normalizedLongitude - nakshatra.startDegree.toBigDecimal()
-            val pada = (positionInNakshatra / padaSpanBd).toInt() + 1
-            return nakshatra to pada.coerceIn(1, 4)
+            // Calculate nakshatra index (0-26)
+            val nakshatraIndexBd = normalizedLongitude.divide(NAKSHATRA_SPAN_BD, java.math.MathContext(20, java.math.RoundingMode.FLOOR))
+            val nakshatraIndex = nakshatraIndexBd.toInt().coerceIn(0, 26)
+            val nakshatra = NAKSHATRA_ENTRIES[nakshatraIndex]
+
+            // Calculate position within nakshatra
+            val nakshatraStartBd = java.math.BigDecimal(nakshatra.startDegree.toString())
+            var positionInNakshatra = normalizedLongitude.subtract(nakshatraStartBd)
+
+            // Handle edge case where position might be slightly negative due to precision
+            if (positionInNakshatra < java.math.BigDecimal.ZERO) {
+                positionInNakshatra = java.math.BigDecimal.ZERO
+            }
+
+            // Calculate pada (1-4)
+            // Pada 1: 0° to 3°20', Pada 2: 3°20' to 6°40', etc.
+            val padaIndexBd = positionInNakshatra.divide(PADA_SPAN_BD, java.math.MathContext(20, java.math.RoundingMode.FLOOR))
+            val pada = (padaIndexBd.toInt() + 1).coerceIn(1, 4)
+
+            return nakshatra to pada
+        }
+
+        /**
+         * Gets the navamsha (D9) sign for a given longitude.
+         * Each pada corresponds to a specific navamsha sign.
+         *
+         * @param longitude Sidereal longitude in degrees
+         * @return The navamsha sign for this longitude
+         */
+        fun getNavamshaSign(longitude: Double): ZodiacSign {
+            val (nakshatra, pada) = fromLongitude(longitude)
+            return when (pada) {
+                1 -> nakshatra.pada1Sign
+                2 -> nakshatra.pada2Sign
+                3 -> nakshatra.pada3Sign
+                4 -> nakshatra.pada4Sign
+                else -> nakshatra.pada1Sign
+            }
         }
     }
 }

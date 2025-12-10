@@ -55,10 +55,29 @@ class SwissEphemerisEngine private constructor(
     @Volatile
     private var isClosed = false
 
-    private val planetResultBuffer = DoubleArray(PLANET_RESULT_SIZE)
-    private val houseCuspsBuffer = DoubleArray(HOUSE_CUSPS_ARRAY_SIZE)
-    private val ascMcBuffer = DoubleArray(ASC_MC_ARRAY_SIZE)
-    private val errorBuffer = StringBuffer(ERROR_BUFFER_SIZE)
+    /**
+     * Thread-local calculation buffers to ensure thread safety.
+     * Each thread gets its own set of buffers to prevent data corruption
+     * when multiple calculations happen concurrently.
+     *
+     * This is critical for accurate Vedic chart calculations as buffer
+     * corruption would lead to incorrect planetary positions.
+     */
+    private data class CalculationBuffers(
+        val planetResult: DoubleArray = DoubleArray(PLANET_RESULT_SIZE),
+        val houseCusps: DoubleArray = DoubleArray(HOUSE_CUSPS_ARRAY_SIZE),
+        val ascMc: DoubleArray = DoubleArray(ASC_MC_ARRAY_SIZE),
+        val error: StringBuffer = StringBuffer(ERROR_BUFFER_SIZE)
+    ) {
+        fun clear() {
+            planetResult.fill(0.0)
+            houseCusps.fill(0.0)
+            ascMc.fill(0.0)
+            error.setLength(0)
+        }
+    }
+
+    private val threadLocalBuffers = ThreadLocal.withInitial { CalculationBuffers() }
 
     private val calculationFlags: Int = if (hasHighPrecisionEphemeris) {
         BASE_CALC_FLAGS or SweConst.SEFLG_JPLEPH
@@ -275,8 +294,9 @@ class SwissEphemerisEngine private constructor(
 
         val ayanamsa = swissEph.swe_get_ayanamsa_ut(julianDay)
 
-        houseCuspsBuffer.fill(0.0)
-        ascMcBuffer.fill(0.0)
+        // Use thread-local buffers to ensure thread safety
+        val buffers = threadLocalBuffers.get()
+        buffers.clear()
 
         val houseResult = swissEph.swe_houses(
             julianDay,
@@ -284,21 +304,22 @@ class SwissEphemerisEngine private constructor(
             birthData.latitude.toDouble(),
             birthData.longitude.toDouble(),
             houseSystem.code.code,
-            houseCuspsBuffer,
-            ascMcBuffer
+            buffers.houseCusps,
+            buffers.ascMc
         )
 
         if (houseResult < 0) {
             Log.w(TAG, "House calculation returned error code: $houseResult, using Placidus fallback")
         }
 
-        val ascendant = ascMcBuffer[ASC_INDEX]
-        val midheaven = ascMcBuffer[MC_INDEX]
+        val ascendant = buffers.ascMc[ASC_INDEX]
+        val midheaven = buffers.ascMc[MC_INDEX]
 
-        val houseCuspsCopy = (1..12).map { houseCuspsBuffer[it] }
+        // Create immutable copy of house cusps for use in planet calculations
+        val houseCuspsCopy = (1..12).map { buffers.houseCusps[it] }
 
         val planetPositions = Planet.ALL_PLANETS.map { planet ->
-            calculatePlanetPositionInternal(planet, julianDay, houseCuspsCopy)
+            calculatePlanetPositionInternal(planet, julianDay, houseCuspsCopy, buffers)
         }
 
         return VedicChart(
@@ -320,8 +341,9 @@ class SwissEphemerisEngine private constructor(
         latitude: Double,
         longitude: Double
     ): PlanetPosition {
-        houseCuspsBuffer.fill(0.0)
-        ascMcBuffer.fill(0.0)
+        // Use thread-local buffers to ensure thread safety
+        val buffers = threadLocalBuffers.get()
+        buffers.clear()
 
         swissEph.swe_houses(
             julianDay,
@@ -329,21 +351,22 @@ class SwissEphemerisEngine private constructor(
             latitude,
             longitude,
             'P'.code,
-            houseCuspsBuffer,
-            ascMcBuffer
+            buffers.houseCusps,
+            buffers.ascMc
         )
 
-        val houseCuspsCopy = (1..12).map { houseCuspsBuffer[it] }
-        return calculatePlanetPositionInternal(planet, julianDay, houseCuspsCopy)
+        val houseCuspsCopy = (1..12).map { buffers.houseCusps[it] }
+        return calculatePlanetPositionInternal(planet, julianDay, houseCuspsCopy, buffers)
     }
 
     private fun calculatePlanetPositionInternal(
         planet: Planet,
         julianDay: Double,
-        houseCusps: List<Double>
+        houseCusps: List<Double>,
+        buffers: CalculationBuffers
     ): PlanetPosition {
-        planetResultBuffer.fill(0.0)
-        errorBuffer.setLength(0)
+        buffers.planetResult.fill(0.0)
+        buffers.error.setLength(0)
 
         val sweId = if (planet == Planet.KETU) Planet.RAHU.swissEphId else planet.swissEphId
 
@@ -351,13 +374,13 @@ class SwissEphemerisEngine private constructor(
             julianDay,
             sweId,
             calculationFlags,
-            planetResultBuffer,
-            errorBuffer
+            buffers.planetResult,
+            buffers.error
         )
 
         if (calcResult < 0) {
-            val errorMessage = if (errorBuffer.isNotEmpty()) {
-                errorBuffer.toString()
+            val errorMessage = if (buffers.error.isNotEmpty()) {
+                buffers.error.toString()
             } else {
                 "Unknown calculation error (code: $calcResult)"
             }
@@ -366,10 +389,10 @@ class SwissEphemerisEngine private constructor(
             )
         }
 
-        var rawLongitude = planetResultBuffer[0]
-        val latitude = planetResultBuffer[1]
-        val distance = planetResultBuffer[2]
-        var speed = planetResultBuffer[3]
+        var rawLongitude = buffers.planetResult[0]
+        val latitude = buffers.planetResult[1]
+        val distance = buffers.planetResult[2]
+        var speed = buffers.planetResult[3]
 
         if (planet == Planet.KETU) {
             rawLongitude = normalizeDegree(rawLongitude + KETU_OFFSET)
@@ -517,6 +540,12 @@ class SwissEphemerisEngine private constructor(
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during SwissEph close", e)
                 } finally {
+                    // Clean up thread-local storage to prevent memory leaks
+                    try {
+                        threadLocalBuffers.remove()
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Error removing thread-local buffers", e)
+                    }
                     isClosed = true
                     Log.d(TAG, "SwissEphemerisEngine closed successfully")
                 }

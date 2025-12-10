@@ -18,7 +18,15 @@ private val DAYS_PER_YEAR_BD = BigDecimal("365.25")
 private val NAKSHATRA_SPAN_BD = BigDecimal("13.333333333333333333")
 private val TOTAL_CYCLE_YEARS_BD = BigDecimal("120")
 
+/**
+ * Converts years to days with proper rounding.
+ * Ensures minimum of 1 day to prevent zero-duration periods.
+ * Handles NaN/Infinite values gracefully.
+ */
 private fun yearsToRoundedDays(years: Double): Long {
+    if (years.isNaN() || years.isInfinite() || years <= 0) {
+        return 1L
+    }
     return BigDecimal(years.toString())
         .multiply(DAYS_PER_YEAR_BD, MATH_CONTEXT)
         .setScale(0, RoundingMode.HALF_EVEN)
@@ -26,12 +34,28 @@ private fun yearsToRoundedDays(years: Double): Long {
         .coerceAtLeast(1L)
 }
 
+/**
+ * Converts BigDecimal years to days with proper rounding.
+ * Ensures minimum of 1 day to prevent zero-duration periods.
+ */
 private fun yearsToRoundedDays(years: BigDecimal): Long {
+    if (years <= BigDecimal.ZERO) {
+        return 1L
+    }
     return years
         .multiply(DAYS_PER_YEAR_BD, MATH_CONTEXT)
         .setScale(0, RoundingMode.HALF_EVEN)
         .toLong()
         .coerceAtLeast(1L)
+}
+
+/**
+ * Sealed class representing the result of Dasha calculations.
+ * Allows for proper error handling without exceptions.
+ */
+sealed class DashaCalculationResult {
+    data class Success(val timeline: DashaCalculator.DashaTimeline) : DashaCalculationResult()
+    data class Error(val message: String, val cause: Throwable? = null) : DashaCalculationResult()
 }
 
 object DashaCalculator {
@@ -61,6 +85,44 @@ object DashaCalculator {
     )
 
     private const val MAX_MAHADASHAS = 12
+
+    /**
+     * LRU Cache for Dasha timeline calculations to avoid recalculating for the same chart.
+     * Key is the chart's birth data hash (unique identifier for a birth moment and location).
+     * Using a thread-safe cache with capacity limit to prevent memory issues.
+     */
+    private val timelineCache = object : LinkedHashMap<String, DashaTimeline>(16, 0.75f, true) {
+        private val maxCacheSize = 10
+        override fun removeEldestEntry(eldest: Map.Entry<String, DashaTimeline>): Boolean {
+            return size > maxCacheSize
+        }
+    }
+
+    @Synchronized
+    private fun getCachedTimeline(cacheKey: String): DashaTimeline? {
+        return timelineCache[cacheKey]
+    }
+
+    @Synchronized
+    private fun putCachedTimeline(cacheKey: String, timeline: DashaTimeline) {
+        timelineCache[cacheKey] = timeline
+    }
+
+    /**
+     * Generate a unique cache key for a chart based on its birth data
+     */
+    private fun generateCacheKey(chart: VedicChart): String {
+        val birthData = chart.birthData
+        return "dasha_${birthData.dateTime}_${birthData.latitude}_${birthData.longitude}_${birthData.timezone}"
+    }
+
+    /**
+     * Clear the timeline cache. Call this if memory needs to be freed.
+     */
+    @Synchronized
+    fun clearCache() {
+        timelineCache.clear()
+    }
 
     fun getDashaYears(planet: Planet): Double {
         return DASHA_YEARS[planet]?.toDouble() ?: 0.0
@@ -535,14 +597,71 @@ object DashaCalculator {
         }
     }
 
+    /**
+     * Calculate Dasha timeline for a Vedic chart.
+     * Results are cached by chart identity to avoid recalculation.
+     *
+     * @param chart The Vedic chart to analyze
+     * @return Complete DashaTimeline with all periods calculated
+     * @throws IllegalArgumentException if Moon position is not found in chart
+     */
     fun calculateDashaTimeline(chart: VedicChart): DashaTimeline {
+        val cacheKey = generateCacheKey(chart)
+
+        // Check cache first
+        getCachedTimeline(cacheKey)?.let { cached ->
+            return cached
+        }
+
+        // Calculate fresh timeline
+        val timeline = computeDashaTimeline(chart)
+
+        // Cache the result
+        putCachedTimeline(cacheKey, timeline)
+
+        return timeline
+    }
+
+    /**
+     * Safe version of calculateDashaTimeline that returns a Result instead of throwing.
+     * Use this for UI contexts where graceful error handling is preferred.
+     *
+     * @param chart The Vedic chart to analyze
+     * @return DashaCalculationResult.Success with timeline or DashaCalculationResult.Error with message
+     */
+    fun calculateDashaTimelineSafe(chart: VedicChart): DashaCalculationResult {
+        return try {
+            DashaCalculationResult.Success(calculateDashaTimeline(chart))
+        } catch (e: IllegalArgumentException) {
+            DashaCalculationResult.Error("Invalid chart data: ${e.message}", e)
+        } catch (e: Exception) {
+            DashaCalculationResult.Error("Dasha calculation failed: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Internal method to compute Dasha timeline without caching.
+     * Separated from calculateDashaTimeline for cleaner code structure.
+     */
+    private fun computeDashaTimeline(chart: VedicChart): DashaTimeline {
         val birthDate = chart.birthData.dateTime.toLocalDate()
         val moonPosition = chart.planetPositions.find { it.planet == Planet.MOON }
-            ?: throw IllegalArgumentException("Moon position not found in chart.")
+            ?: throw IllegalArgumentException("Moon position not found in chart. Cannot calculate Vimsottari Dasha.")
 
         val moonLongitude = moonPosition.longitude
+
+        // Validate moon longitude
+        if (moonLongitude.isNaN() || moonLongitude.isInfinite()) {
+            throw IllegalArgumentException("Invalid Moon longitude: $moonLongitude")
+        }
+
         val (birthNakshatra, pada) = Nakshatra.fromLongitude(moonLongitude)
         val nakshatraLord = birthNakshatra.ruler
+
+        // Validate nakshatra lord is in dasha sequence
+        if (nakshatraLord !in DASHA_SEQUENCE) {
+            throw IllegalArgumentException("Nakshatra lord $nakshatraLord not found in Vimsottari Dasha sequence")
+        }
 
         val moonLongitudeBd = BigDecimal(moonLongitude.toString())
         val nakshatraStartBd = BigDecimal(birthNakshatra.startDegree.toString())
@@ -560,6 +679,7 @@ object DashaCalculator {
         val firstDashaYearsBd = DASHA_YEARS[nakshatraLord] ?: BigDecimal.ZERO
         val elapsedInFirstDashaBd = nakshatraProgressBd.multiply(firstDashaYearsBd, MATH_CONTEXT)
         val balanceOfFirstDashaBd = firstDashaYearsBd.subtract(elapsedInFirstDashaBd, MATH_CONTEXT)
+            .max(BigDecimal.ZERO) // Ensure non-negative
         val balanceOfFirstDasha = balanceOfFirstDashaBd.toDouble().coerceAtLeast(0.0)
 
         val today = LocalDate.now()

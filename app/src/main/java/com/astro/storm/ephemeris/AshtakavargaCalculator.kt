@@ -59,6 +59,44 @@ object AshtakavargaCalculator {
     private const val KAKSHA_ASCENDANT = "Ascendant"
 
     /**
+     * LRU Cache for Ashtakavarga analysis to avoid recalculating for the same chart.
+     * Key is the chart's birth data hash (unique identifier for a birth moment and location).
+     * Using a thread-safe cache with capacity limit to prevent memory issues.
+     */
+    private val analysisCache = object : LinkedHashMap<String, AshtakavargaAnalysis>(16, 0.75f, true) {
+        private val maxCacheSize = 10
+        override fun removeEldestEntry(eldest: Map.Entry<String, AshtakavargaAnalysis>): Boolean {
+            return size > maxCacheSize
+        }
+    }
+
+    @Synchronized
+    private fun getCachedAnalysis(cacheKey: String): AshtakavargaAnalysis? {
+        return analysisCache[cacheKey]
+    }
+
+    @Synchronized
+    private fun putCachedAnalysis(cacheKey: String, analysis: AshtakavargaAnalysis) {
+        analysisCache[cacheKey] = analysis
+    }
+
+    /**
+     * Generate a unique cache key for a chart based on its birth data
+     */
+    private fun generateCacheKey(chart: VedicChart): String {
+        val birthData = chart.birthData
+        return "${birthData.dateTime}_${birthData.latitude}_${birthData.longitude}_${birthData.timezone}"
+    }
+
+    /**
+     * Clear the analysis cache. Call this if memory needs to be freed.
+     */
+    @Synchronized
+    fun clearCache() {
+        analysisCache.clear()
+    }
+
+    /**
      * Bindu allocation rules from BPHS
      * Format: Map<ContributingPlanet, List<HousePositionsFromContributingPlanet>>
      * These are the houses from the contributing planet where it gives a bindu
@@ -342,9 +380,34 @@ object AshtakavargaCalculator {
     )
 
     /**
-     * Calculate complete Ashtakavarga for a chart
+     * Calculate complete Ashtakavarga for a chart.
+     * Results are cached by chart identity to avoid recalculation.
+     *
+     * @param chart The Vedic chart to analyze
+     * @return Complete Ashtakavarga analysis including BAV, SAV, and Prastara tables
      */
     fun calculateAshtakavarga(chart: VedicChart): AshtakavargaAnalysis {
+        val cacheKey = generateCacheKey(chart)
+
+        // Check cache first
+        getCachedAnalysis(cacheKey)?.let { cached ->
+            return cached
+        }
+
+        // Calculate fresh analysis
+        val analysis = computeAshtakavargaAnalysis(chart)
+
+        // Cache the result
+        putCachedAnalysis(cacheKey, analysis)
+
+        return analysis
+    }
+
+    /**
+     * Internal method to compute Ashtakavarga analysis without caching.
+     * Separated from calculateAshtakavarga for cleaner code structure.
+     */
+    private fun computeAshtakavargaAnalysis(chart: VedicChart): AshtakavargaAnalysis {
         val bhinnashtakavarga = mutableMapOf<Planet, Bhinnashtakavarga>()
         val prastarashtakavarga = mutableMapOf<Planet, Prastarashtakavarga>()
 
@@ -493,11 +556,32 @@ object AshtakavargaCalculator {
     }
 
     /**
-     * Calculate Kaksha position for a given longitude
+     * Calculate Kaksha position for a given longitude.
+     *
+     * @param longitude The sidereal longitude in degrees
+     * @param chart The Vedic chart for context
+     * @return KakshaPosition with all relevant details
      */
     fun calculateKakshaPosition(
         longitude: Double,
         chart: VedicChart
+    ): KakshaPosition {
+        // Use the cached analysis to avoid recalculating
+        val analysis = calculateAshtakavarga(chart)
+        return calculateKakshaPositionWithAnalysis(longitude, analysis)
+    }
+
+    /**
+     * Calculate Kaksha position using a pre-computed Ashtakavarga analysis.
+     * This is more efficient when the analysis has already been calculated.
+     *
+     * @param longitude The sidereal longitude in degrees
+     * @param analysis Pre-computed Ashtakavarga analysis
+     * @return KakshaPosition with all relevant details
+     */
+    fun calculateKakshaPositionWithAnalysis(
+        longitude: Double,
+        analysis: AshtakavargaAnalysis
     ): KakshaPosition {
         val normalizedLong = com.astro.storm.util.AstrologicalUtils.normalizeLongitude(longitude)
         val sign = ZodiacSign.fromLongitude(normalizedLong)
@@ -505,21 +589,9 @@ object AshtakavargaCalculator {
 
         // Each Kaksha is 3.75° (30° / 8)
         val kakshaSize = 3.75
-        if (kakshaSize <= 0) {
-            // Handle division by zero or invalid kakshaSize
-            // You might want to log an error or return a default/error state
-            return KakshaPosition(
-                sign = sign,
-                kakshaNumber = 0,
-                kakshaLord = "Error",
-                degreeStart = 0.0,
-                degreeEnd = 0.0,
-                isBeneficial = false
-            )
-        }
         val kakshaNumber = ((degreeInSign / kakshaSize).toInt() + 1).coerceIn(1, 8)
-        val degreeStart = (kakshaNumber - 1) * 3.75
-        val degreeEnd = kakshaNumber * 3.75
+        val degreeStart = (kakshaNumber - 1) * kakshaSize
+        val degreeEnd = kakshaNumber * kakshaSize
 
         val kakshaLord = if (kakshaNumber <= 7) {
             KAKSHA_LORDS[kakshaNumber - 1].displayName
@@ -528,7 +600,6 @@ object AshtakavargaCalculator {
         }
 
         // Check if the Kaksha lord is benefic for this sign
-        val analysis = calculateAshtakavarga(chart)
         val isBeneficial = if (kakshaNumber <= 7) {
             val lordPlanet = KAKSHA_LORDS[kakshaNumber - 1]
             val bavForLord = analysis.bhinnashtakavarga[lordPlanet]
