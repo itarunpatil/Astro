@@ -70,11 +70,11 @@ import com.astro.storm.ui.screen.chartdetail.components.StyledDivider
 import java.text.DecimalFormat
 
 @Immutable
-enum class DignityStatus(val stringKey: StringKey) {
-    EXALTED(StringKey.DIGNITY_EXALTED_STATUS),
-    DEBILITATED(StringKey.DIGNITY_DEBILITATED_STATUS),
-    OWN_SIGN(StringKey.DIGNITY_OWN_SIGN_STATUS),
-    NEUTRAL(StringKey.DIGNITY_NEUTRAL_STATUS);
+enum class DignityStatus(val stringKey: StringKey, val displayName: String) {
+    EXALTED(StringKey.DIGNITY_EXALTED_STATUS, "Exalted"),
+    DEBILITATED(StringKey.DIGNITY_DEBILITATED_STATUS, "Debilitated"),
+    OWN_SIGN(StringKey.DIGNITY_OWN_SIGN_STATUS, "Own Sign"),
+    NEUTRAL(StringKey.DIGNITY_NEUTRAL_STATUS, "Neutral");
 
     val isSignificant: Boolean get() = this != NEUTRAL
 }
