@@ -9,34 +9,39 @@ object ChartDetailUtils {
 
     /**
      * Formats a degree value in DMS (degrees, minutes, seconds) notation.
+     * Uses floor operations to avoid floating point precision errors.
      *
      * @param degree The degree value to format
      * @return Formatted string like "123° 45' 30"
      */
     fun formatDegree(degree: Double): String {
         val normalizedDegree = (degree % 360.0 + 360.0) % 360.0
-        val deg = normalizedDegree.toInt()
-        val min = ((normalizedDegree - deg) * 60).toInt()
-        val sec = ((((normalizedDegree - deg) * 60) - min) * 60).toInt()
+        val deg = kotlin.math.floor(normalizedDegree).toInt()
+        val minFrac = (normalizedDegree - deg) * 60.0
+        val min = kotlin.math.floor(minFrac).toInt()
+        val sec = kotlin.math.floor((minFrac - min) * 60.0).toInt()
         return "$deg° $min' $sec\""
     }
 
     /**
      * Formats a longitude value as degree within its zodiac sign (0-30).
+     * Uses floor operations to avoid floating point precision errors.
      *
      * @param longitude The absolute longitude value
      * @return Formatted string like "15° 30' 45"
      */
     fun formatDegreeInSign(longitude: Double): String {
-        val degreeInSign = longitude % 30.0
-        val deg = degreeInSign.toInt()
-        val min = ((degreeInSign - deg) * 60).toInt()
-        val sec = ((((degreeInSign - deg) * 60) - min) * 60).toInt()
+        val degreeInSign = (longitude % 30.0 + 30.0) % 30.0
+        val deg = kotlin.math.floor(degreeInSign).toInt()
+        val minFrac = (degreeInSign - deg) * 60.0
+        val min = kotlin.math.floor(minFrac).toInt()
+        val sec = kotlin.math.floor((minFrac - min) * 60.0).toInt()
         return "$deg° $min' $sec\""
     }
 
     /**
      * Formats a coordinate (latitude or longitude) with direction indicator.
+     * Uses floor operations to avoid floating point precision errors.
      *
      * @param value The coordinate value in decimal degrees
      * @param isLatitude True for latitude (N/S), false for longitude (E/W)
@@ -44,8 +49,8 @@ object ChartDetailUtils {
      */
     fun formatCoordinate(value: Double, isLatitude: Boolean): String {
         val absValue = abs(value)
-        val degrees = absValue.toInt()
-        val minutes = ((absValue - degrees) * 60).toInt()
+        val degrees = kotlin.math.floor(absValue).toInt()
+        val minutes = kotlin.math.floor((absValue - degrees) * 60.0).toInt()
         val direction = if (isLatitude) {
             if (value >= 0) "N" else "S"
         } else {
@@ -56,6 +61,7 @@ object ChartDetailUtils {
 
     /**
      * Formats a coordinate with full precision including seconds.
+     * Uses floor operations to avoid floating point precision errors.
      *
      * @param value The coordinate value in decimal degrees
      * @param isLatitude True for latitude (N/S), false for longitude (E/W)
@@ -63,9 +69,10 @@ object ChartDetailUtils {
      */
     fun formatCoordinateFull(value: Double, isLatitude: Boolean): String {
         val absValue = abs(value)
-        val degrees = absValue.toInt()
-        val minutes = ((absValue - degrees) * 60).toInt()
-        val seconds = ((((absValue - degrees) * 60) - minutes) * 60).toInt()
+        val degrees = kotlin.math.floor(absValue).toInt()
+        val minFrac = (absValue - degrees) * 60.0
+        val minutes = kotlin.math.floor(minFrac).toInt()
+        val seconds = kotlin.math.floor((minFrac - minutes) * 60.0).toInt()
         val direction = if (isLatitude) {
             if (value >= 0) "N" else "S"
         } else {

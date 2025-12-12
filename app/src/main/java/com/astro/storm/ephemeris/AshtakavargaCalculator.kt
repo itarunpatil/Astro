@@ -399,19 +399,20 @@ object AshtakavargaCalculator {
 
             // For each house position that gives a bindu
             bindusFromThisPlanet.forEach { houseFromContributor ->
-                // Calculate which sign this house falls in
-                val targetSignNumber = ((contributorSignNumber - 1 + houseFromContributor - 1) % 12) + 1
-                val targetSign = ZodiacSign.entries.find { it.number == targetSignNumber }!!
+                // Calculate which sign this house falls in (0-indexed for array access, then find by 1-based number)
+                val targetSignIndex = ((contributorSignNumber - 1 + houseFromContributor - 1) % 12)
+                val targetSign = ZodiacSign.entries.getOrNull(targetSignIndex) ?: return@forEach
 
                 binduMatrix[targetSign] = (binduMatrix[targetSign] ?: 0) + 1
-                contributorMatrix[targetSign]!!.add(contributor.displayName)
-                prastaraMatrix[targetSign]!![contributor.displayName] = true
+                contributorMatrix[targetSign]?.add(contributor.displayName)
+                prastaraMatrix[targetSign]?.set(contributor.displayName, true)
             }
 
             // Mark non-contributing positions
             ZodiacSign.entries.forEach { sign ->
-                if (prastaraMatrix[sign]!![contributor.displayName] != true) {
-                    prastaraMatrix[sign]!![contributor.displayName] = false
+                val prastaraSignMap = prastaraMatrix[sign]
+                if (prastaraSignMap?.get(contributor.displayName) != true) {
+                    prastaraSignMap?.set(contributor.displayName, false)
                 }
             }
         }
@@ -421,18 +422,19 @@ object AshtakavargaCalculator {
         val ascendantSignNumber = ascendantSign.number
 
         ascendantBindus.forEach { houseFromAscendant ->
-            val targetSignNumber = ((ascendantSignNumber - 1 + houseFromAscendant - 1) % 12) + 1
-            val targetSign = ZodiacSign.entries.find { it.number == targetSignNumber }!!
+            val targetSignIndex = ((ascendantSignNumber - 1 + houseFromAscendant - 1) % 12)
+            val targetSign = ZodiacSign.entries.getOrNull(targetSignIndex) ?: return@forEach
 
             binduMatrix[targetSign] = (binduMatrix[targetSign] ?: 0) + 1
-            contributorMatrix[targetSign]!!.add("Ascendant")
-            prastaraMatrix[targetSign]!!["Ascendant"] = true
+            contributorMatrix[targetSign]?.add("Ascendant")
+            prastaraMatrix[targetSign]?.set("Ascendant", true)
         }
 
         // Mark non-contributing Ascendant positions
         ZodiacSign.entries.forEach { sign ->
-            if (prastaraMatrix[sign]!!["Ascendant"] != true) {
-                prastaraMatrix[sign]!!["Ascendant"] = false
+            val prastaraSignMap = prastaraMatrix[sign]
+            if (prastaraSignMap?.get("Ascendant") != true) {
+                prastaraSignMap?.set("Ascendant", false)
             }
         }
 
@@ -504,7 +506,7 @@ object AshtakavargaCalculator {
         chart: VedicChart,
         preCalculatedAnalysis: AshtakavargaAnalysis? = null
     ): KakshaPosition {
-        val normalizedLong = com.astro.storm.util.AstrologicalUtils.normalizeLongitude(longitude)
+        val normalizedLong = VedicAstrologyUtils.normalizeLongitude(longitude)
         val sign = ZodiacSign.fromLongitude(normalizedLong)
         val degreeInSign = normalizedLong % 30.0
 
@@ -560,7 +562,14 @@ object AshtakavargaCalculator {
         }
 
         val analysis = calculateAshtakavarga(chart)
-        val bav = analysis.bhinnashtakavarga[transitingPlanet]!!
+        val bav = analysis.bhinnashtakavarga[transitingPlanet] ?: return TransitPrediction(
+            planet = transitingPlanet,
+            sign = transitSign,
+            bavBindus = 0,
+            savBindus = 0,
+            quality = TransitQuality.UNKNOWN,
+            prediction = "Bhinnashtakavarga not found for ${transitingPlanet.displayName}"
+        )
         val sav = analysis.sarvashtakavarga
 
         val bavBindus = bav.getBindusForSign(transitSign)

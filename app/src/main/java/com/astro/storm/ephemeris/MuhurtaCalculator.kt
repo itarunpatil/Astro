@@ -839,7 +839,8 @@ class MuhurtaCalculator(context: Context) {
             Vara.SATURDAY to listOf(Choghadiya.KAAL, Choghadiya.SHUBH, Choghadiya.ROG, Choghadiya.UDVEG, Choghadiya.CHAR, Choghadiya.LABH, Choghadiya.AMRIT, Choghadiya.KAAL)
         )
 
-        val sequence = daySequences[vara] ?: daySequences[Vara.SUNDAY]!!
+        // Safe fallback - Sunday sequence is guaranteed to exist
+        val sequence = daySequences[vara] ?: daySequences.getValue(Vara.SUNDAY)
 
         return sequence.mapIndexed { index, choghadiya ->
             ChoghadiyaInfo(
@@ -874,7 +875,8 @@ class MuhurtaCalculator(context: Context) {
             Vara.SATURDAY to listOf(Choghadiya.LABH, Choghadiya.UDVEG, Choghadiya.SHUBH, Choghadiya.AMRIT, Choghadiya.CHAR, Choghadiya.ROG, Choghadiya.KAAL, Choghadiya.LABH)
         )
 
-        val sequence = nightSequences[vara] ?: nightSequences[Vara.SUNDAY]!!
+        // Safe fallback - Sunday sequence is guaranteed to exist
+        val sequence = nightSequences[vara] ?: nightSequences.getValue(Vara.SUNDAY)
 
         return sequence.mapIndexed { index, choghadiya ->
             var startTime = sunset.plusMinutes(index * choghadiyaDuration)

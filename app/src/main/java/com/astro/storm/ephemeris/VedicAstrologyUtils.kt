@@ -884,6 +884,76 @@ object VedicAstrologyUtils {
     }
 
     /**
+     * Alias for normalizeAngle for semantic clarity when working with longitudes.
+     */
+    fun normalizeLongitude(longitude: Double): Double = normalizeAngle(longitude)
+
+    /**
+     * Alias for normalizeAngle for semantic clarity when working with degrees.
+     */
+    fun normalizeDegree(degree: Double): Double = normalizeAngle(degree)
+
+    /**
+     * Get zodiac sign from longitude.
+     * @param longitude The sidereal longitude in degrees.
+     * @return The corresponding zodiac sign.
+     */
+    fun getSignFromLongitude(longitude: Double): ZodiacSign {
+        return ZodiacSign.fromLongitude(normalizeLongitude(longitude))
+    }
+
+    /**
+     * Get the degree within the sign (0-30).
+     * @param longitude The sidereal longitude in degrees.
+     * @return The degree within the sign (0-30).
+     */
+    fun getDegreeInSign(longitude: Double): Double {
+        return normalizeLongitude(longitude) % 30.0
+    }
+
+    /**
+     * Calculate the angular distance between two longitudes.
+     * Returns the shortest distance (0-180).
+     * @param long1 First longitude.
+     * @param long2 Second longitude.
+     * @return The angular distance (0-180).
+     */
+    fun angularDistance(long1: Double, long2: Double): Double {
+        val diff = abs(normalizeLongitude(long1) - normalizeLongitude(long2))
+        return if (diff > 180.0) 360.0 - diff else diff
+    }
+
+    /**
+     * Calculate whole sign house from longitude and ascendant.
+     * @param longitude The planet's longitude.
+     * @param ascendantLongitude The ascendant longitude.
+     * @return The house number (1-12).
+     */
+    fun calculateWholeSignHouse(longitude: Double, ascendantLongitude: Double): Int {
+        val normalizedLong = normalizeLongitude(longitude)
+        val normalizedAsc = normalizeLongitude(ascendantLongitude)
+        val ascSign = (normalizedAsc / 30.0).toInt().coerceIn(0, 11)
+        val planetSign = (normalizedLong / 30.0).toInt().coerceIn(0, 11)
+        val house = ((planetSign - ascSign + 12) % 12) + 1
+        return house.coerceIn(1, 12)
+    }
+
+    /**
+     * Get ordinal suffix for a number (1st, 2nd, 3rd, etc.)
+     * @param n The number.
+     * @return The ordinal suffix.
+     */
+    fun getOrdinalSuffix(n: Int): String {
+        return when {
+            n in 11..13 -> "th"
+            n % 10 == 1 -> "st"
+            n % 10 == 2 -> "nd"
+            n % 10 == 3 -> "rd"
+            else -> "th"
+        }
+    }
+
+    /**
      * Get Moon position from a chart.
      */
     fun getMoonPosition(chart: VedicChart): PlanetPosition? {

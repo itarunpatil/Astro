@@ -45,7 +45,7 @@ import com.astro.storm.data.repository.SavedChart
 import com.astro.storm.ephemeris.AspectCalculator
 import com.astro.storm.ui.theme.AppTheme
 import com.astro.storm.ui.viewmodel.ChartViewModel
-import com.astro.storm.util.AstrologicalUtils
+import com.astro.storm.ephemeris.VedicAstrologyUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -506,7 +506,7 @@ private fun calculateSynastry(
 }
 
 private fun calculateOrb(longitude1: Double, longitude2: Double, targetAngle: Double): Double {
-    val diff = abs(AstrologicalUtils.normalizeAngle(longitude1 - longitude2))
+    val diff = abs(VedicAstrologyUtils.normalizeAngle(longitude1 - longitude2))
     val orb = abs(diff - targetAngle)
     return minOf(orb, 360.0 - orb)
 }
@@ -516,10 +516,10 @@ private fun calculateAspectStrength(orb: Double, maxOrb: Double): Double {
 }
 
 private fun isAspectApplying(pos1: PlanetPosition, pos2: PlanetPosition, targetAngle: Double): Boolean {
-    val currentDiff = AstrologicalUtils.normalizeAngle(pos2.longitude - pos1.longitude)
-    val futurePos1 = AstrologicalUtils.normalizeAngle(pos1.longitude + pos1.speed)
-    val futurePos2 = AstrologicalUtils.normalizeAngle(pos2.longitude + pos2.speed)
-    val futureDiff = AstrologicalUtils.normalizeAngle(futurePos2 - futurePos1)
+    val currentDiff = VedicAstrologyUtils.normalizeAngle(pos2.longitude - pos1.longitude)
+    val futurePos1 = VedicAstrologyUtils.normalizeAngle(pos1.longitude + pos1.speed)
+    val futurePos2 = VedicAstrologyUtils.normalizeAngle(pos2.longitude + pos2.speed)
+    val futureDiff = VedicAstrologyUtils.normalizeAngle(futurePos2 - futurePos1)
     val currentOrb = abs(currentDiff - targetAngle)
     val futureOrb = abs(futureDiff - targetAngle)
     return futureOrb < currentOrb
@@ -563,7 +563,7 @@ private fun calculateHouseOverlays(
 }
 
 private fun getHouseForLongitude(longitude: Double, houseCusps: List<Double>): Int {
-    val normalizedLong = AstrologicalUtils.normalizeAngle(longitude)
+    val normalizedLong = VedicAstrologyUtils.normalizeAngle(longitude)
     for (i in 0 until 12) {
         val nextIndex = (i + 1) % 12
         val cusp = houseCusps[i]

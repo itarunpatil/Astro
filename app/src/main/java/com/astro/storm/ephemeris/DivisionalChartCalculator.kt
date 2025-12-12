@@ -4,7 +4,7 @@ import com.astro.storm.data.localization.Language
 import com.astro.storm.data.localization.StringKey
 import com.astro.storm.data.localization.StringResources
 import com.astro.storm.data.model.*
-import com.astro.storm.util.AstrologicalUtils.normalizeLongitude
+import com.astro.storm.ephemeris.VedicAstrologyUtils.normalizeLongitude
 import kotlin.math.floor
 
 private const val DEGREES_IN_SIGN = 30.0

@@ -3605,7 +3605,532 @@ enum class StringKey(val en: String, val ne: String) {
     SHADBALA_BELOW_REQUIREMENT("Below required strength", "आवश्यक शक्तिभन्दा तल"),
     SHADBALA_BREAKDOWN("Strength Breakdown", "शक्ति विवरण"),
     SHADBALA_CALCULATING("Calculating Shadbala...", "षड्बल गणना गर्दै..."),
-    SHADBALA_CHART_ANALYSIS("Chart Strength Analysis", "कुण्डली शक्ति विश्लेषण");
+    SHADBALA_CHART_ANALYSIS("Chart Strength Analysis", "कुण्डली शक्ति विश्लेषण"),
+
+    // ============================================
+    // SADE SATI ANALYSIS
+    // ============================================
+    SADE_SATI_TITLE("Sade Sati Analysis", "साढेसाती विश्लेषण"),
+    SADE_SATI_SUBTITLE("Saturn's 7.5 Year Transit", "शनिको ७.५ वर्षे गोचर"),
+    SADE_SATI_ACTIVE("Sade Sati Active", "साढेसाती सक्रिय"),
+    SADE_SATI_NOT_ACTIVE("Sade Sati is not currently active", "साढेसाती हाल सक्रिय छैन"),
+    SADE_SATI_PHASE_RISING("Rising Phase", "उदय चरण"),
+    SADE_SATI_PHASE_PEAK("Peak Phase", "शिखर चरण"),
+    SADE_SATI_PHASE_SETTING("Setting Phase", "अस्त चरण"),
+    SADE_SATI_RISING_DESC("Saturn transiting 12th from Moon - Beginning of Sade Sati", "शनि चन्द्रबाट १२औं राशिमा गोचर - साढेसातीको शुरुआत"),
+    SADE_SATI_PEAK_DESC("Saturn transiting over natal Moon - Most intense phase", "शनि जन्म चन्द्रमाथि गोचर - सबैभन्दा तीव्र चरण"),
+    SADE_SATI_SETTING_DESC("Saturn transiting 2nd from Moon - Final phase of Sade Sati", "शनि चन्द्रबाट २औं राशिमा गोचर - साढेसातीको अन्तिम चरण"),
+    SADE_SATI_ACTIVE_SUMMARY("{phase} phase active with {severity} intensity", "{phase} चरण {severity} तीव्रताका साथ सक्रिय"),
+    SMALL_PANOTI_FOURTH("Kantak Shani (4th from Moon)", "कण्टक शनि (चन्द्रबाट ४औं)"),
+    SMALL_PANOTI_EIGHTH("Ashtama Shani (8th from Moon)", "अष्टम शनि (चन्द्रबाट ८औं)"),
+    SMALL_PANOTI_ACTIVE_SUMMARY("{type} is active", "{type} सक्रिय छ"),
+    SEVERITY_MILD("Mild", "हल्का"),
+    SEVERITY_MODERATE("Moderate", "मध्यम"),
+    SEVERITY_SIGNIFICANT("Significant", "महत्त्वपूर्ण"),
+    SEVERITY_INTENSE("Intense", "तीव्र"),
+    SADE_SATI_DAYS_REMAINING("Days Remaining", "बाँकी दिनहरू"),
+    SADE_SATI_PROGRESS("Progress in Phase", "चरणमा प्रगति"),
+    SADE_SATI_MOON_SIGN("Natal Moon Sign", "जन्म चन्द्र राशि"),
+    SADE_SATI_SATURN_SIGN("Transit Saturn Sign", "गोचर शनि राशि"),
+
+    // Sade Sati Remedies
+    REMEDY_SHANI_MANTRA_TITLE("Shani Mantra", "शनि मन्त्र"),
+    REMEDY_SHANI_MANTRA_DESC("Recite 'Om Sham Shanaishcharaya Namah' 108 times daily", "'ॐ शं शनैश्चराय नमः' दैनिक १०८ पटक जप गर्नुहोस्"),
+    REMEDY_SATURDAY_CHARITY_TITLE("Saturday Charity", "शनिबार दान"),
+    REMEDY_SATURDAY_CHARITY_DESC("Donate black sesame, mustard oil, or iron items to the needy", "कालो तिल, सर्स्यूको तेल, वा फलामका सामानहरू गरिबलाई दान गर्नुहोस्"),
+    REMEDY_SATURDAY_FAST_TITLE("Saturday Fasting", "शनिबार व्रत"),
+    REMEDY_SATURDAY_FAST_DESC("Observe fast on Saturdays and eat only after sunset", "शनिबार व्रत राख्नुहोस् र सूर्यास्त पछि मात्र खानुहोस्"),
+    REMEDY_HANUMAN_WORSHIP_TITLE("Hanuman Worship", "हनुमान पूजा"),
+    REMEDY_HANUMAN_WORSHIP_DESC("Recite Hanuman Chalisa daily, especially on Tuesdays and Saturdays", "हनुमान चालीसा दैनिक पाठ गर्नुहोस्, विशेष गरी मंगलबार र शनिबार"),
+    REMEDY_BLUE_SAPPHIRE_TITLE("Blue Sapphire (Neelam)", "नीलम रत्न"),
+    REMEDY_BLUE_SAPPHIRE_DESC("Wear after proper testing and astrologer consultation", "उचित परीक्षण र ज्योतिषी परामर्श पछि लगाउनुहोस्"),
+
+    // ============================================
+    // MANGLIK DOSHA ANALYSIS
+    // ============================================
+    MANGLIK_TITLE("Manglik Dosha Analysis", "मांगलिक दोष विश्लेषण"),
+    MANGLIK_SUBTITLE("Mars Placement Analysis for Marriage", "विवाहको लागि मंगल स्थिति विश्लेषण"),
+    MANGLIK_NONE_LEVEL("No Manglik Dosha", "मांगलिक दोष छैन"),
+    MANGLIK_MILD("Mild Manglik", "हल्का मांगलिक"),
+    MANGLIK_PARTIAL_LEVEL("Partial Manglik", "आंशिक मांगलिक"),
+    MANGLIK_FULL_LEVEL("Full Manglik", "पूर्ण मांगलिक"),
+    MANGLIK_SEVERE("Severe Manglik", "गम्भीर मांगलिक"),
+    MANGLIK_SUMMARY_PRESENT("{level} present with {intensity}% intensity", "{level} {intensity}% तीव्रताका साथ उपस्थित"),
+    MANGLIK_SUMMARY_ABSENT("No Manglik Dosha in this chart", "यस कुण्डलीमा मांगलिक दोष छैन"),
+    MANGLIK_FROM_LAGNA("From Lagna", "लग्नबाट"),
+    MANGLIK_FROM_MOON("From Moon", "चन्द्रबाट"),
+    MANGLIK_FROM_VENUS("From Venus", "शुक्रबाट"),
+    MANGLIK_INTENSITY("Intensity", "तीव्रता"),
+    MANGLIK_CANCELLATIONS("Cancellation Factors", "रद्द गर्ने कारकहरू"),
+    MANGLIK_EFFECTIVE_LEVEL("Effective Level", "प्रभावी स्तर"),
+
+    // Manglik Cancellation Factors
+    MANGLIK_CANCEL_OWN_SIGN_TITLE("Mars in Own Sign", "मंगल स्वराशिमा"),
+    MANGLIK_CANCEL_OWN_SIGN_DESC("Mars in Aries or Scorpio reduces Manglik effects", "मंगल मेष वा वृश्चिकमा मांगलिक प्रभाव कम गर्छ"),
+    MANGLIK_CANCEL_EXALTED_TITLE("Mars Exalted", "मंगल उच्च"),
+    MANGLIK_CANCEL_EXALTED_DESC("Mars in Capricorn cancels Manglik Dosha completely", "मंगल मकरमा मांगलिक दोष पूर्ण रूपमा रद्द गर्छ"),
+    MANGLIK_CANCEL_JUPITER_CONJUNCT_TITLE("Jupiter Conjunction", "गुरु युति"),
+    MANGLIK_CANCEL_JUPITER_CONJUNCT_DESC("Jupiter conjunct Mars cancels Manglik effects", "गुरुले मंगलसँग युतिले मांगलिक प्रभाव रद्द गर्छ"),
+    MANGLIK_CANCEL_VENUS_CONJUNCT_TITLE("Venus Conjunction", "शुक्र युति"),
+    MANGLIK_CANCEL_VENUS_CONJUNCT_DESC("Venus conjunct Mars significantly reduces effects", "शुक्रले मंगलसँग युतिले प्रभाव उल्लेखनीय रूपमा कम गर्छ"),
+    MANGLIK_CANCEL_JUPITER_ASPECT_TITLE("Jupiter's Aspect", "गुरुको दृष्टि"),
+    MANGLIK_CANCEL_JUPITER_ASPECT_DESC("Jupiter aspecting Mars reduces Manglik effects", "गुरुको मंगलमा दृष्टिले मांगलिक प्रभाव कम गर्छ"),
+    MANGLIK_CANCEL_SECOND_MERCURY_TITLE("Mars in 2nd in Mercury Sign", "बुध राशिमा २औं मंगल"),
+    MANGLIK_CANCEL_SECOND_MERCURY_DESC("Mars in 2nd house in Gemini/Virgo cancels dosha", "मिथुन/कन्यामा २औं भावमा मंगलले दोष रद्द गर्छ"),
+    MANGLIK_CANCEL_FOURTH_OWN_TITLE("Mars in 4th in Own Sign", "स्वराशिमा ४औं मंगल"),
+    MANGLIK_CANCEL_FOURTH_OWN_DESC("Mars in 4th house in Aries/Scorpio cancels dosha", "मेष/वृश्चिकमा ४औं भावमा मंगलले दोष रद्द गर्छ"),
+    MANGLIK_CANCEL_SEVENTH_SPECIAL_TITLE("Mars in 7th Special", "७औं मंगल विशेष"),
+    MANGLIK_CANCEL_SEVENTH_SPECIAL_DESC("Mars in 7th in Cancer/Capricorn reduces effects", "कर्कट/मकरमा ७औं भावमा मंगलले प्रभाव कम गर्छ"),
+    MANGLIK_CANCEL_EIGHTH_JUPITER_TITLE("Mars in 8th Jupiter Sign", "गुरु राशिमा ८औं मंगल"),
+    MANGLIK_CANCEL_EIGHTH_JUPITER_DESC("Mars in 8th in Sagittarius/Pisces reduces effects", "धनु/मीनमा ८औं भावमा मंगलले प्रभाव कम गर्छ"),
+    MANGLIK_CANCEL_TWELFTH_VENUS_TITLE("Mars in 12th Venus Sign", "शुक्र राशिमा १२औं मंगल"),
+    MANGLIK_CANCEL_TWELFTH_VENUS_DESC("Mars in 12th in Taurus/Libra cancels dosha", "वृषभ/तुलामा १२औं भावमा मंगलले दोष रद्द गर्छ"),
+    MANGLIK_CANCEL_BENEFIC_ASC_TITLE("Benefic Ascendant", "शुभ लग्न"),
+    MANGLIK_CANCEL_BENEFIC_ASC_DESC("For Aries/Cancer/Leo/Scorpio ascendants, Mars is benefic", "मेष/कर्कट/सिंह/वृश्चिक लग्नको लागि मंगल शुभ हो"),
+
+    // Manglik Remedies
+    REMEDY_KUMBH_VIVAH_TITLE("Kumbh Vivah", "कुम्भ विवाह"),
+    REMEDY_KUMBH_VIVAH_DESC("Ceremonial marriage to a clay pot or Peepal tree before actual marriage", "वास्तविक विवाह अघि माटोको घडा वा पीपलको रूखसँग विवाह समारोह"),
+    REMEDY_MANGAL_SHANTI_TITLE("Mangal Shanti Puja", "मंगल शान्ति पूजा"),
+    REMEDY_MANGAL_SHANTI_DESC("Perform Mars pacification ritual at a temple or home", "मन्दिर वा घरमा मंगल शान्ति विधि गर्नुहोस्"),
+    REMEDY_MARS_MANTRA_TITLE("Mars Mantra", "मंगल मन्त्र"),
+    REMEDY_MARS_MANTRA_DESC("Recite 'Om Kram Kreem Kroum Sah Bhaumaya Namah' 108 times on Tuesdays", "मंगलबार 'ॐ क्रां क्रीं क्रौं सः भौमाय नमः' १०८ पटक जप गर्नुहोस्"),
+    REMEDY_CORAL_TITLE("Red Coral (Moonga)", "मूंगा रत्न"),
+    REMEDY_CORAL_DESC("Wear red coral in gold or copper on right hand ring finger", "दाहिने हातको अनामिकामा सुन वा तामामा मूंगा लगाउनुहोस्"),
+    REMEDY_TUESDAY_CHARITY_TITLE("Tuesday Charity", "मंगलबार दान"),
+    REMEDY_TUESDAY_CHARITY_DESC("Donate red lentils, red cloth, or copper items on Tuesdays", "मंगलबार रातो दाल, रातो कपडा, वा तामाका सामान दान गर्नुहोस्"),
+
+    // ============================================
+    // PITRA DOSHA ANALYSIS
+    // ============================================
+    PITRA_DOSHA_TITLE("Pitra Dosha Analysis", "पितृ दोष विश्लेषण"),
+    PITRA_DOSHA_SUBTITLE("Ancestral Karma Assessment", "पुर्खाको कर्म मूल्यांकन"),
+    PITRA_DOSHA_NONE("No Pitra Dosha", "पितृ दोष छैन"),
+    PITRA_DOSHA_MINOR("Minor Pitra Dosha", "हल्का पितृ दोष"),
+    PITRA_DOSHA_MODERATE("Moderate Pitra Dosha", "मध्यम पितृ दोष"),
+    PITRA_DOSHA_SIGNIFICANT("Significant Pitra Dosha", "महत्त्वपूर्ण पितृ दोष"),
+    PITRA_DOSHA_SEVERE("Severe Pitra Dosha", "गम्भीर पितृ दोष"),
+    PITRA_DOSHA_PRESENT_SUMMARY("{level} detected in chart", "कुण्डलीमा {level} पत्ता लाग्यो"),
+    PITRA_DOSHA_ABSENT_SUMMARY("No significant Pitra Dosha indicators found", "कुनै महत्त्वपूर्ण पितृ दोष संकेतकहरू फेला परेनन्"),
+
+    // Pitra Dosha Types
+    PITRA_TYPE_SURYA_RAHU("Sun-Rahu Conjunction", "सूर्य-राहु युति"),
+    PITRA_TYPE_SURYA_KETU("Sun-Ketu Conjunction", "सूर्य-केतु युति"),
+    PITRA_TYPE_SURYA_SHANI("Sun-Saturn Affliction", "सूर्य-शनि पीडा"),
+    PITRA_TYPE_NINTH_HOUSE("9th House Affliction", "९औं भाव पीडा"),
+    PITRA_TYPE_NINTH_LORD("9th Lord Affliction", "९औं भावेश पीडा"),
+    PITRA_TYPE_RAHU_NINTH("Rahu in 9th House", "९औं भावमा राहु"),
+    PITRA_TYPE_COMBINED("Combined Affliction", "संयुक्त पीडा"),
+
+    // Pitra Dosha Descriptions
+    PITRA_DESC_SURYA_RAHU("Primary indicator - eclipsed Sun indicates blocked ancestral blessings", "प्राथमिक संकेतक - ग्रहण लागेको सूर्यले अवरुद्ध पुर्खाको आशीर्वाद संकेत गर्छ"),
+    PITRA_DESC_SURYA_KETU("Past-life karmic debts from paternal lineage", "पितृ वंशबाट पूर्व जन्मको कर्म ऋण"),
+    PITRA_DESC_SURYA_SHANI("Father-related karmic lessons and delays", "पिता-सम्बन्धित कर्म पाठ र ढिलाइ"),
+    PITRA_DESC_NINTH_HOUSE("House of ancestors afflicted by malefics", "पुर्खाको भाव अशुभ ग्रहबाट पीडित"),
+    PITRA_DESC_NINTH_LORD("Lord of father and fortune is weakened", "पिता र भाग्यको स्वामी कमजोर छ"),
+    PITRA_DESC_RAHU_NINTH("Strong indication of ancestral debts", "पुर्खाको ऋणको बलियो संकेत"),
+    PITRA_DESC_COMBINED("Multiple factors indicate significant ancestral karma", "बहु कारकहरूले महत्त्वपूर्ण पुर्खाको कर्म संकेत गर्छन्"),
+
+    // Pitra Dosha Remedies
+    REMEDY_PITRA_TARPAN_TITLE("Pitra Tarpan", "पितृ तर्पण"),
+    REMEDY_PITRA_TARPAN_DESC("Offer water with sesame seeds to ancestors during Amavasya", "अमावस्यामा पुर्खालाई तिल पानी अर्पण गर्नुहोस्"),
+    REMEDY_SHRADDHA_TITLE("Shraddha Ceremony", "श्राद्ध विधि"),
+    REMEDY_SHRADDHA_DESC("Perform annual death anniversary rituals for departed ancestors", "दिवंगत पुर्खाको वार्षिक मृत्यु वर्षगाँठ विधि गर्नुहोस्"),
+    REMEDY_CROW_FEEDING_TITLE("Crow Feeding", "काग भोजन"),
+    REMEDY_CROW_FEEDING_DESC("Feed crows daily as they are considered messengers of ancestors", "कागलाई दैनिक खुवाउनुहोस् किनभने तिनीहरूलाई पुर्खाको दूत मानिन्छ"),
+    REMEDY_NARAYAN_BALI_TITLE("Narayan Bali", "नारायण बलि"),
+    REMEDY_NARAYAN_BALI_DESC("Special ritual for departed souls performed at Trimbakeshwar", "त्र्यम्बकेश्वरमा दिवंगत आत्माको लागि विशेष विधि"),
+    REMEDY_PIND_DAAN_TITLE("Pind Daan", "पिण्ड दान"),
+    REMEDY_PIND_DAAN_DESC("Offer rice balls to ancestors at Gaya or other sacred places", "गया वा अन्य पवित्र स्थानमा पुर्खालाई भातको पिण्ड अर्पण गर्नुहोस्"),
+    REMEDY_PITRA_GAYATRI_TITLE("Pitra Gayatri Mantra", "पितृ गायत्री मन्त्र"),
+    REMEDY_PITRA_GAYATRI_DESC("Recite Pitra Gayatri daily during Brahma Muhurta for ancestral peace", "पुर्खाको शान्तिको लागि ब्रह्म मुहूर्तमा पितृ गायत्री दैनिक जप गर्नुहोस्"),
+
+    // ============================================
+    // COMMON DOSHA ANALYSIS STRINGS
+    // ============================================
+    DOSHA_ANALYSIS("Dosha Analysis", "दोष विश्लेषण"),
+    DOSHA_INDICATORS("Indicators Found", "संकेतकहरू फेला परे"),
+    DOSHA_AFFECTED_AREAS("Affected Life Areas", "प्रभावित जीवन क्षेत्रहरू"),
+    DOSHA_REMEDIES_SECTION("Recommended Remedies", "सिफारिस गरिएका उपायहरू"),
+    DOSHA_INTERPRETATION("Interpretation", "व्याख्या"),
+    DOSHA_SEVERITY_SCORE("Severity Score", "गम्भीरता अंक"),
+    DOSHA_AUSPICIOUS_TIMES("Auspicious Times for Remedies", "उपायहरूको लागि शुभ समय"),
+
+    // ============================================
+    // TIME ABBREVIATIONS
+    // ============================================
+    DAYS_SHORT("d", "दि"),
+    HOURS_SHORT("h", "घ"),
+    MINUTES_SHORT("m", "मि"),
+    SECONDS_SHORT("s", "से"),
+
+    // ============================================
+    // DASHA ADDITIONAL STRINGS
+    // ============================================
+    DASHA_MAHADASHA("Mahadasha", "महादशा"),
+    DASHA_ANTARDASHA("Antardasha", "अन्तर्दशा"),
+    DASHA_PRATYANTARDASHA("Pratyantardasha", "प्रत्यन्तर्दशा"),
+    DASHA_SOOKSHMADASHA("Sookshmadasha", "सूक्ष्मदशा"),
+    DASHA_PRANADASHA("Pranadasha", "प्राणदशा"),
+    DASHA_DEHADASHA("Dehadasha", "देहदशा"),
+    DASHA_BHUKTI("Bhukti", "भुक्ति"),
+    DASHA_PRATYANTAR("Pratyantar", "प्रत्यन्तर"),
+    DASHA_SOOKSHMA("Sookshma", "सूक्ष्म"),
+    DASHA_NO_ACTIVE_PERIOD("No active Dasha period", "कुनै सक्रिय दशा अवधि छैन"),
+
+    // ============================================
+    // GENDER STRINGS
+    // ============================================
+    GENDER_MALE("Male", "पुरुष"),
+    GENDER_FEMALE("Female", "महिला"),
+
+    // ============================================
+    // INTERPRETATION SECTION HEADERS
+    // ============================================
+    INTERP_ANALYSIS_HEADER("ANALYSIS", "विश्लेषण"),
+    INTERP_INDICATORS_FOUND("INDICATORS FOUND:", "पाइएका संकेतकहरू:"),
+    INTERP_INTERPRETATION("INTERPRETATION:", "व्याख्या:"),
+    INTERP_SEVERITY("SEVERITY:", "गम्भीरता:"),
+    INTERP_LEVEL("Level:", "स्तर:"),
+
+    // ============================================
+    // MANGLIK DOSHA INTERPRETATION
+    // ============================================
+    MANGLIK_INTERP_NO_DOSHA("NO MANGLIK DOSHA", "मांगलिक दोष छैन"),
+    MANGLIK_INTERP_MARS_NOT_PLACED(
+        "Mars is not placed in houses 1, 2, 4, 7, 8, or 12 from your Lagna, Moon, or Venus.",
+        "मंगल तपाईंको लग्न, चन्द्र वा शुक्रबाट १, २, ४, ७, ८ वा १२ भावमा छैन।"
+    ),
+    MANGLIK_INTERP_NO_DOSHA_DESC(
+        "There is no Manglik Dosha in your chart.",
+        "तपाईंको कुण्डलीमा मांगलिक दोष छैन।"
+    ),
+    MANGLIK_INTERP_HEADER("MANGLIK DOSHA ANALYSIS", "मांगलिक दोष विश्लेषण"),
+    MANGLIK_INTERP_MARS_POSITION("Mars Position:", "मंगलको स्थिति:"),
+    MANGLIK_INTERP_FROM_REFERENCE("ANALYSIS FROM THREE REFERENCE POINTS:", "तीन सन्दर्भ बिन्दुबाट विश्लेषण:"),
+    MANGLIK_INTERP_FROM_LAGNA("From Lagna", "लग्नबाट"),
+    MANGLIK_INTERP_FROM_MOON("From Moon", "चन्द्रबाट"),
+    MANGLIK_INTERP_FROM_VENUS("From Venus", "शुक्रबाट"),
+    MANGLIK_INTERP_MARS_IN_HOUSE("Mars in house", "मंगल भावमा"),
+    MANGLIK_INTERP_MANGLIK_YES("YES", "छ"),
+    MANGLIK_INTERP_MANGLIK_NO("NO", "छैन"),
+    MANGLIK_INTERP_INITIAL_LEVEL("Initial Level:", "प्रारम्भिक स्तर:"),
+    MANGLIK_INTERP_CANCELLATION_PRESENT("CANCELLATION FACTORS PRESENT:", "निरसन कारकहरू उपस्थित:"),
+    MANGLIK_INTERP_EFFECTIVE_LEVEL("Effective Level After Cancellations:", "निरसन पछिको प्रभावकारी स्तर:"),
+    MANGLIK_INTERP_HOUSE_SUFFIX_ST("st", "औं"),
+    MANGLIK_INTERP_HOUSE_SUFFIX_ND("nd", "औं"),
+    MANGLIK_INTERP_HOUSE_SUFFIX_RD("rd", "औं"),
+    MANGLIK_INTERP_HOUSE_SUFFIX_TH("th", "औं"),
+
+    // ============================================
+    // MANGLIK MARRIAGE CONSIDERATIONS
+    // ============================================
+    MANGLIK_MARRIAGE_HEADER("MARRIAGE CONSIDERATIONS", "विवाह विचार"),
+    MANGLIK_MARRIAGE_NONE_NO_RESTRICTION(
+        "No restrictions based on Manglik Dosha",
+        "मांगलिक दोषको आधारमा कुनै प्रतिबन्ध छैन"
+    ),
+    MANGLIK_MARRIAGE_NONE_COMPATIBLE(
+        "Compatible with both Manglik and non-Manglik partners",
+        "मांगलिक र गैर-मांगलिक दुवै साझेदारसँग मिल्दो"
+    ),
+    MANGLIK_MARRIAGE_MILD_EFFECTS(
+        "Mild Manglik effects - marriage with non-Manglik is possible",
+        "हल्का मांगलिक प्रभाव - गैर-मांगलिकसँग विवाह सम्भव छ"
+    ),
+    MANGLIK_MARRIAGE_MILD_REMEDIES(
+        "Simple remedies recommended before marriage",
+        "विवाह अघि सरल उपायहरू सिफारिस गरिन्छ"
+    ),
+    MANGLIK_MARRIAGE_MILD_MATCHING(
+        "Matching with another Manglik is beneficial but not essential",
+        "अर्को मांगलिकसँग मिलान लाभदायक तर अनिवार्य होइन"
+    ),
+    MANGLIK_MARRIAGE_PARTIAL_REMEDIES(
+        "Partial Manglik - remedies strongly recommended",
+        "आंशिक मांगलिक - उपायहरू जोडदार सिफारिस"
+    ),
+    MANGLIK_MARRIAGE_PARTIAL_PREFERABLE(
+        "Marriage with Manglik partner is preferable",
+        "मांगलिक साझेदारसँग विवाह उपयुक्त"
+    ),
+    MANGLIK_MARRIAGE_PARTIAL_KUMBH(
+        "If marrying non-Manglik, perform Kumbh Vivah",
+        "गैर-मांगलिकसँग विवाह गर्दा कुम्भ विवाह गर्नुहोस्"
+    ),
+    MANGLIK_MARRIAGE_FULL_PRESENT(
+        "Full Manglik Dosha present",
+        "पूर्ण मांगलिक दोष उपस्थित"
+    ),
+    MANGLIK_MARRIAGE_FULL_RECOMMENDED(
+        "Marriage with Manglik partner highly recommended",
+        "मांगलिक साझेदारसँग विवाह अत्यधिक सिफारिस"
+    ),
+    MANGLIK_MARRIAGE_FULL_KUMBH_ESSENTIAL(
+        "Kumbh Vivah or equivalent ritual essential before marriage",
+        "विवाह अघि कुम्भ विवाह वा समान अनुष्ठान आवश्यक"
+    ),
+    MANGLIK_MARRIAGE_FULL_PROPITIATION(
+        "Regular Mars propitiation recommended",
+        "नियमित मंगल शान्ति सिफारिस गरिन्छ"
+    ),
+    MANGLIK_MARRIAGE_SEVERE_CONSIDERATION(
+        "Severe Manglik Dosha - careful consideration required",
+        "गम्भीर मांगलिक दोष - सावधानीपूर्ण विचार आवश्यक"
+    ),
+    MANGLIK_MARRIAGE_SEVERE_ONLY_MANGLIK(
+        "Only marry Manglik partner with similar intensity",
+        "समान तीव्रता भएको मांगलिक साझेदारसँग मात्र विवाह गर्नुहोस्"
+    ),
+    MANGLIK_MARRIAGE_SEVERE_MULTIPLE_REMEDIES(
+        "Multiple remedies required before and after marriage",
+        "विवाह अघि र पछि धेरै उपायहरू आवश्यक"
+    ),
+    MANGLIK_MARRIAGE_SEVERE_DELAY(
+        "Consider delaying marriage until after age 28 (Mars maturity)",
+        "मंगल परिपक्वता (२८ वर्ष) सम्म विवाह ढिला गर्ने विचार गर्नुहोस्"
+    ),
+    MANGLIK_MARRIAGE_FULL_CANCELLATION(
+        "NOTE: Full cancellation present - Manglik Dosha effectively nullified",
+        "नोट: पूर्ण निरसन उपस्थित - मांगलिक दोष प्रभावकारी रूपमा शून्य"
+    ),
+
+    // ============================================
+    // MANGLIK COMPATIBILITY
+    // ============================================
+    MANGLIK_COMPAT_EXCELLENT(
+        "Excellent Manglik compatibility - no concerns",
+        "उत्कृष्ट मांगलिक मिलान - कुनै चिन्ता छैन"
+    ),
+    MANGLIK_COMPAT_GOOD(
+        "Good compatibility - minor remedies may help",
+        "राम्रो मिलान - साना उपायहरू सहायक हुन सक्छ"
+    ),
+    MANGLIK_COMPAT_AVERAGE(
+        "Average compatibility - remedies recommended",
+        "औसत मिलान - उपायहरू सिफारिस गरिन्छ"
+    ),
+    MANGLIK_COMPAT_BELOW_AVERAGE(
+        "Below average - significant remedies required",
+        "औसतभन्दा कम - महत्वपूर्ण उपायहरू आवश्यक"
+    ),
+    MANGLIK_COMPAT_POOR(
+        "Challenging combination - expert consultation advised",
+        "कठिन संयोजन - विशेषज्ञ परामर्श सल्लाह दिइन्छ"
+    ),
+
+    // ============================================
+    // MANGLIK REMEDY EFFECTIVENESS
+    // ============================================
+    REMEDY_EFFECTIVENESS_TRADITIONAL(
+        "Traditional remedy - highly effective",
+        "परम्परागत उपाय - अत्यधिक प्रभावकारी"
+    ),
+    REMEDY_EFFECTIVENESS_ALL_LEVELS(
+        "Recommended for all Manglik levels",
+        "सबै मांगलिक स्तरहरूको लागि सिफारिस"
+    ),
+    REMEDY_EFFECTIVENESS_TUESDAYS(
+        "Daily recitation on Tuesdays",
+        "मंगलबार दैनिक पाठ"
+    ),
+    REMEDY_EFFECTIVENESS_CONSULT(
+        "Consult astrologer before wearing",
+        "लगाउनु अघि ज्योतिषीसँग परामर्श गर्नुहोस्"
+    ),
+    REMEDY_EFFECTIVENESS_EVERY_TUESDAY(
+        "Every Tuesday",
+        "हरेक मंगलबार"
+    ),
+
+    // ============================================
+    // PITRA DOSHA INTERPRETATION
+    // ============================================
+    PITRA_INTERP_NO_DOSHA("NO SIGNIFICANT PITRA DOSHA", "कुनै महत्वपूर्ण पित्र दोष छैन"),
+    PITRA_INTERP_NO_DOSHA_DESC(
+        "Your chart does not show significant indicators of Pitra Dosha.",
+        "तपाईंको कुण्डलीमा पित्र दोषको महत्वपूर्ण संकेतकहरू देखिँदैनन्।"
+    ),
+    PITRA_INTERP_SUPPORTIVE(
+        "The ancestral lineage appears supportive of your life journey.",
+        "पैतृक वंश तपाईंको जीवन यात्रामा सहायक देखिन्छ।"
+    ),
+    PITRA_INTERP_BENEFICIAL(
+        "However, performing regular ancestral offerings (Shraddha) is always beneficial for maintaining positive ancestral blessings.",
+        "तथापि, सकारात्मक पैतृक आशीर्वाद कायम राख्न नियमित श्राद्ध गर्नु सधैं लाभदायक हुन्छ।"
+    ),
+    PITRA_INTERP_HEADER("PITRA DOSHA ANALYSIS", "पित्र दोष विश्लेषण"),
+    PITRA_INTERP_NINTH_HOUSE("9TH HOUSE ANALYSIS (House of Ancestors):", "९औं भाव विश्लेषण (पूर्वजको भाव):"),
+    PITRA_INTERP_NINTH_LORD("9th Lord:", "९औं स्वामी:"),
+    PITRA_INTERP_NINTH_LORD_POSITION("9th Lord Position:", "९औं स्वामीको स्थिति:"),
+    PITRA_INTERP_LORD_AFFLICTED("9th Lord Afflicted:", "९औं स्वामी पीडित:"),
+    PITRA_INTERP_HOUSE_AFFLICTED("9th House Afflicted:", "९औं भाव पीडित:"),
+    PITRA_INTERP_BENEFIC_INFLUENCE("Benefic Influence:", "शुभ प्रभाव:"),
+    PITRA_INTERP_YES_MITIGATING("Yes - Mitigating", "छ - न्यूनीकरण गर्दै"),
+
+    // Pitra Dosha indicator descriptions
+    PITRA_DESC_SUN_RAHU_HOUSE(
+        "Sun conjunct Rahu in House %d - Primary Pitra Dosha indicator",
+        "भाव %d मा सूर्य-राहु युति - प्रमुख पित्र दोष संकेतक"
+    ),
+    PITRA_DESC_SUN_KETU_HOUSE(
+        "Sun conjunct Ketu in House %d - Indicates past-life ancestral karma",
+        "भाव %d मा सूर्य-केतु युति - पूर्वजन्मको पैतृक कर्म संकेत"
+    ),
+    PITRA_DESC_SUN_SATURN_CONJUNCT(
+        "Sun conjunct Saturn in House %d - Father-related karmic issues",
+        "भाव %d मा सूर्य-शनि युति - पितृ-सम्बन्धी कार्मिक मुद्दाहरू"
+    ),
+    PITRA_DESC_SATURN_ASPECT(
+        "Saturn aspects Sun from House %d - Delayed results due to ancestral karma",
+        "शनिले भाव %d बाट सूर्यलाई हेर्छ - पैतृक कर्मले गर्दा ढिलो परिणाम"
+    ),
+    PITRA_DESC_MALEFICS_NINTH(
+        "Malefics in 9th house - Ancestral blessings blocked",
+        "९औं भावमा पाप ग्रह - पैतृक आशीर्वाद अवरुद्ध"
+    ),
+    PITRA_DESC_RAHU_NINTH(
+        "Rahu in 9th house - Strong Pitra Dosha, past-life debts to ancestors",
+        "९औं भावमा राहु - बलियो पित्र दोष, पूर्वजहरूप्रति पूर्वजन्मको ऋण"
+    ),
+    PITRA_DESC_NINTH_LORD_AFFLICTED(
+        "9th lord %s is afflicted - Ancestral lineage karma",
+        "९औं स्वामी %s पीडित छ - पैतृक वंश कर्म"
+    ),
+
+    // Pitra interpretation levels
+    PITRA_LEVEL_MINOR_DESC(
+        "Minor ancestral karma is indicated. This may manifest as occasional obstacles or delays that seem unexplained. Regular ancestral prayers and offerings during Pitru Paksha should be sufficient.",
+        "साना पैतृक कर्म संकेत गरिएको छ। यसले अव्याख्येय देखिने कहिलेकाहीं अवरोधहरू वा ढिलाइको रूपमा प्रकट हुन सक्छ। पितृ पक्षमा नियमित पैतृक प्रार्थना र अर्पण पर्याप्त हुनुपर्छ।"
+    ),
+    PITRA_LEVEL_MODERATE_DESC(
+        "Moderate Pitra Dosha suggests unresolved ancestral obligations. You may experience recurring challenges in life that feel karmic. Regular Tarpan and Shraddha ceremonies are recommended.",
+        "मध्यम पित्र दोषले अपूर्ण पैतृक दायित्वहरू संकेत गर्दछ। तपाईंले कार्मिक जस्तो लाग्ने जीवनमा आवर्ती चुनौतीहरू अनुभव गर्न सक्नुहुन्छ। नियमित तर्पण र श्राद्ध समारोहहरू सिफारिस गरिन्छ।"
+    ),
+    PITRA_LEVEL_SIGNIFICANT_DESC(
+        "Significant ancestral karma is present. This may manifest as: delayed marriage or relationship issues, difficulties with children or progeny, career obstacles despite qualifications, and family disharmony. Comprehensive remedies including Narayan Bali may be beneficial.",
+        "महत्वपूर्ण पैतृक कर्म उपस्थित छ। यसले विवाहमा ढिलाइ वा सम्बन्ध समस्या, सन्तान वा सन्ततिमा कठिनाइहरू, योग्यता भएता पनि क्यारियरमा अवरोधहरू, र पारिवारिक विसंगतिको रूपमा प्रकट हुन सक्छ। नारायण बलि सहित व्यापक उपायहरू लाभदायक हुन सक्छ।"
+    ),
+    PITRA_LEVEL_SEVERE_DESC(
+        "Severe Pitra Dosha indicates deep ancestral karma that requires serious attention and remedial measures. This level of dosha often indicates: ancestors who departed with unfulfilled wishes, interrupted or improper last rites in the lineage, and significant karmic debts carried forward. Consult a qualified priest for Narayan Bali/Nagbali and Pind Daan at sacred places like Gaya.",
+        "गम्भीर पित्र दोषले गहिरो पैतृक कर्म संकेत गर्दछ जसलाई गम्भीर ध्यान र उपचारात्मक उपायहरू आवश्यक छ। यस स्तरको दोषले प्रायः संकेत गर्दछ: अपूर्ण इच्छाहरूसँग गएका पूर्वजहरू, वंशमा अवरुद्ध वा अनुचित अन्तिम संस्कार, र अगाडि लगिएको महत्वपूर्ण कार्मिक ऋणहरू। गयामा नारायण बलि/नागबलि र पिण्डदान को लागि योग्य पुजारीसँग परामर्श गर्नुहोस्।"
+    ),
+
+    // Pitra life areas
+    PITRA_AREA_FATHER("Father and paternal lineage", "पिता र पैतृक वंश"),
+    PITRA_AREA_SPIRITUAL("Spiritual progress and dharma", "आध्यात्मिक प्रगति र धर्म"),
+    PITRA_AREA_SELF("Self, health, and overall life direction", "आत्म, स्वास्थ्य, र समग्र जीवन दिशा"),
+    PITRA_AREA_FAMILY_WEALTH("Family wealth and accumulated assets", "पारिवारिक सम्पत्ति र संचित सम्पत्ति"),
+    PITRA_AREA_SIBLINGS("Siblings and communication", "भाइबहिनी र संचार"),
+    PITRA_AREA_MOTHER("Mother, property, and domestic peace", "आमा, सम्पत्ति, र घरेलु शान्ति"),
+    PITRA_AREA_CHILDREN("Children, education, and creativity", "बच्चाहरू, शिक्षा, र सृजनात्मकता"),
+    PITRA_AREA_HEALTH("Health, debts, and service", "स्वास्थ्य, ऋण, र सेवा"),
+    PITRA_AREA_MARRIAGE("Marriage and partnerships", "विवाह र साझेदारी"),
+    PITRA_AREA_LONGEVITY("Longevity and inherited wealth", "दीर्घायु र विरासत सम्पत्ति"),
+    PITRA_AREA_FORTUNE("Fortune, higher learning, and spirituality", "भाग्य, उच्च शिक्षा, र आध्यात्मिकता"),
+    PITRA_AREA_CAREER("Career and public reputation", "क्यारियर र सार्वजनिक प्रतिष्ठा"),
+    PITRA_AREA_GAINS("Gains and social network", "लाभ र सामाजिक नेटवर्क"),
+    PITRA_AREA_LIBERATION("Spiritual liberation and foreign lands", "आध्यात्मिक मुक्ति र विदेश"),
+
+    // Pitra remedy timings
+    PITRA_TIMING_AMAVASYA("Amavasya (New Moon) or Pitru Paksha", "औंसी वा पितृ पक्ष"),
+    PITRA_TIMING_DEATH_ANNIVERSARY("Father's death anniversary or Pitru Paksha", "पिताको पुण्यतिथि वा पितृ पक्ष"),
+    PITRA_TIMING_DAILY_PITRU("Daily, especially during Pitru Paksha", "दैनिक, विशेष गरी पितृ पक्षमा"),
+    PITRA_TIMING_NARAYAN_BALI("Once in lifetime at Trimbakeshwar or Gaya", "जीवनकालमा एकपटक त्र्यम्बकेश्वर वा गयामा"),
+    PITRA_TIMING_PIND_DAAN("Pitru Paksha at Gaya", "गयामा पितृ पक्ष"),
+    PITRA_TIMING_BRAHMA_MUHURTA("Daily during Brahma Muhurta", "ब्रह्म मुहूर्तमा दैनिक"),
+
+    // Pitra auspicious periods
+    PITRA_PERIOD_PITRU_PAKSHA("Pitru Paksha (15-day period in Bhadrapada month)", "पितृ पक्ष (भाद्र महिनामा १५ दिनको अवधि)"),
+    PITRA_PERIOD_AMAVASYA("Amavasya (New Moon days)", "औंसी (अमावस्या दिनहरू)"),
+    PITRA_PERIOD_ECLIPSE("Solar/Lunar eclipses", "सूर्य/चन्द्र ग्रहण"),
+    PITRA_PERIOD_DEATH_ANNIV("Father's death anniversary", "पिताको पुण्यतिथि"),
+    PITRA_PERIOD_MAHALAYA("Mahalaya Amavasya", "महालय अमावस्या"),
+    PITRA_PERIOD_AKSHAYA("Akshaya Tritiya", "अक्षय तृतीया"),
+    PITRA_PERIOD_GAYA("Gaya Shraddha periods", "गया श्राद्ध अवधिहरू"),
+
+    // ============================================
+    // SADE SATI INTERPRETATION
+    // ============================================
+    SADE_SATI_ACTIVE_HEADER("SADE SATI ACTIVE - %s PHASE", "साढ़े साती सक्रिय - %s चरण"),
+    SADE_SATI_TRANSIT_DESC(
+        "Saturn is currently transiting %s, which is the %s from your natal Moon in %s.",
+        "शनि हाल %s मा गोचर गर्दैछ, जुन तपाईंको जन्म चन्द्र %s बाट %s हो।"
+    ),
+    SADE_SATI_12TH_HOUSE("12th house", "१२औं भाव"),
+    SADE_SATI_SAME_SIGN("same sign", "उही राशि"),
+    SADE_SATI_2ND_HOUSE("2nd house", "२औं भाव"),
+    SADE_SATI_RISING_HEADER("RISING PHASE CHARACTERISTICS:", "उदय चरण विशेषताहरू:"),
+    SADE_SATI_RISING_BEGIN("Beginning of Sade Sati period", "साढ़े साती अवधिको सुरुवात"),
+    SADE_SATI_RISING_EXPENSES("Focus on expenses and losses (12th house)", "खर्च र हानिमा केन्द्रित (१२औं भाव)"),
+    SADE_SATI_RISING_SLEEP("Sleep disturbances possible", "निद्रामा गडबडी सम्भव"),
+    SADE_SATI_RISING_ENEMIES("Hidden enemies may become active", "लुकेका शत्रुहरू सक्रिय हुन सक्छन्"),
+    SADE_SATI_RISING_SPIRITUAL("Spiritual growth opportunities", "आध्यात्मिक वृद्धिका अवसरहरू"),
+    SADE_SATI_PEAK_HEADER("PEAK PHASE CHARACTERISTICS:", "शिखर चरण विशेषताहरू:"),
+    SADE_SATI_PEAK_INTENSE("Most intense phase of Sade Sati", "साढ़े साती को सबैभन्दा तीव्र चरण"),
+    SADE_SATI_PEAK_MIND("Direct impact on mind and emotions", "मन र भावनाहरूमा प्रत्यक्ष प्रभाव"),
+    SADE_SATI_PEAK_HEALTH("Health may need attention", "स्वास्थ्यमा ध्यान आवश्यक हुन सक्छ"),
+    SADE_SATI_PEAK_SELF("Self-image transformation", "आत्म-छवि रूपान्तरण"),
+    SADE_SATI_PEAK_RESTRUCTURE("Major life restructuring possible", "प्रमुख जीवन पुनर्संरचना सम्भव"),
+    SADE_SATI_SETTING_HEADER("SETTING PHASE CHARACTERISTICS:", "अस्त चरण विशेषताहरू:"),
+    SADE_SATI_SETTING_FINAL("Final phase of Sade Sati", "साढ़े साती को अन्तिम चरण"),
+    SADE_SATI_SETTING_FINANCES("Focus on finances and family (2nd house)", "वित्त र परिवारमा केन्द्रित (२औं भाव)"),
+    SADE_SATI_SETTING_SPEECH("Speech and communication impacted", "वाणी र संचार प्रभावित"),
+    SADE_SATI_SETTING_WEALTH("Accumulated wealth may fluctuate", "संचित सम्पत्तिमा उतारचढाव"),
+    SADE_SATI_SETTING_LESSONS("Integration of lessons learned", "सिकेका पाठहरूको एकीकरण"),
+    SADE_SATI_NOT_ACTIVE_HEADER("SADE SATI NOT ACTIVE", "साढ़े साती सक्रिय छैन"),
+    SADE_SATI_NOT_ACTIVE_DESC(
+        "Saturn is currently transiting %s, which does not form Sade Sati or Small Panoti with your natal Moon in %s.",
+        "शनि हाल %s मा गोचर गर्दैछ, जसले तपाईंको जन्म चन्द्र %s सँग साढ़े साती वा सानो पनोती बनाउँदैन।"
+    ),
+    SADE_SATI_FAVORABLE_PERIOD(
+        "This is generally a favorable period regarding Saturn's influence on emotional and mental well-being.",
+        "भावनात्मक र मानसिक कल्याणमा शनिको प्रभाव सम्बन्धमा यो सामान्यतया अनुकूल अवधि हो।"
+    ),
+    SADE_SATI_SMALL_PANOTI_HEADER("SMALL PANOTI (DHAIYA) ACTIVE", "सानो पनोती (ढैया) सक्रिय"),
+    SADE_SATI_FOURTH_TRANSIT("Saturn is transiting the 4th house from your Moon.", "शनि तपाईंको चन्द्रबाट ४औं भावमा गोचर गर्दैछ।"),
+    SADE_SATI_FOURTH_DOMESTIC("Domestic peace may be disturbed", "घरेलु शान्ति अशान्त हुन सक्छ"),
+    SADE_SATI_FOURTH_MOTHER("Mother's health may need attention", "आमाको स्वास्थ्यमा ध्यान आवश्यक"),
+    SADE_SATI_FOURTH_PROPERTY("Property matters require caution", "सम्पत्ति मामिलाहरूमा सावधानी आवश्यक"),
+    SADE_SATI_FOURTH_MENTAL("Mental peace may fluctuate", "मानसिक शान्तिमा उतारचढाव"),
+    SADE_SATI_ASHTAMA_HEADER("ASHTAMA SHANI - Saturn in 8th from Moon", "अष्टम शनि - चन्द्रबाट ८औं मा शनि"),
+    SADE_SATI_ASHTAMA_CHALLENGING(
+        "This is considered one of the most challenging Saturn transits.",
+        "यो शनिको सबैभन्दा चुनौतीपूर्ण गोचर मध्ये एक मानिन्छ।"
+    ),
+    SADE_SATI_ASHTAMA_CHANGES("Sudden changes and transformations", "अचानक परिवर्तन र रूपान्तरणहरू"),
+    SADE_SATI_ASHTAMA_HEALTH("Health requires vigilance", "स्वास्थ्यमा सतर्कता आवश्यक"),
+    SADE_SATI_ASHTAMA_OBSTACLES("Obstacles in ventures", "उद्यमहरूमा अवरोधहरू"),
+    SADE_SATI_ASHTAMA_PSYCHOLOGICAL("Deep psychological transformation", "गहिरो मनोवैज्ञानिक रूपान्तरण"),
+
+    // Sade Sati favorable/challenging factors
+    SADE_SATI_FACTOR_EXALTED("Saturn is exalted in transit - effects significantly reduced", "शनि गोचरमा उच्च - प्रभावहरू उल्लेखनीय कम"),
+    SADE_SATI_FACTOR_OWN_SIGN("Saturn is in own sign - effects well-managed", "शनि स्वराशिमा - प्रभावहरू राम्रोसँग व्यवस्थित"),
+    SADE_SATI_FACTOR_YOGAKARAKA("Saturn is Yogakaraka for your ascendant - may bring positive results", "शनि तपाईंको लग्नको लागि योगकारक - सकारात्मक परिणाम ल्याउन सक्छ"),
+    SADE_SATI_FACTOR_NATAL_STRONG("Natal Saturn is strong - better equipped to handle transit", "जन्म शनि बलियो - गोचर सम्हाल्न राम्रो सुसज्जित"),
+    SADE_SATI_FACTOR_DEBILITATED("Saturn is debilitated in transit - effects may be more challenging", "शनि गोचरमा नीच - प्रभावहरू थप चुनौतीपूर्ण हुन सक्छ"),
+    SADE_SATI_FACTOR_WEAK_MOON("Natal Moon is weak - emotional resilience may be tested", "जन्म चन्द्र कमजोर - भावनात्मक लचिलोपन परीक्षण हुन सक्छ"),
+    SADE_SATI_FACTOR_NATAL_WEAK("Natal Saturn is weak - transit effects may be more pronounced", "जन्म शनि कमजोर - गोचर प्रभाव थप उच्चारित हुन सक्छ"),
+    SADE_SATI_FACTOR_RETROGRADE("Natal Saturn is retrograde - internal processing of karmic lessons", "जन्म शनि वक्री - कार्मिक पाठहरूको आन्तरिक प्रशोधन"),
+
+    // Sade Sati remedy timings
+    SADE_SATI_TIMING_SATURN_HORA("Saturday during Saturn Hora", "शनि होरामा शनिबार"),
+    SADE_SATI_TIMING_EVERY_SATURDAY("Every Saturday", "हरेक शनिबार"),
+    SADE_SATI_TIMING_TUE_SAT("Tuesday and Saturday", "मंगलबार र शनिबार"),
+
+    // Error messages
+    ERROR_MOON_NOT_FOUND("Unable to calculate - Moon position not found", "गणना गर्न असमर्थ - चन्द्र स्थिति फेला परेन"),
+    ERROR_SADE_SATI_CALC("Unable to calculate Sade Sati - Moon position not available in chart.", "साढ़े साती गणना गर्न असमर्थ - कुण्डलीमा चन्द्र स्थिति उपलब्ध छैन।"),
+    ERROR_BAV_NOT_FOUND("Bhinnashtakavarga not found for %s", "%s को लागि भिन्नाष्टकवर्ग फेला परेन"),
+    ERROR_ASHTAKAVARGA_NOT_APPLICABLE("Ashtakavarga not applicable for %s", "%s को लागि अष्टकवर्ग लागू हुँदैन"),
+
+    // ============================================
+    // SYNASTRY SCREEN STRINGS
+    // ============================================
+    SYNASTRY_LAGNA("Lagna", "लग्न"),
+    SYNASTRY_MOON("Moon", "चन्द्र"),
+    SYNASTRY_VENUS("Venus", "शुक्र"),
+    SYNASTRY_HOUSE_IN("in House", "भावमा");
 
     companion object {
         /**

@@ -9,7 +9,7 @@ import com.astro.storm.data.model.Planet
 import com.astro.storm.data.model.PlanetPosition
 import com.astro.storm.data.model.VedicChart
 import com.astro.storm.data.model.ZodiacSign
-import com.astro.storm.util.AstrologicalUtils
+import com.astro.storm.ephemeris.VedicAstrologyUtils
 import swisseph.SweConst
 import swisseph.SweDate
 import swisseph.SwissEph
@@ -376,7 +376,7 @@ class SwissEphemerisEngine private constructor(
             speed = -speed
         }
 
-        val normalizedLongitude = AstrologicalUtils.normalizeLongitude(rawLongitude)
+        val normalizedLongitude = VedicAstrologyUtils.normalizeLongitude(rawLongitude)
 
         val sign = ZodiacSign.fromLongitude(normalizedLongitude)
         val degreeInSign = normalizedLongitude % DEGREES_PER_SIGN
