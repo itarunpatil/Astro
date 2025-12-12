@@ -63,9 +63,10 @@ object MatchmakingCalculator {
         val rating = CompatibilityRating.fromScore(totalPoints, nadiScore, bhakootScore)
 
         // Delegate to ManglikDoshaCalculator for Manglik analysis
-        val brideManglik = ManglikDoshaCalculator.calculate(brideChart, "Bride")
-        val groomManglik = ManglikDoshaCalculator.calculate(groomChart, "Groom")
-        val manglikCompatibility = ManglikDoshaCalculator.assessCompatibility(brideManglik, groomManglik, language)
+        val brideManglik = ManglikDoshaCalculator.calculateManglikDosha(brideChart)
+        val groomManglik = ManglikDoshaCalculator.calculateManglikDosha(groomChart)
+        val manglikCompatibilityAnalysis = ManglikDoshaCalculator.checkManglikCompatibility(brideManglik, groomManglik)
+        val manglikCompatibility = manglikCompatibilityAnalysis.recommendation
 
         // Calculate additional factors
         val additionalFactors = calculateAdditionalFactors(brideNakshatra, groomNakshatra, language)

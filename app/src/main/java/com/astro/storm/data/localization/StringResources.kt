@@ -3660,7 +3660,6 @@ enum class StringKey(val en: String, val ne: String) {
     MANGLIK_FROM_LAGNA("From Lagna", "लग्नबाट"),
     MANGLIK_FROM_MOON("From Moon", "चन्द्रबाट"),
     MANGLIK_FROM_VENUS("From Venus", "शुक्रबाट"),
-    MANGLIK_INTENSITY("Intensity", "तीव्रता"),
     MANGLIK_CANCELLATIONS("Cancellation Factors", "रद्द गर्ने कारकहरू"),
     MANGLIK_EFFECTIVE_LEVEL("Effective Level", "प्रभावी स्तर"),
 
@@ -3755,34 +3754,6 @@ enum class StringKey(val en: String, val ne: String) {
     DOSHA_INTERPRETATION("Interpretation", "व्याख्या"),
     DOSHA_SEVERITY_SCORE("Severity Score", "गम्भीरता अंक"),
     DOSHA_AUSPICIOUS_TIMES("Auspicious Times for Remedies", "उपायहरूको लागि शुभ समय"),
-
-    // ============================================
-    // TIME ABBREVIATIONS
-    // ============================================
-    DAYS_SHORT("d", "दि"),
-    HOURS_SHORT("h", "घ"),
-    MINUTES_SHORT("m", "मि"),
-    SECONDS_SHORT("s", "से"),
-
-    // ============================================
-    // DASHA ADDITIONAL STRINGS
-    // ============================================
-    DASHA_MAHADASHA("Mahadasha", "महादशा"),
-    DASHA_ANTARDASHA("Antardasha", "अन्तर्दशा"),
-    DASHA_PRATYANTARDASHA("Pratyantardasha", "प्रत्यन्तर्दशा"),
-    DASHA_SOOKSHMADASHA("Sookshmadasha", "सूक्ष्मदशा"),
-    DASHA_PRANADASHA("Pranadasha", "प्राणदशा"),
-    DASHA_DEHADASHA("Dehadasha", "देहदशा"),
-    DASHA_BHUKTI("Bhukti", "भुक्ति"),
-    DASHA_PRATYANTAR("Pratyantar", "प्रत्यन्तर"),
-    DASHA_SOOKSHMA("Sookshma", "सूक्ष्म"),
-    DASHA_NO_ACTIVE_PERIOD("No active Dasha period", "कुनै सक्रिय दशा अवधि छैन"),
-
-    // ============================================
-    // GENDER STRINGS
-    // ============================================
-    GENDER_MALE("Male", "पुरुष"),
-    GENDER_FEMALE("Female", "महिला"),
 
     // ============================================
     // INTERPRETATION SECTION HEADERS
@@ -3988,10 +3959,6 @@ enum class StringKey(val en: String, val ne: String) {
     PITRA_DESC_MALEFICS_NINTH(
         "Malefics in 9th house - Ancestral blessings blocked",
         "९औं भावमा पाप ग्रह - पैतृक आशीर्वाद अवरुद्ध"
-    ),
-    PITRA_DESC_RAHU_NINTH(
-        "Rahu in 9th house - Strong Pitra Dosha, past-life debts to ancestors",
-        "९औं भावमा राहु - बलियो पित्र दोष, पूर्वजहरूप्रति पूर्वजन्मको ऋण"
     ),
     PITRA_DESC_NINTH_LORD_AFFLICTED(
         "9th lord %s is afflicted - Ancestral lineage karma",
