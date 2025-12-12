@@ -1009,6 +1009,11 @@ enum class StringKey(val en: String, val ne: String) {
     RAJJU_KANTHA_BODY("Neck", "घाँटी"),
     RAJJU_SIRO("Siro Rajju", "शिरो रज्जु"),
     RAJJU_SIRO_BODY("Head", "शिर"),
+    RAJJU_SIRO_WARNING("Most serious - affects longevity of spouse", "सबैभन्दा गम्भीर - जीवनसाथीको आयुमा असर पार्छ"),
+    RAJJU_KANTHA_WARNING("May cause health issues to both", "दुवैलाई स्वास्थ्य समस्या हुन सक्छ"),
+    RAJJU_NABHI_WARNING("May affect children", "सन्तानमा असर पर्न सक्छ"),
+    RAJJU_KATI_WARNING("May cause financial difficulties", "आर्थिक कठिनाइहरू हुन सक्छ"),
+    RAJJU_PADA_WARNING("May cause wandering tendencies", "भ्रमण प्रवृत्ति हुन सक्छ"),
 
     // ============================================
     // MATCHMAKING CALCULATOR - MANGLIK DOSHA
@@ -1017,6 +1022,20 @@ enum class StringKey(val en: String, val ne: String) {
     MANGLIK_PARTIAL("Partial Manglik", "आंशिक मांगलिक"),
     MANGLIK_FULL("Full Manglik", "पूर्ण मांगलिक"),
     MANGLIK_DOUBLE("Double Manglik (Severe)", "दोहोरो मांगलिक (गम्भीर)"),
+    MANGLIK_NO_DOSHA_DESC("No Manglik Dosha present.", "मांगलिक दोष छैन।"),
+    MANGLIK_DETECTED("detected", "पत्ता लाग्यो"),
+    MANGLIK_INTENSITY("intensity", "तीव्रता"),
+    MANGLIK_MARS_IN("Mars in", "मंगल"),
+    HOUSE("house", "भाव"),
+    FROM_LAGNA("from Lagna", "लग्नबाट"),
+    FROM_MOON("from Moon", "चन्द्रबाट"),
+    FROM_VENUS("from Venus", "शुक्रबाट"),
+    MANGLIK_BOTH_NON("Both non-Manglik - No concerns", "दुवै गैर-मांगलिक - कुनै चिन्ता छैन"),
+    MANGLIK_BOTH_MATCH("Both Manglik - Doshas cancel each other (Manglik to Manglik match is recommended)", "दुवै मांगलिक - दोषहरू एकअर्कालाई निष्क्रिय गर्छन् (मांगलिकसँग मांगलिक मिलान सिफारिस गरिएको)"),
+    MANGLIK_MINOR_IMBALANCE("Minor Manglik imbalance - Manageable with remedies", "सानो मांगलिक असन्तुलन - उपायहरूद्वारा व्यवस्थापनयोग्य"),
+    MANGLIK_BRIDE_ONLY("Bride is Manglik while Groom is not - Kumbh Vivah or other remedies advised", "दुलही मांगलिक छिन् जबकि दुलाहा छैनन् - कुम्भ विवाह वा अन्य उपायहरू सल्लाह दिइएको"),
+    MANGLIK_GROOM_ONLY("Groom is Manglik while Bride is not - Remedies strongly recommended", "दुलाहा मांगलिक छन् जबकि दुलही छैनन् - उपायहरू दृढतापूर्वक सिफारिस गरिएको"),
+    MANGLIK_SIGNIFICANT_IMBALANCE("Significant Manglik imbalance - Careful consideration and remedies essential", "महत्त्वपूर्ण मांगलिक असन्तुलन - सावधानीपूर्ण विचार र उपायहरू आवश्यक"),
 
     // ============================================
     // MATCHMAKING CALCULATOR - COMPATIBILITY RATINGS
@@ -1044,6 +1063,81 @@ enum class StringKey(val en: String, val ne: String) {
     TARA_VADHA("Vadha (Death)", "वध (मृत्यु)"),
     TARA_MITRA("Mitra (Friend)", "मित्र"),
     TARA_PARAMA_MITRA("Parama Mitra (Best Friend)", "परम मित्र"),
+
+    // ============================================
+    // GUNA MILAN ANALYSIS STRINGS
+    // ============================================
+    // Varna Analysis
+    VARNA_DESC("Spiritual compatibility and ego harmony", "आध्यात्मिक अनुकूलता र अहंकार सामञ्जस्य"),
+    VARNA_COMPATIBLE("Compatible: Groom's Varna ({groom}) is equal to or higher than Bride's ({bride}). This indicates spiritual harmony.", "अनुकूल: दुलाहाको वर्ण ({groom}) दुलहीको ({bride}) बराबर वा माथि छ। यसले आध्यात्मिक सामञ्जस्य संकेत गर्छ।"),
+    VARNA_INCOMPATIBLE("Mismatch: Bride's Varna ({bride}) is higher than Groom's ({groom}). May cause ego-related issues.", "बेमेल: दुलहीको वर्ण ({bride}) दुलाहाको ({groom}) भन्दा माथि छ। अहंकार-सम्बन्धित समस्या हुन सक्छ।"),
+
+    // Vashya Analysis
+    VASHYA_DESC("Mutual attraction and influence", "पारस्परिक आकर्षण र प्रभाव"),
+    VASHYA_EXCELLENT("Excellent mutual attraction and influence. Both partners can positively influence each other.", "उत्कृष्ट पारस्परिक आकर्षण र प्रभाव। दुवै साझेदारहरू एकअर्कालाई सकारात्मक रूपमा प्रभाव पार्न सक्छन्।"),
+    VASHYA_VERY_GOOD("Very good compatibility with balanced influence between partners.", "साझेदारहरू बीच सन्तुलित प्रभावसहित धेरै राम्रो अनुकूलता।"),
+    VASHYA_GOOD("Good compatibility with moderate mutual influence.", "मध्यम पारस्परिक प्रभावसहित राम्रो अनुकूलता।"),
+    VASHYA_PARTIAL("Partial compatibility. One partner may dominate relationship dynamics.", "आंशिक अनुकूलता। एउटा साझेदारले सम्बन्धको गतिशीलतामा प्रभुत्व जमाउन सक्छ।"),
+    VASHYA_INCOMPATIBLE("Incompatible Vashya types. May cause power struggles in the relationship.", "असंगत वश्य प्रकारहरू। सम्बन्धमा शक्ति संघर्ष हुन सक्छ।"),
+
+    // Tara Analysis
+    TARA_DESC("Destiny and birth star compatibility", "भाग्य र जन्म तारा अनुकूलता"),
+    TARA_EXCELLENT("Both have auspicious Taras - excellent destiny compatibility. Harmonious life path.", "दुवैको शुभ तारा छ - उत्कृष्ट भाग्य अनुकूलता। सामञ्जस्यपूर्ण जीवन मार्ग।"),
+    TARA_MODERATE("One auspicious Tara present - moderate destiny compatibility.", "एउटा शुभ तारा उपस्थित - मध्यम भाग्य अनुकूलता।"),
+    TARA_INAUSPICIOUS("Both Taras are inauspicious - may face obstacles together. Remedies recommended.", "दुवै तारा अशुभ - सँगै अवरोधहरू सामना गर्न सक्छन्। उपायहरू सिफारिस गरिएको।"),
+
+    // Yoni Analysis
+    YONI_DESC("Physical and sexual compatibility", "शारीरिक र यौन अनुकूलता"),
+    YONI_SAME("Same Yoni animal - perfect physical and instinctual compatibility. Strong natural attraction.", "उही योनि पशु - उत्तम शारीरिक र सहज अनुकूलता। बलियो प्राकृतिक आकर्षण।"),
+    YONI_FRIENDLY("Friendly Yonis - very good physical compatibility. Natural understanding.", "मित्र योनि - धेरै राम्रो शारीरिक अनुकूलता। प्राकृतिक बुझाइ।"),
+    YONI_NEUTRAL("Neutral Yonis - moderate physical compatibility. Requires some adjustment.", "तटस्थ योनि - मध्यम शारीरिक अनुकूलता। केही समायोजन आवश्यक।"),
+    YONI_UNFRIENDLY("Unfriendly Yonis - some physical and instinctual differences. Needs conscious effort.", "अमैत्रीपूर्ण योनि - केही शारीरिक र सहज भिन्नताहरू। सचेत प्रयास आवश्यक।"),
+    YONI_ENEMY("Enemy Yonis - significant physical incompatibility. May face intimacy challenges.", "शत्रु योनि - महत्त्वपूर्ण शारीरिक असंगतता। अन्तरंगता चुनौतीहरू सामना गर्न सक्छ।"),
+
+    // Graha Maitri Analysis
+    GRAHA_MAITRI_DESC("Mental compatibility and friendship", "मानसिक अनुकूलता र मित्रता"),
+    GRAHA_MAITRI_EXCELLENT("Same lord or mutual friends - excellent mental compatibility. Natural understanding.", "उही स्वामी वा पारस्परिक मित्र - उत्कृष्ट मानसिक अनुकूलता। प्राकृतिक बुझाइ।"),
+    GRAHA_MAITRI_VERY_GOOD("One friend, one neutral - very good mental harmony. Good communication.", "एउटा मित्र, एउटा तटस्थ - धेरै राम्रो मानसिक सामञ्जस्य। राम्रो सञ्चार।"),
+    GRAHA_MAITRI_AVERAGE("Neutral relationship - average mental compatibility. Requires effort for understanding.", "तटस्थ सम्बन्ध - औसत मानसिक अनुकूलता। बुझाइको लागि प्रयास आवश्यक।"),
+    GRAHA_MAITRI_FRICTION("One enemy present - some mental friction. Different thought processes.", "एउटा शत्रु उपस्थित - केही मानसिक घर्षण। फरक विचार प्रक्रियाहरू।"),
+    GRAHA_MAITRI_INCOMPATIBLE("Mutual enemies - significant mental incompatibility. May face frequent misunderstandings.", "पारस्परिक शत्रु - महत्त्वपूर्ण मानसिक असंगतता। बारम्बार गलतफहमीहरू हुन सक्छ।"),
+
+    // Gana Analysis
+    GANA_DESC("Temperament and behavior compatibility", "स्वभाव र व्यवहार अनुकूलता"),
+    GANA_SAME("Same Gana - perfect temperamental harmony. Similar approach to life and values.", "उही गण - उत्तम स्वभावगत सामञ्जस्य। जीवन र मूल्यहरूमा समान दृष्टिकोण।"),
+    GANA_COMPATIBLE("Compatible Ganas - good temperamental harmony with minor differences.", "अनुकूल गण - सानातिना भिन्नताहरूसहित राम्रो स्वभावगत सामञ्जस्य।"),
+    GANA_PARTIAL("Partially compatible - some temperamental adjustment needed.", "आंशिक अनुकूल - केही स्वभावगत समायोजन आवश्यक।"),
+    GANA_DIFFERENT("Different temperaments - significant adjustment required. May cause lifestyle clashes.", "फरक स्वभाव - महत्त्वपूर्ण समायोजन आवश्यक। जीवनशैली टकराव हुन सक्छ।"),
+    GANA_OPPOSITE("Opposite temperaments - major incompatibility. Frequent conflicts likely.", "विपरीत स्वभाव - प्रमुख असंगतता। बारम्बार द्वन्द्व हुन सक्छ।"),
+
+    // Bhakoot Analysis
+    BHAKOOT_DESC("Love, health, and financial compatibility", "प्रेम, स्वास्थ्य र आर्थिक अनुकूलता"),
+    BHAKOOT_NO_DOSHA("No Bhakoot dosha - excellent compatibility for love, health, and finances.", "भकुट दोष छैन - प्रेम, स्वास्थ्य र वित्तको लागि उत्कृष्ट अनुकूलता।"),
+    BHAKOOT_CANCELLED("Bhakoot dosha cancelled by same sign lord - no adverse effects.", "उही राशि स्वामीद्वारा भकुट दोष रद्द - कुनै प्रतिकूल प्रभाव छैन।"),
+    BHAKOOT_2_12("Dhan-Vyaya (2-12) Bhakoot Dosha - financial concerns possible.", "धन-व्यय (२-१२) भकुट दोष - आर्थिक चिन्ता सम्भव।"),
+    BHAKOOT_2_12_DESC("May cause financial fluctuations and differences in spending habits.", "आर्थिक उतार-चढाव र खर्च बानीमा भिन्नता हुन सक्छ।"),
+    BHAKOOT_6_8("Shadashtak (6-8) Bhakoot Dosha - health concerns may arise.", "षडाष्टक (६-८) भकुट दोष - स्वास्थ्य चिन्ता हुन सक्छ।"),
+    BHAKOOT_6_8_DESC("May affect health and cause separation tendencies. Most serious Bhakoot dosha.", "स्वास्थ्यमा असर पार्न र विच्छेद प्रवृत्ति हुन सक्छ। सबैभन्दा गम्भीर भकुट दोष।"),
+    BHAKOOT_5_9("Signs are in 5-9 (Trine) relationship - actually favorable.", "राशिहरू ५-९ (त्रिकोण) सम्बन्धमा छन् - वास्तवमा अनुकूल।"),
+    BHAKOOT_5_9_DESC("Trine relationship is auspicious for progeny, dharma, and spiritual growth.", "त्रिकोण सम्बन्ध सन्तान, धर्म र आध्यात्मिक विकासको लागि शुभ छ।"),
+    BHAKOOT_FAVORABLE("Signs are in favorable positions for marital harmony.", "राशिहरू वैवाहिक सामञ्जस्यको लागि अनुकूल स्थानमा छन्।"),
+    BHAKOOT_CANCEL_SAME_LORD("Same lord ({lord}) rules both Moon signs - Full Cancellation", "उही स्वामी ({lord}) ले दुवै चन्द्र राशि शासन गर्छ - पूर्ण रद्द"),
+    BHAKOOT_CANCEL_MUTUAL_FRIENDS("Moon sign lords ({lord1} & {lord2}) are mutual friends - Full Cancellation", "चन्द्र राशि स्वामी ({lord1} र {lord2}) पारस्परिक मित्र हुन् - पूर्ण रद्द"),
+    BHAKOOT_CANCEL_EXALTATION("Lord is exalted in partner's sign - Partial Cancellation", "स्वामी साथीको राशिमा उच्च छ - आंशिक रद्द"),
+    BHAKOOT_CANCEL_FRIENDLY("Moon sign lords have friendly disposition - Partial Cancellation", "चन्द्र राशि स्वामीहरूको मैत्रीपूर्ण स्वभाव छ - आंशिक रद्द"),
+    BHAKOOT_CANCEL_ELEMENT("Both Moon signs share same element ({element}) - Partial Cancellation", "दुवै चन्द्र राशिले एउटै तत्व ({element}) साझा गर्छन् - आंशिक रद्द"),
+
+    // Nadi Analysis
+    NADI_DESC("Health and progeny compatibility (most important)", "स्वास्थ्य र सन्तान अनुकूलता (सबैभन्दा महत्त्वपूर्ण)"),
+    NADI_DOSHA_PRESENT("NADI DOSHA PRESENT: Same Nadi ({nadi}) without cancellation. Serious concern affecting health and progeny.", "नाडी दोष उपस्थित: रद्द बिना उही नाडी ({nadi})। स्वास्थ्य र सन्तानलाई असर गर्ने गम्भीर चिन्ता।"),
+    NADI_DOSHA_CANCELLED("Same Nadi but CANCELLED:", "उही नाडी तर रद्द:"),
+    NADI_DIFFERENT("Different Nadis ({nadi1} & {nadi2}) - excellent health and progeny compatibility.", "फरक नाडी ({nadi1} र {nadi2}) - उत्कृष्ट स्वास्थ्य र सन्तान अनुकूलता।"),
+    NADI_CANCEL_SAME_NAK_DIFF_RASHI("Same Nakshatra ({nakshatra}) but different Rashis - Full Cancellation", "उही नक्षत्र ({nakshatra}) तर फरक राशि - पूर्ण रद्द"),
+    NADI_CANCEL_SAME_RASHI_DIFF_NAK("Same Rashi ({rashi}) but different Nakshatras - Full Cancellation", "उही राशि ({rashi}) तर फरक नक्षत्र - पूर्ण रद्द"),
+    NADI_CANCEL_DIFF_PADA("Same Nakshatra and Rashi but different Padas ({pada1} vs {pada2}) - Partial Cancellation", "उही नक्षत्र र राशि तर फरक पाद ({pada1} बनाम {pada2}) - आंशिक रद्द"),
+    NADI_CANCEL_SPECIAL_PAIR("Special Nakshatra pair ({nak1}-{nak2}) cancels Nadi dosha per classical texts", "विशेष नक्षत्र जोडी ({nak1}-{nak2}) ले शास्त्रीय ग्रन्थ अनुसार नाडी दोष रद्द गर्छ"),
+    NADI_CANCEL_LORDS_FRIENDS("Moon sign lords ({lord1} & {lord2}) are mutual friends - Partial Cancellation", "चन्द्र राशि स्वामी ({lord1} र {lord2}) पारस्परिक मित्र हुन् - आंशिक रद्द"),
+    NADI_CANCEL_SAME_NAK_LORD("Both Nakshatras ruled by {lord} - Partial Cancellation", "दुवै नक्षत्र {lord} द्वारा शासित - आंशिक रद्द"),
 
     // ============================================
     // DASHA CALCULATOR - LEVELS
@@ -1224,6 +1318,137 @@ enum class StringKey(val en: String, val ne: String) {
     // ============================================
     RAJJU_ASCENDING("Aarohana (Ascending)", "आरोहण"),
     RAJJU_DESCENDING("Avarohana (Descending)", "अवरोहण"),
+
+    // ============================================
+    // MATCHMAKING - ADDITIONAL FACTORS
+    // ============================================
+    MAHENDRA_FAVORABLE("Mahendra favorable at position {count} - promotes longevity and progeny", "महेन्द्र स्थिति {count} मा अनुकूल - दीर्घायु र सन्तान प्रवर्धन गर्छ"),
+    MAHENDRA_NOT_APPLICABLE("Mahendra position not in favorable sequence", "महेन्द्र स्थिति अनुकूल क्रममा छैन"),
+    VEDHA_PRESENT("Vedha (obstruction) present between {nak1} and {nak2} - may cause obstacles", "वेध (बाधा) {nak1} र {nak2} बीच उपस्थित - अवरोधहरू हुन सक्छ"),
+    VEDHA_NOT_PRESENT("No Vedha between the nakshatras - favorable", "नक्षत्रहरू बीच वेध छैन - अनुकूल"),
+    RAJJU_COMPATIBLE("Different Rajju types - compatible, no concerns related to body part compatibility", "फरक रज्जु प्रकार - अनुकूल, शरीर भाग अनुकूलतासम्बन्धी कुनै चिन्ता छैन"),
+    RAJJU_SAME_DIFF_ARUDHA("Same {rajju} but different Arudha ({arudha1} vs {arudha2}) - partially compatible, reduced concern", "उही {rajju} तर फरक अरुढा ({arudha1} बनाम {arudha2}) - आंशिक अनुकूल, कम चिन्ता"),
+    RAJJU_SAME_SAME_ARUDHA("Same {rajju} ({body}) and same {arudha} - Rajju Dosha present. {warning}", "उही {rajju} ({body}) र उही {arudha} - रज्जु दोष उपस्थित। {warning}"),
+
+    // ============================================
+    // MATCHMAKING - SPECIAL CONSIDERATIONS
+    // ============================================
+    SPECIAL_NADI_DOSHA("NADI DOSHA: Same Nadi can affect health and progeny. Consider remedies before proceeding.", "नाडी दोष: उही नाडीले स्वास्थ्य र सन्तानमा असर पार्न सक्छ। अगाडि बढ्नु अघि उपायहरू विचार गर्नुहोस्।"),
+    SPECIAL_BHAKOOT_DOSHA("BHAKOOT DOSHA present: {analysis}. May affect love, finances, or health.", "भकुट दोष उपस्थित: {analysis}। प्रेम, वित्त, वा स्वास्थ्यमा असर पर्न सक्छ।"),
+    SPECIAL_BRIDE_MANGLIK("MANGLIK IMBALANCE: Bride has {dosha} while Groom is non-Manglik. Kumbh Vivah or remedies strongly advised.", "मांगलिक असन्तुलन: दुलहीमा {dosha} छ जबकि दुलाहा गैर-मांगलिक छन्। कुम्भ विवाह वा उपायहरू दृढतापूर्वक सल्लाह दिइएको।"),
+    SPECIAL_GROOM_MANGLIK("MANGLIK IMBALANCE: Groom has {dosha} while Bride is non-Manglik. Remedies strongly recommended.", "मांगलिक असन्तुलन: दुलाहामा {dosha} छ जबकि दुलही गैर-मांगलिक छिन्। उपायहरू दृढतापूर्वक सिफारिस गरिएको।"),
+    SPECIAL_GANA_INCOMPAT("GANA INCOMPATIBILITY: Opposite temperaments (Deva-Rakshasa). May cause frequent conflicts without conscious effort.", "गण असंगतता: विपरीत स्वभाव (देव-राक्षस)। सचेत प्रयास बिना बारम्बार द्वन्द्व हुन सक्छ।"),
+    SPECIAL_YONI_INCOMPAT("YONI INCOMPATIBILITY: Enemy Yonis present. Physical and instinctual harmony may require extra effort.", "योनि असंगतता: शत्रु योनि उपस्थित। शारीरिक र सहज सामञ्जस्यको लागि अतिरिक्त प्रयास आवश्यक पर्न सक्छ।"),
+    SPECIAL_VEDHA("VEDHA PRESENT: {details}. Nakshatra obstruction may cause challenges in specific life areas.", "वेध उपस्थित: {details}। नक्षत्र बाधाले जीवनका विशेष क्षेत्रहरूमा चुनौतीहरू ल्याउन सक्छ।"),
+    SPECIAL_RAJJU("RAJJU DOSHA: {details}. Related body part may face health concerns in marriage.", "रज्जु दोष: {details}। सम्बन्धित शरीर भागमा विवाहमा स्वास्थ्य चिन्ता हुन सक्छ।"),
+    SPECIAL_STREE_DEERGHA("STREE DEERGHA not satisfied: Nakshatra difference is {diff} (requires 13+). Bride's prosperity may need attention.", "स्त्री दीर्घ सन्तुष्ट छैन: नक्षत्र भिन्नता {diff} छ (१३+ आवश्यक)। दुलहीको समृद्धिमा ध्यान दिनुपर्ने हुन सक्छ।"),
+    SPECIAL_MULTIPLE_LOW("MULTIPLE CONCERNS: {count} Gunas scored below threshold. Overall compatibility requires attention.", "बहु चिन्ताहरू: {count} गुणले न्यूनतम भन्दा कम अंक पाए। समग्र अनुकूलतामा ध्यान आवश्यक।"),
+    SPECIAL_7TH_LORDS_ENEMY("7TH HOUSE LORDS INCOMPATIBLE: {lord1} and {lord2} are mutual enemies. Marriage house lords in conflict.", "७औं भाव स्वामी असंगत: {lord1} र {lord2} पारस्परिक शत्रु हुन्। विवाह भाव स्वामीहरू द्वन्द्वमा।"),
+    SPECIAL_NO_ISSUES("No significant special concerns noted. The match appears harmonious across additional factors.", "कुनै महत्त्वपूर्ण विशेष चिन्ता छैन। मिलान अतिरिक्त कारकहरूमा सामञ्जस्यपूर्ण देखिन्छ।"),
+
+    // ============================================
+    // MATCHMAKING - REMEDIES
+    // ============================================
+    REMEDY_NADI_1("Nadi Dosha: Donate grains, gold, or cow on an auspicious day after consulting a priest", "नाडी दोष: पुजारीसँग परामर्श पछि शुभ दिनमा अन्न, सुन, वा गाई दान गर्नुहोस्"),
+    REMEDY_NADI_2("Nadi Dosha: Perform Maha Mrityunjaya Jaap (108 times daily for 40 days)", "नाडी दोष: महा मृत्युञ्जय जाप गर्नुहोस् (४० दिन दैनिक १०८ पटक)"),
+    REMEDY_NADI_3("Nadi Dosha: Worship Lord Shiva and Goddess Parvati together on Mondays", "नाडी दोष: सोमबारमा भगवान शिव र देवी पार्वतीको सँगै पूजा गर्नुहोस्"),
+    REMEDY_BHAKOOT_1("Bhakoot Dosha: Perform Graha Shanti puja for Moon sign lords of both partners", "भकुट दोष: दुवै साझेदारको चन्द्र राशि स्वामीको ग्रह शान्ति पूजा गर्नुहोस्"),
+    REMEDY_BHAKOOT_2("Bhakoot Dosha: Chant Vishnu Sahasranama on Thursdays for 21 weeks", "भकुट दोष: २१ हप्ता बिहीबारमा विष्णु सहस्रनाम जाप गर्नुहोस्"),
+    REMEDY_SHADASHTAK("Shadashtak (6-8) Dosha: Perform Rudrabhishek and donate medicines to the needy", "षडाष्टक (६-८) दोष: रुद्राभिषेक गर्नुहोस् र जरुरतमन्दलाई औषधि दान गर्नुहोस्"),
+    REMEDY_MANGLIK_1("Manglik Dosha: Perform Kumbh Vivah (symbolic marriage to a pot or banana tree) before actual marriage", "मांगलिक दोष: वास्तविक विवाह अघि कुम्भ विवाह (घैंटो वा केराको बोटसँग प्रतीकात्मक विवाह) गर्नुहोस्"),
+    REMEDY_MANGLIK_2("Manglik Dosha: Chant Mangal Mantra 'Om Kraam Kreem Kraum Sah Bhaumaya Namah' 108 times on Tuesdays", "मांगलिक दोष: मंगलबारमा मंगल मन्त्र 'ॐ क्रां क्रीं क्रौं सः भौमाय नमः' १०८ पटक जाप गर्नुहोस्"),
+    REMEDY_MANGLIK_3("Manglik Dosha: Wear a Red Coral (Moonga) after proper energization and astrological consultation", "मांगलिक दोष: उचित ऊर्जावान र ज्योतिषीय परामर्श पछि मुंगा (प्रवाल) धारण गर्नुहोस्"),
+    REMEDY_MANGLIK_BRIDE("For Bride's Manglik: Visit Hanuman temple on Tuesdays and offer vermilion and jasmine oil", "दुलहीको मांगलिकको लागि: मंगलबारमा हनुमान मन्दिरमा जानुहोस् र सिन्दूर र चमेलीको तेल चढाउनुहोस्"),
+    REMEDY_MANGLIK_GROOM("For Groom's Manglik: Perform Mars-related charity on Tuesdays (donate red lentils, jaggery, copper)", "दुलाहाको मांगलिकको लागि: मंगलबारमा मंगल-सम्बन्धित दान गर्नुहोस् (रातो दाल, गुड, तामा दान गर्नुहोस्)"),
+    REMEDY_DOUBLE_MANGLIK("Double Manglik: Requires extended Kumbh Vivah ritual and 11 Rudrabhisheks over 11 consecutive Mondays", "दोहोरो मांगलिक: विस्तारित कुम्भ विवाह विधि र लगातार ११ सोमबारमा ११ रुद्राभिषेक आवश्यक"),
+    REMEDY_GANA_1("Gana Incompatibility: Chant Ganapati Atharvasheersham daily for 41 days", "गण असंगतता: ४१ दिन दैनिक गणपति अथर्वशीर्षम् जाप गर्नुहोस्"),
+    REMEDY_GANA_2("Gana Incompatibility: Perform Navgraha Shanti puja together before marriage", "गण असंगतता: विवाह अघि सँगै नवग्रह शान्ति पूजा गर्नुहोस्"),
+    REMEDY_GANA_3("Gana Incompatibility: Practice mutual respect and conscious communication daily", "गण असंगतता: दैनिक पारस्परिक सम्मान र सचेत सञ्चार अभ्यास गर्नुहोस्"),
+    REMEDY_GRAHA_MAITRI_1("Graha Maitri: Strengthen Mercury through green charity and Budh mantra chanting on Wednesdays", "ग्रह मैत्री: बुधबारमा हरियो दान र बुध मन्त्र जापद्वारा बुध बलियो बनाउनुहोस्"),
+    REMEDY_GRAHA_MAITRI_2("Graha Maitri: Both partners should meditate together daily to improve mental harmony", "ग्रह मैत्री: मानसिक सामञ्जस्य सुधार गर्न दुवै साझेदारले दैनिक सँगै ध्यान गर्नुपर्छ"),
+    REMEDY_YONI_1("Yoni Incompatibility: Worship Kamadeva (God of Love) and offer flowers on Fridays", "योनि असंगतता: शुक्रबारमा कामदेव (प्रेमको देवता) पूजा गर्नुहोस् र फूल चढाउनुहोस्"),
+    REMEDY_YONI_2("Yoni Incompatibility: Perform Ashwamedha or Gajamedha symbolic puja to neutralize animal enmity", "योनि असंगतता: पशु वैमनस्य निष्क्रिय गर्न अश्वमेध वा गजमेध प्रतीकात्मक पूजा गर्नुहोस्"),
+    REMEDY_VEDHA_1("Vedha Dosha: Perform Nakshatra Shanti puja for both birth stars", "वेध दोष: दुवै जन्म नक्षत्रको लागि नक्षत्र शान्ति पूजा गर्नुहोस्"),
+    REMEDY_VEDHA_2("Vedha Dosha: Donate black sesame and urad dal on Saturdays", "वेध दोष: शनिबारमा कालो तिल र उडदको दाल दान गर्नुहोस्"),
+    REMEDY_RAJJU_SIRO("Siro Rajju Dosha (Head): Perform Ayushya Homa and worship Lord Mrityunjaya Shiva", "शिरो रज्जु दोष (शिर): आयुष्य होम गर्नुहोस् र भगवान मृत्युञ्जय शिवको पूजा गर्नुहोस्"),
+    REMEDY_RAJJU_KANTHA("Kantha Rajju Dosha (Neck): Wear Rudraksha mala and chant Vishnu mantras", "कण्ठ रज्जु दोष (घाँटी): रुद्राक्ष माला लगाउनुहोस् र विष्णु मन्त्र जाप गर्नुहोस्"),
+    REMEDY_RAJJU_NABHI("Nabhi Rajju Dosha (Navel): Perform Santan Gopal puja and donate to orphanages", "नाभि रज्जु दोष (नाभि): सन्तान गोपाल पूजा गर्नुहोस् र अनाथाश्रममा दान गर्नुहोस्"),
+    REMEDY_RAJJU_KATI("Kati Rajju Dosha (Waist): Perform Lakshmi puja and donate to poverty relief", "कटि रज्जु दोष (कम्मर): लक्ष्मी पूजा गर्नुहोस् र गरिबी उन्मूलनमा दान गर्नुहोस्"),
+    REMEDY_RAJJU_PADA("Pada Rajju Dosha (Feet): Worship at a pilgrimage site together before marriage", "पाद रज्जु दोष (पाउ): विवाह अघि सँगै तीर्थस्थलमा पूजा गर्नुहोस्"),
+    REMEDY_GENERAL_1("General: Perform Satyanarayan Puja together on Purnima (full moon)", "सामान्य: पूर्णिमामा सँगै सत्यनारायण पूजा गर्नुहोस्"),
+    REMEDY_GENERAL_2("General: Chant Swayamvara Parvati Mantra for marital harmony", "सामान्य: वैवाहिक सामञ्जस्यको लागि स्वयंवर पार्वती मन्त्र जाप गर्नुहोस्"),
+    REMEDY_GENERAL_3("General: Donate to couples in need or contribute to marriage funds for the poor", "सामान्य: जरुरतमन्द जोडीहरूलाई दान गर्नुहोस् वा गरिबको विवाह कोषमा योगदान गर्नुहोस्"),
+    REMEDY_GENERAL_4("General: Both partners should observe Monday fasts for Lord Shiva", "सामान्य: दुवै साझेदारले भगवान शिवको लागि सोमबार व्रत गर्नुपर्छ"),
+    REMEDY_SERIOUS_1("Serious Concerns: Consult a qualified Vedic astrologer for personalized guidance", "गम्भीर चिन्ताहरू: व्यक्तिगत मार्गदर्शनको लागि योग्य वैदिक ज्योतिषीसँग परामर्श गर्नुहोस्"),
+    REMEDY_SERIOUS_2("Serious Concerns: Consider Maha Mrityunjaya Homa for overall protection", "गम्भीर चिन्ताहरू: समग्र सुरक्षाको लागि महा मृत्युञ्जय होम विचार गर्नुहोस्"),
+    REMEDY_NONE_NEEDED("Excellent compatibility - no specific remedies required.", "उत्कृष्ट अनुकूलता - कुनै विशेष उपाय आवश्यक छैन।"),
+    REMEDY_SATYANARAYAN("For auspiciousness: Perform Satyanarayan Katha together on the first Purnima after marriage", "शुभताको लागि: विवाह पछिको पहिलो पूर्णिमामा सँगै सत्यनारायण कथा गर्नुहोस्"),
+
+    // ============================================
+    // MATCHMAKING - SUMMARY & ANALYSIS STRINGS
+    // ============================================
+    SUMMARY_TITLE("KUNDLI MILAN SUMMARY", "कुण्डली मिलान सारांश"),
+    SUMMARY_OVERALL_SCORE("Overall Score", "समग्र अंक"),
+    SUMMARY_RATING("Rating", "मूल्यांकन"),
+    SUMMARY_STRENGTHS("Strengths", "शक्तिहरू"),
+    SUMMARY_CONCERNS("Areas of Concern", "चिन्ताका क्षेत्रहरू"),
+    SUMMARY_MANGLIK("Manglik Status", "मांगलिक स्थिति"),
+    SUMMARY_ADDITIONAL("Additional Factors", "अतिरिक्त कारकहरू"),
+    SUMMARY_RECOMMENDATION("Recommendation", "सिफारिस"),
+    DETAILED_TITLE("DETAILED MATCHMAKING ANALYSIS", "विस्तृत मिलान विश्लेषण"),
+    BIRTH_DATA_SUMMARY("Birth Data Summary", "जन्म डाटा सारांश"),
+    MOON_SIGN("Moon Sign", "चन्द्र राशि"),
+    NAKSHATRA_LABEL("Nakshatra", "नक्षत्र"),
+    PADA_LABEL("Pada", "पाद"),
+    MOON_LONGITUDE("Moon Longitude", "चन्द्र देशान्तर"),
+    PURPOSE("Purpose", "उद्देश्य"),
+    ANALYSIS_LABEL("Analysis", "विश्लेषण"),
+    ADDITIONAL_FACTORS_TITLE("Additional Compatibility Factors", "अतिरिक्त अनुकूलता कारकहरू"),
+    OBSTRUCTION("Obstruction", "बाधा"),
+    COSMIC_BOND("Cosmic Bond", "ब्रह्माण्डीय बन्धन"),
+    WARNING_LABEL("Warning", "चेतावनी"),
+    WIFE_PROSPERITY("Wife's Prosperity", "पत्नीको समृद्धि"),
+    NAKSHATRA_DIFF("Nakshatra Difference", "नक्षत्र भिन्नता"),
+    SATISFIED("Satisfied", "सन्तुष्ट"),
+    NOT_SATISFIED("Not Satisfied", "सन्तुष्ट छैन"),
+    LONGEVITY_PROSPERITY("Longevity & Prosperity", "दीर्घायु र समृद्धि"),
+    NOT_APPLICABLE("Not Applicable", "लागू हुँदैन"),
+
+    // ============================================
+    // MATCHMAKING - COMMON STATUS STRINGS
+    // ============================================
+    BRIDE("Bride", "दुलही"),
+    GROOM("Groom", "दुलाहा"),
+    STATUS("Status", "स्थिति"),
+    COMPATIBLE("Compatible", "अनुकूल"),
+    NEEDS_ATTENTION("Needs Attention", "ध्यान आवश्यक"),
+    PRESENT("Present", "उपस्थित"),
+    NOT_PRESENT("Not Present", "उपस्थित छैन"),
+    FAVORABLE("Favorable", "अनुकूल"),
+    SAME_RAJJU("Same Rajju", "उही रज्जु"),
+    DETAILS("Details", "विवरण"),
+
+    // ============================================
+    // MATCHMAKING - GUNA DESCRIPTIONS
+    // ============================================
+    GUNA_DESC_VARNA("Varna indicates spiritual compatibility based on the Moon sign's element. It measures ego harmony and how partners relate on a spiritual level. Higher compatibility suggests natural understanding of values.", "वर्णले चन्द्र राशिको तत्वमा आधारित आध्यात्मिक अनुकूलता संकेत गर्दछ। यसले अहंकार सामञ्जस्य र साझेदारहरू आध्यात्मिक स्तरमा कसरी सम्बन्धित छन् मापन गर्दछ।"),
+    GUNA_DESC_VASHYA("Vashya measures the mutual attraction and influence between partners. It indicates who can influence whom and the power dynamics in the relationship.", "वश्यले साझेदारहरू बीचको पारस्परिक आकर्षण र प्रभाव मापन गर्दछ। यसले कसले कसलाई प्रभाव पार्न सक्छ र सम्बन्धमा शक्ति गतिशीलता संकेत गर्दछ।"),
+    GUNA_DESC_TARA("Tara analyzes destiny compatibility through the birth stars (Nakshatras). It determines the auspiciousness of the couple's combined destiny path.", "तारा जन्म तारा (नक्षत्र) मार्फत भाग्य अनुकूलता विश्लेषण गर्दछ। यसले जोडीको संयुक्त भाग्य मार्गको शुभता निर्धारण गर्दछ।"),
+    GUNA_DESC_YONI("Yoni represents physical and sexual compatibility based on the animal nature assigned to each Nakshatra. Same or friendly animals indicate better physical harmony.", "योनीले प्रत्येक नक्षत्रलाई तोकिएको पशु प्रकृतिमा आधारित शारीरिक र यौन अनुकूलता प्रतिनिधित्व गर्दछ। उही वा मित्र पशुहरूले राम्रो शारीरिक सामञ्जस्य संकेत गर्दछ।"),
+    GUNA_DESC_GRAHA_MAITRI("Graha Maitri analyzes mental compatibility through the friendship of Moon sign lords. It indicates how well the couple can understand each other intellectually.", "ग्रह मैत्रीले चन्द्र राशि स्वामीहरूको मित्रता मार्फत मानसिक अनुकूलता विश्लेषण गर्दछ। यसले जोडीले बौद्धिक रूपमा एकअर्कालाई कत्तिको राम्रोसँग बुझ्न सक्छ संकेत गर्दछ।"),
+    GUNA_DESC_GANA("Gana measures temperament compatibility through Deva (divine), Manushya (human), or Rakshasa (demon) classification based on Nakshatra.", "गणले नक्षत्रमा आधारित देव, मनुष्य, वा राक्षस वर्गीकरण मार्फत स्वभाव अनुकूलता मापन गर्दछ।"),
+    GUNA_DESC_BHAKOOT("Bhakoot indicates love, health, and financial compatibility based on the Moon sign positions. It's crucial for long-term marital harmony.", "भकुटले चन्द्र राशि स्थितिहरूमा आधारित प्रेम, स्वास्थ्य र आर्थिक अनुकूलता संकेत गर्दछ। यो दीर्घकालीन वैवाहिक सामञ्जस्यको लागि महत्त्वपूर्ण छ।"),
+    GUNA_DESC_NADI("Nadi is the most important factor (8 points), indicating health and progeny compatibility. Same Nadi can cause health issues and affect children.", "नाडी सबैभन्दा महत्त्वपूर्ण कारक (८ अंक) हो, स्वास्थ्य र सन्तान अनुकूलता संकेत गर्दछ। उही नाडीले स्वास्थ्य समस्या र सन्तानमा असर पार्न सक्छ।"),
+    GUNA_DESC_NOT_AVAILABLE("Detailed description not available for this Guna.", "यस गुणको विस्तृत विवरण उपलब्ध छैन।"),
+
+    // ============================================
+    // MATCHMAKING - SCORE INTERPRETATIONS
+    // ============================================
+    SCORE_EXCELLENT("Excellent match! Score above 28 indicates highly favorable compatibility across all dimensions.", "उत्कृष्ट मिलान! २८ माथिको अंकले सबै आयामहरूमा अत्यन्त अनुकूल अनुकूलता संकेत गर्दछ।"),
+    SCORE_GOOD("Good match. Score of 21-27 suggests strong compatibility with minor areas to work on.", "राम्रो मिलान। २१-२७ को अंकले काम गर्नुपर्ने सानातिना क्षेत्रहरूसहित बलियो अनुकूलता सुझाव दिन्छ।"),
+    SCORE_AVERAGE("Average compatibility. Score of 18-20 requires attention to problem areas and remedies.", "औसत अनुकूलता। १८-२० को अंकले समस्या क्षेत्रहरू र उपायहरूमा ध्यान आवश्यक पर्छ।"),
+    SCORE_BELOW_AVERAGE("Below average compatibility. Score of 14-17 indicates significant challenges requiring serious consideration.", "औसतमुनि अनुकूलता। १४-१७ को अंकले गम्भीर विचार आवश्यक पर्ने महत्त्वपूर्ण चुनौतीहरू संकेत गर्दछ।"),
+    SCORE_POOR("Poor compatibility. Score below 14 suggests major challenges. Marriage not recommended without extensive remedies.", "कमजोर अनुकूलता। १४ मुनिको अंकले प्रमुख चुनौतीहरू सुझाव दिन्छ। व्यापक उपायहरू बिना विवाह सिफारिस गरिएको छैन।"),
 
     // ============================================
     // YOGA CALCULATOR - CATEGORIES & STRENGTH

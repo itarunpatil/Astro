@@ -1,4 +1,4 @@
-package com.astro.storm.ui.screen
+package com.astro.storm.ui.screen.matchmaking
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -48,7 +48,7 @@ import com.astro.storm.data.localization.StringKey
 import com.astro.storm.data.localization.StringResources
 import com.astro.storm.data.localization.currentLanguage
 import com.astro.storm.data.localization.stringResource
-import com.astro.storm.data.model.VedicChart
+import com.astro.storm.data.model.*
 import com.astro.storm.ephemeris.MatchmakingCalculator
 import com.astro.storm.ephemeris.VedicAstrologyUtils
 import com.astro.storm.ui.theme.AppTheme
@@ -76,7 +76,7 @@ fun MatchmakingScreen(
     var brideChart by remember { mutableStateOf<VedicChart?>(null) }
     var groomChart by remember { mutableStateOf<VedicChart?>(null) }
 
-    var matchingResult by remember { mutableStateOf<MatchmakingCalculator.MatchmakingResult?>(null) }
+    var matchingResult by remember { mutableStateOf<MatchmakingResult?>(null) }
     var isCalculating by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -750,7 +750,7 @@ private fun ErrorCard(
 
 @Composable
 private fun EnhancedCompatibilityScoreCard(
-    result: MatchmakingCalculator.MatchmakingResult,
+    result: MatchmakingResult,
     animatedProgress: Float
 ) {
     Card(
@@ -869,7 +869,7 @@ private fun EnhancedCompatibilityScoreCard(
 }
 
 @Composable
-private fun QuickInsightsRow(result: MatchmakingCalculator.MatchmakingResult) {
+private fun QuickInsightsRow(result: MatchmakingResult) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -988,7 +988,7 @@ private fun TabSelector(
 
 @Composable
 private fun OverviewSection(
-    result: MatchmakingCalculator.MatchmakingResult,
+    result: MatchmakingResult,
     brideChart: VedicChart?,
     groomChart: VedicChart?
 ) {
@@ -1041,7 +1041,7 @@ private fun OverviewSection(
 }
 
 @Composable
-private fun EnhancedGunaScoreBar(guna: MatchmakingCalculator.GunaAnalysis) {
+private fun EnhancedGunaScoreBar(guna: GunaAnalysis) {
     val animatedProgress by animateFloatAsState(
         targetValue = (guna.obtainedPoints / guna.maxPoints).toFloat(),
         animationSpec = tween(800, easing = FastOutSlowInEasing),
@@ -1263,7 +1263,7 @@ private fun SpecialConsiderationsCard(considerations: List<String>) {
 }
 
 @Composable
-private fun GunaSummaryHeader(result: MatchmakingCalculator.MatchmakingResult) {
+private fun GunaSummaryHeader(result: MatchmakingResult) {
     val positiveCount = result.gunaAnalyses.count { it.isPositive }
     val totalCount = result.gunaAnalyses.size
 
@@ -1325,7 +1325,7 @@ private fun GunaSummaryHeader(result: MatchmakingCalculator.MatchmakingResult) {
 
 @Composable
 private fun AnimatedGunaCard(
-    guna: MatchmakingCalculator.GunaAnalysis,
+    guna: GunaAnalysis,
     index: Int
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -1479,7 +1479,7 @@ private fun AnimatedGunaCard(
 }
 
 @Composable
-private fun DoshaSection(result: MatchmakingCalculator.MatchmakingResult) {
+private fun DoshaSection(result: MatchmakingResult) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Card(
             modifier = Modifier
@@ -1558,7 +1558,7 @@ private fun DoshaSection(result: MatchmakingCalculator.MatchmakingResult) {
 
 @Composable
 private fun EnhancedManglikPersonCard(
-    analysis: MatchmakingCalculator.ManglikAnalysis,
+    analysis: ManglikAnalysis,
     label: String,
     accentColor: Color
 ) {
@@ -1678,7 +1678,7 @@ private fun EnhancedManglikPersonCard(
 }
 
 @Composable
-private fun NadiDoshaCard(result: MatchmakingCalculator.MatchmakingResult) {
+private fun NadiDoshaCard(result: MatchmakingResult) {
     val nadiGuna = result.gunaAnalyses.find { it.name == "Nadi" }
     val hasNadiDosha = nadiGuna?.obtainedPoints == 0.0
 
@@ -1782,7 +1782,7 @@ private fun NadiDoshaCard(result: MatchmakingCalculator.MatchmakingResult) {
 }
 
 @Composable
-private fun BhakootDoshaCard(result: MatchmakingCalculator.MatchmakingResult) {
+private fun BhakootDoshaCard(result: MatchmakingResult) {
     val bhakootGuna = result.gunaAnalyses.find { it.name == "Bhakoot" }
     val hasBhakootDosha = bhakootGuna?.obtainedPoints == 0.0
 
@@ -1871,7 +1871,7 @@ private fun BhakootDoshaCard(result: MatchmakingCalculator.MatchmakingResult) {
 
 @Composable
 private fun NakshatraSection(
-    result: MatchmakingCalculator.MatchmakingResult,
+    result: MatchmakingResult,
     brideChart: VedicChart?,
     groomChart: VedicChart?
 ) {
@@ -1999,7 +1999,7 @@ private fun NakshatraComparisonRow(
 }
 
 @Composable
-private fun RajjuAnalysisCard(result: MatchmakingCalculator.MatchmakingResult) {
+private fun RajjuAnalysisCard(result: MatchmakingResult) {
     val hasRajjuDosha = result.specialConsiderations.any { 
         it.contains("Rajju", ignoreCase = true) 
     }
@@ -2069,7 +2069,7 @@ private fun RajjuAnalysisCard(result: MatchmakingCalculator.MatchmakingResult) {
 }
 
 @Composable
-private fun VedhaAnalysisCard(result: MatchmakingCalculator.MatchmakingResult) {
+private fun VedhaAnalysisCard(result: MatchmakingResult) {
     val hasVedha = result.specialConsiderations.any { 
         it.contains("Vedha", ignoreCase = true) 
     }
@@ -2140,7 +2140,7 @@ private fun VedhaAnalysisCard(result: MatchmakingCalculator.MatchmakingResult) {
 
 @Composable
 private fun StreeDeerghCard(
-    result: MatchmakingCalculator.MatchmakingResult,
+    result: MatchmakingResult,
     brideChart: VedicChart?,
     groomChart: VedicChart?
 ) {
@@ -2235,7 +2235,7 @@ private fun StreeDeerghCard(
 }
 
 @Composable
-private fun EnhancedRemediesSection(result: MatchmakingCalculator.MatchmakingResult) {
+private fun EnhancedRemediesSection(result: MatchmakingResult) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Card(
             modifier = Modifier
@@ -2584,7 +2584,7 @@ private fun EnhancedProfileSelectorBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShareOptionsSheet(
-    result: MatchmakingCalculator.MatchmakingResult?,
+    result: MatchmakingResult?,
     brideChart: VedicChart?,
     groomChart: VedicChart?,
     onDismiss: () -> Unit,
@@ -2634,7 +2634,7 @@ private fun ShareOptionsSheet(
                 subtitle = stringResource(StringKey.MATCH_COPY_FULL_DESC),
                 onClick = {
                     result?.let {
-                        onCopyToClipboard(generateTextReport(it, brideChart, groomChart, language))
+                        onCopyToClipboard(MatchmakingReportUtils.generateFullReport(it, brideChart, groomChart, language))
                     }
                 }
             )
@@ -2645,7 +2645,7 @@ private fun ShareOptionsSheet(
                 subtitle = stringResource(StringKey.MATCH_COPY_SUMMARY_DESC),
                 onClick = {
                     result?.let {
-                        onCopyToClipboard(generateSummaryReport(it, brideChart, groomChart, language))
+                        onCopyToClipboard(MatchmakingReportUtils.generateSummaryReport(it, brideChart, groomChart, language))
                     }
                 }
             )
@@ -2656,7 +2656,7 @@ private fun ShareOptionsSheet(
                 subtitle = stringResource(StringKey.MATCH_COPY_SCORES_DESC),
                 onClick = {
                     result?.let {
-                        onCopyToClipboard(generateScoresReport(it, language))
+                        onCopyToClipboard(MatchmakingReportUtils.generateScoresReport(it, language))
                     }
                 }
             )
@@ -2720,215 +2720,10 @@ private fun ShareOptionItem(
     }
 }
 
-private fun generateTextReport(
-    result: MatchmakingCalculator.MatchmakingResult,
-    brideChart: VedicChart?,
-    groomChart: VedicChart?,
-    language: Language
-): String {
-    val naText = StringResources.get(StringKey.REPORT_NA, language)
-    val brideLabel = StringResources.get(StringKey.REPORT_BRIDE_LABEL, language)
-    val groomLabel = StringResources.get(StringKey.REPORT_GROOM_LABEL, language)
-    val moonSignLabel = StringResources.get(StringKey.REPORT_MOON_SIGN_LABEL, language)
-    val nakshatraLabel = StringResources.get(StringKey.REPORT_NAKSHATRA_LABEL, language)
-    val cancellationText = StringResources.get(StringKey.REPORT_CANCELLATION, language)
-
-    return buildString {
-        appendLine("═══════════════════════════════════════")
-        appendLine("       ${StringResources.get(StringKey.REPORT_MATCHMAKING_TITLE, language)}")
-        appendLine("         ${StringResources.get(StringKey.REPORT_ASTROSTORM_ANALYSIS, language)}")
-        appendLine("═══════════════════════════════════════")
-        appendLine()
-
-        appendLine(StringResources.get(StringKey.REPORT_PROFILES, language))
-        appendLine("─────────────────────────────────────")
-        brideChart?.let {
-            appendLine("$brideLabel ${it.birthData.name ?: naText}")
-            appendLine("  $moonSignLabel ${getRashiNameForReport(it)}")
-            appendLine("  $nakshatraLabel ${getNakshatraNameForReport(it)} (${getPadaForReport(it)})")
-        }
-        groomChart?.let {
-            appendLine("$groomLabel ${it.birthData.name ?: naText}")
-            appendLine("  $moonSignLabel ${getRashiNameForReport(it)}")
-            appendLine("  $nakshatraLabel ${getNakshatraNameForReport(it)} (${getPadaForReport(it)})")
-        }
-        appendLine()
-
-        appendLine(StringResources.get(StringKey.REPORT_COMPATIBILITY_SCORE, language))
-        appendLine("─────────────────────────────────────")
-        appendLine("${StringResources.get(StringKey.REPORT_TOTAL_POINTS, language)} ${String.format("%.1f", result.totalPoints)} / ${result.maxPoints.toInt()}")
-        appendLine("${StringResources.get(StringKey.REPORT_PERCENTAGE, language)} ${String.format("%.1f", result.percentage)}%")
-        appendLine("${StringResources.get(StringKey.REPORT_RATING_LABEL, language)} ${result.rating.displayName}")
-        appendLine()
-
-        appendLine(StringResources.get(StringKey.REPORT_ASHTAKOOTA_8_GUNA, language))
-        appendLine("─────────────────────────────────────")
-        result.gunaAnalyses.forEach { guna ->
-            val status = if (guna.isPositive) "✓" else "✗"
-            appendLine("$status ${guna.name} (${guna.description})")
-            appendLine("  ${StringResources.get(StringKey.REPORT_SCORE_LABEL, language)} ${guna.obtainedPoints.toInt()}/${guna.maxPoints.toInt()}")
-            appendLine("  ${StringResources.get(StringKey.MATCH_BRIDE, language)}: ${guna.brideValue} | ${StringResources.get(StringKey.MATCH_GROOM, language)}: ${guna.groomValue}")
-            appendLine("  ${guna.analysis}")
-            appendLine()
-        }
-
-        appendLine(StringResources.get(StringKey.REPORT_MANGLIK_DOSHA_ANALYSIS, language))
-        appendLine("─────────────────────────────────────")
-        appendLine("${StringResources.get(StringKey.REPORT_COMPATIBILITY_LABEL, language)} ${result.manglikCompatibility}")
-        appendLine()
-        appendLine("${StringResources.get(StringKey.MATCH_BRIDE, language)}: ${result.brideManglik.effectiveDosha.displayName}")
-        if (result.brideManglik.marsHouse > 0) {
-            appendLine("  ${String.format(StringResources.get(StringKey.REPORT_MARS_IN_HOUSE, language), result.brideManglik.marsHouse)}")
-        }
-        result.brideManglik.factors.forEach { appendLine("  • $it") }
-        result.brideManglik.cancellations.forEach { appendLine("  ✓ $it $cancellationText") }
-        appendLine()
-        appendLine("${StringResources.get(StringKey.MATCH_GROOM, language)}: ${result.groomManglik.effectiveDosha.displayName}")
-        if (result.groomManglik.marsHouse > 0) {
-            appendLine("  ${String.format(StringResources.get(StringKey.REPORT_MARS_IN_HOUSE, language), result.groomManglik.marsHouse)}")
-        }
-        result.groomManglik.factors.forEach { appendLine("  • $it") }
-        result.groomManglik.cancellations.forEach { appendLine("  ✓ $it $cancellationText") }
-        appendLine()
-
-        if (result.specialConsiderations.isNotEmpty()) {
-            appendLine(StringResources.get(StringKey.REPORT_SPECIAL_CONSIDERATIONS, language))
-            appendLine("─────────────────────────────────────")
-            result.specialConsiderations.forEach { appendLine("• $it") }
-            appendLine()
-        }
-
-        appendLine(StringResources.get(StringKey.REPORT_SUGGESTED_REMEDIES, language))
-        appendLine("─────────────────────────────────────")
-        result.remedies.forEachIndexed { index, remedy ->
-            appendLine("${index + 1}. $remedy")
-        }
-        appendLine()
-
-        appendLine("═══════════════════════════════════════")
-        appendLine(StringResources.get(StringKey.REPORT_GENERATED_BY, language))
-        appendLine(StringResources.get(StringKey.REPORT_ASTROSTORM_VEDIC, language))
-        appendLine("═══════════════════════════════════════")
-    }
-}
-
-private fun generateSummaryReport(
-    result: MatchmakingCalculator.MatchmakingResult,
-    brideChart: VedicChart?,
-    groomChart: VedicChart?,
-    language: Language
-): String {
-    val naText = StringResources.get(StringKey.REPORT_NA, language)
-    val brideLabel = StringResources.get(StringKey.MATCH_BRIDE, language)
-    val groomLabel = StringResources.get(StringKey.MATCH_GROOM, language)
-
-    return buildString {
-        appendLine("🔮 ${StringResources.get(StringKey.REPORT_KUNDLI_MILAN_SUMMARY, language)}")
-        appendLine()
-        brideChart?.let { appendLine("👰 $brideLabel: ${it.birthData.name ?: naText}") }
-        groomChart?.let { appendLine("🤵 $groomLabel: ${it.birthData.name ?: naText}") }
-        appendLine()
-        appendLine("⭐ ${StringResources.get(StringKey.REPORT_SCORE_LABEL, language)} ${String.format("%.1f", result.totalPoints)}/${result.maxPoints.toInt()} (${String.format("%.1f", result.percentage)}%)")
-        appendLine("📊 ${StringResources.get(StringKey.REPORT_RATING_LABEL, language)} ${result.rating.displayName}")
-        appendLine()
-        appendLine("${result.rating.description}")
-        appendLine()
-        appendLine("🔴 ${StringResources.get(StringKey.REPORT_MANGLIK_LABEL, language)} ${result.manglikCompatibility}")
-        appendLine()
-        appendLine("— ${StringResources.get(StringKey.REPORT_GENERATED_BY, language)}")
-    }
-}
-
-private fun generateScoresReport(
-    result: MatchmakingCalculator.MatchmakingResult,
-    language: Language
-): String {
-    return buildString {
-        appendLine(StringResources.get(StringKey.REPORT_ASHTAKOOTA_GUNA_SCORES, language))
-        appendLine("━━━━━━━━━━━━━━━━━━━━━━")
-        result.gunaAnalyses.forEach { guna ->
-            val emoji = if (guna.isPositive) "✅" else "⚠️"
-            appendLine("$emoji ${guna.name}: ${guna.obtainedPoints.toInt()}/${guna.maxPoints.toInt()}")
-        }
-        appendLine("━━━━━━━━━━━━━━━━━━━━━━")
-        appendLine("${StringResources.get(StringKey.REPORT_TOTAL, language)}: ${String.format("%.1f", result.totalPoints)}/${result.maxPoints.toInt()}")
-        appendLine()
-        appendLine("— AstroStorm")
-    }
-}
-
-private fun getRatingColor(rating: MatchmakingCalculator.CompatibilityRating): Color {
-    return when (rating) {
-        MatchmakingCalculator.CompatibilityRating.EXCELLENT -> Color(0xFF2E7D32)
-        MatchmakingCalculator.CompatibilityRating.GOOD -> Color(0xFF558B2F)
-        MatchmakingCalculator.CompatibilityRating.AVERAGE -> Color(0xFFF9A825)
-        MatchmakingCalculator.CompatibilityRating.BELOW_AVERAGE -> Color(0xFFEF6C00)
-        MatchmakingCalculator.CompatibilityRating.POOR -> Color(0xFFC62828)
-    }
-}
-
-private fun getRatingIcon(rating: MatchmakingCalculator.CompatibilityRating): ImageVector {
-    return when (rating) {
-        MatchmakingCalculator.CompatibilityRating.EXCELLENT -> Icons.Filled.Stars
-        MatchmakingCalculator.CompatibilityRating.GOOD -> Icons.Filled.ThumbUp
-        MatchmakingCalculator.CompatibilityRating.AVERAGE -> Icons.Outlined.Balance
-        MatchmakingCalculator.CompatibilityRating.BELOW_AVERAGE -> Icons.Outlined.TrendingDown
-        MatchmakingCalculator.CompatibilityRating.POOR -> Icons.Filled.Cancel
-    }
-}
-
-private fun getManglikStatusColor(status: String): Color {
-    return when {
-        status.contains("No concerns", ignoreCase = true) -> AppTheme.SuccessColor
-        status.contains("cancel", ignoreCase = true) -> AppTheme.SuccessColor
-        status.contains("Both", ignoreCase = true) -> AppTheme.SuccessColor
-        status.contains("Manageable", ignoreCase = true) -> AppTheme.WarningColor
-        status.contains("Partial", ignoreCase = true) -> AppTheme.WarningColor
-        else -> AppTheme.ErrorColor
-    }
-}
-
-private fun getManglikSeverityColor(dosha: MatchmakingCalculator.ManglikDosha): Color {
-    return when (dosha) {
-        MatchmakingCalculator.ManglikDosha.NONE -> AppTheme.SuccessColor
-        MatchmakingCalculator.ManglikDosha.PARTIAL -> AppTheme.WarningColor
-        MatchmakingCalculator.ManglikDosha.FULL -> AppTheme.ErrorColor
-        MatchmakingCalculator.ManglikDosha.DOUBLE -> Color(0xFF8B0000)
-    }
-}
-
-private fun getManglikQuickStatus(result: MatchmakingCalculator.MatchmakingResult): String {
-    val brideStatus = result.brideManglik.effectiveDosha
-    val groomStatus = result.groomManglik.effectiveDosha
-    
-    return when {
-        brideStatus == MatchmakingCalculator.ManglikDosha.NONE && 
-            groomStatus == MatchmakingCalculator.ManglikDosha.NONE -> "No Dosha"
-        brideStatus != MatchmakingCalculator.ManglikDosha.NONE && 
-            groomStatus != MatchmakingCalculator.ManglikDosha.NONE -> "Both Manglik"
-        brideStatus != MatchmakingCalculator.ManglikDosha.NONE -> "Bride Only"
-        groomStatus != MatchmakingCalculator.ManglikDosha.NONE -> "Groom Only"
-        else -> "Check Details"
-    }
-}
+// Report generation functions moved to MatchmakingReportUtils.kt
 
 private fun getMoonPosition(chart: VedicChart) = chart.planetPositions.find {
-    it.planet == com.astro.storm.data.model.Planet.MOON
-}
-
-// Non-composable versions for text report generation
-private fun getNakshatraNameForReport(chart: VedicChart): String {
-    return getMoonPosition(chart)?.nakshatra?.displayName ?: "N/A"
-}
-
-private fun getRashiNameForReport(chart: VedicChart): String {
-    val moonPosition = getMoonPosition(chart) ?: return "N/A"
-    return moonPosition.sign.displayName
-}
-
-private fun getPadaForReport(chart: VedicChart): String {
-    val moonPosition = getMoonPosition(chart) ?: return "N/A"
-    return "Pada ${moonPosition.nakshatraPada}"
+    it.planet == Planet.MOON
 }
 
 @Composable
