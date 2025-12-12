@@ -641,6 +641,13 @@ object MatchmakingConstants {
     const val MAX_NADI = 8.0
     const val MAX_TOTAL = 36.0
 
+    // Compatibility rating thresholds (based on guna points out of 36)
+    const val EXCELLENT_THRESHOLD = 31.0  // 31+ points
+    const val GOOD_THRESHOLD = 26.0       // 26-30 points
+    const val AVERAGE_THRESHOLD = 21.0    // 21-25 points
+    const val POOR_THRESHOLD = 16.0       // 16-20 points
+    // Below 16 is BELOW_AVERAGE
+
     /** Manglik houses from Lagna: 1, 2, 4, 7, 8, 12 */
     val MANGLIK_HOUSES = listOf(1, 2, 4, 7, 8, 12)
 

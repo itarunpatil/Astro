@@ -51,6 +51,7 @@ import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.*
 import com.astro.storm.ephemeris.MatchmakingCalculator
 import com.astro.storm.ephemeris.VedicAstrologyUtils
+import com.astro.storm.ui.screen.matchmaking.MatchmakingReportUtils.getManglikQuickStatus
 import com.astro.storm.ui.theme.AppTheme
 import com.astro.storm.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.Dispatchers
@@ -182,7 +183,7 @@ fun MatchmakingScreen(
                             IconButton(onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 matchingResult?.let { result ->
-                                    val report = generateTextReport(result, brideChart, groomChart, language)
+                                    val report = MatchmakingReportUtils.generateFullReport(result, brideChart, groomChart, language)
                                     clipboardManager.setText(AnnotatedString(report))
                                     scope.launch {
                                         snackbarHostState.showSnackbar(copiedToClipboardText)
@@ -616,139 +617,6 @@ private fun EnhancedProfileCard(
 }
 
 @Composable
-private fun ConnectionIndicator(
-    isConnected: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (isConnected) 1.2f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_scale"
-    )
-
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        if (isConnected) {
-            Icon(
-                Icons.Filled.Favorite,
-                contentDescription = stringResource(StringKey.MATCH_CONNECTED),
-                tint = AppTheme.LifeAreaLove,
-                modifier = Modifier
-                    .size(28.dp)
-                    .scale(scale)
-            )
-        } else {
-            Icon(
-                Icons.Outlined.FavoriteBorder,
-                contentDescription = stringResource(StringKey.MATCH_NOT_CONNECTED),
-                tint = AppTheme.TextSubtle,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun CalculatingState() {
-    val infiniteTransition = rememberInfiniteTransition(label = "calculating")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing)
-        ),
-        label = "rotation"
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(64.dp),
-                    color = AppTheme.AccentPrimary.copy(alpha = 0.3f),
-                    strokeWidth = 4.dp
-                )
-                Icon(
-                    Icons.Filled.AutoAwesome,
-                    contentDescription = null,
-                    tint = AppTheme.AccentPrimary,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .rotate(rotation)
-                )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                stringResource(StringKey.MATCH_ANALYZING_COMPATIBILITY),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = AppTheme.TextPrimary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                stringResource(StringKey.MATCH_CALCULATING_DOSHAS),
-                style = MaterialTheme.typography.bodySmall,
-                color = AppTheme.TextMuted
-            )
-        }
-    }
-}
-
-@Composable
-private fun ErrorCard(
-    error: String,
-    onRetry: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = AppTheme.ErrorColor.copy(alpha = 0.08f)
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Filled.ErrorOutline,
-                contentDescription = null,
-                tint = AppTheme.ErrorColor,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    stringResource(StringKey.MATCH_CALCULATION_ERROR),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = AppTheme.ErrorColor
-                )
-                Text(
-                    error,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppTheme.ErrorColor.copy(alpha = 0.8f)
-                )
-            }
-            TextButton(onClick = onRetry) {
-                Text(stringResource(StringKey.BTN_RETRY), color = AppTheme.ErrorColor)
-            }
-        }
-    }
-}
-
-@Composable
 private fun EnhancedCompatibilityScoreCard(
     result: MatchmakingResult,
     animatedProgress: Float
@@ -911,36 +779,6 @@ private fun QuickInsightsRow(result: MatchmakingResult) {
                 label = stringResource(StringKey.MATCH_GUNAS),
                 value = "${result.totalPoints.toInt()}/${result.maxPoints.toInt()}",
                 color = if (result.totalPoints >= 18) AppTheme.SuccessColor else AppTheme.WarningColor
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickInsightChip(
-    label: String,
-    value: String,
-    color: Color
-) {
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(10.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = color.copy(alpha = 0.8f)
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                value,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-                color = color
             )
         }
     }
@@ -1171,43 +1009,6 @@ private fun ProfileComparisonCard(
             ComparisonRow(stringResource(StringKey.MATCH_NAKSHATRA), getNakshatraName(brideChart), getNakshatraName(groomChart))
             ComparisonRow(stringResource(StringKey.MATCH_PADA), getPada(brideChart), getPada(groomChart))
         }
-    }
-}
-
-@Composable
-private fun ComparisonRow(label: String, brideValue: String, groomValue: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            brideValue,
-            style = MaterialTheme.typography.bodySmall,
-            color = AppTheme.LifeAreaLove,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
-        Surface(
-            color = AppTheme.ChipBackground,
-            shape = RoundedCornerShape(4.dp)
-        ) {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = AppTheme.TextMuted,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-            )
-        }
-        Text(
-            groomValue,
-            style = MaterialTheme.typography.bodySmall,
-            color = AppTheme.AccentTeal,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
     }
 }
 
@@ -1950,55 +1751,6 @@ private fun NakshatraSection(
 }
 
 @Composable
-private fun NakshatraComparisonRow(
-    label: String,
-    brideValue: String,
-    groomValue: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                brideValue,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = AppTheme.LifeAreaLove
-            )
-        }
-        Surface(
-            color = AppTheme.ChipBackground,
-            shape = RoundedCornerShape(6.dp)
-        ) {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = AppTheme.TextMuted,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End
-        ) {
-            Text(
-                groomValue,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = AppTheme.AccentTeal
-            )
-        }
-    }
-}
-
-@Composable
 private fun RajjuAnalysisCard(result: MatchmakingResult) {
     val hasRajjuDosha = result.specialConsiderations.any { 
         it.contains("Rajju", ignoreCase = true) 
@@ -2305,44 +2057,6 @@ private fun EnhancedRemediesSection(result: MatchmakingResult) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun RemedyItem(number: Int, remedy: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top
-    ) {
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            AppTheme.AccentPrimary.copy(alpha = 0.2f),
-                            AppTheme.AccentSecondary.copy(alpha = 0.2f)
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                "$number",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = AppTheme.AccentPrimary
-            )
-        }
-        Spacer(modifier = Modifier.width(14.dp))
-        Text(
-            remedy,
-            style = MaterialTheme.typography.bodyMedium,
-            color = AppTheme.TextSecondary,
-            lineHeight = 22.sp,
-            modifier = Modifier.weight(1f)
-        )
     }
 }
 

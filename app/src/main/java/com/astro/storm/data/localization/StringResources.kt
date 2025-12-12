@@ -1026,7 +1026,6 @@ enum class StringKey(val en: String, val ne: String) {
     MANGLIK_DETECTED("detected", "पत्ता लाग्यो"),
     MANGLIK_INTENSITY("intensity", "तीव्रता"),
     MANGLIK_MARS_IN("Mars in", "मंगल"),
-    HOUSE("house", "भाव"),
     FROM_LAGNA("from Lagna", "लग्नबाट"),
     FROM_MOON("from Moon", "चन्द्रबाट"),
     FROM_VENUS("from Venus", "शुक्रबाट"),
