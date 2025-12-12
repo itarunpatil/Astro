@@ -8,7 +8,7 @@ import com.astro.storm.data.model.ZodiacSign
 import com.astro.storm.data.preferences.ThemeMode
 import com.astro.storm.ephemeris.YogaCalculator
 import com.astro.storm.ephemeris.RemediesCalculator
-import com.astro.storm.ephemeris.MatchmakingCalculator
+import com.astro.storm.data.model.Yoni
 import com.astro.storm.ephemeris.Tithi
 import com.astro.storm.ephemeris.TithiGroup
 import com.astro.storm.ephemeris.Yoga
@@ -467,58 +467,17 @@ fun RemediesCalculator.RemedyPriority.getLocalizedName(language: Language): Stri
 // MATCHMAKING CALCULATOR EXTENSIONS
 // ============================================
 
-/**
- * Get localized display name for Varna
- */
-fun Varna.getLocalizedName(language: Language): String {
-    return when (this) {
-        Varna.BRAHMIN -> StringResources.get(StringKey.VARNA_BRAHMIN, language)
-        Varna.KSHATRIYA -> StringResources.get(StringKey.VARNA_KSHATRIYA, language)
-        Varna.VAISHYA -> StringResources.get(StringKey.VARNA_VAISHYA, language)
-        Varna.SHUDRA -> StringResources.get(StringKey.VARNA_SHUDRA, language)
-    }
-}
-
-/**
- * Get localized display name for Vashya
- */
-fun Vashya.getLocalizedName(language: Language): String {
-    return when (this) {
-        Vashya.CHATUSHPADA -> StringResources.get(StringKey.VASHYA_CHATUSHPADA, language)
-        Vashya.MANAVA -> StringResources.get(StringKey.VASHYA_MANAVA, language)
-        Vashya.JALACHARA -> StringResources.get(StringKey.VASHYA_JALACHARA, language)
-        Vashya.VANACHARA -> StringResources.get(StringKey.VASHYA_VANACHARA, language)
-        Vashya.KEETA -> StringResources.get(StringKey.VASHYA_KEETA, language)
-    }
-}
-
-/**
- * Get localized display name for Gana
- */
-fun Gana.getLocalizedName(language: Language): String {
-    return when (this) {
-        Gana.DEVA -> StringResources.get(StringKey.GANA_DEVA, language)
-        Gana.MANUSHYA -> StringResources.get(StringKey.GANA_MANUSHYA, language)
-        Gana.RAKSHASA -> StringResources.get(StringKey.GANA_RAKSHASA, language)
-    }
-}
-
-/**
- * Get localized description for Gana
- */
-fun Gana.getLocalizedDescription(language: Language): String {
-    return when (this) {
-        Gana.DEVA -> StringResources.get(StringKey.GANA_DEVA_DESC, language)
-        Gana.MANUSHYA -> StringResources.get(StringKey.GANA_MANUSHYA_DESC, language)
-        Gana.RAKSHASA -> StringResources.get(StringKey.GANA_RAKSHASA_DESC, language)
-    }
-}
+// NOTE: Varna, Vashya, Gana, Yoni, Nadi, Rajju, ManglikDosha, and CompatibilityRating
+// already have getLocalizedName() and getLocalizedDescription() methods defined
+// as member functions in MatchmakingModels.kt. Do not duplicate them here to avoid
+// overload resolution ambiguity errors.
 
 /**
  * Get localized display name for Yoni animal
+ * This is a utility function since Yoni doesn't have a member function for localized animal names.
  */
-fun Yoni.getLocalizedAnimalName(language: Language): String {
-    return when (this.animal) {
+fun getYoniLocalizedAnimalName(yoni: Yoni, language: Language): String {
+    return when (yoni.animal) {
         "Horse" -> StringResources.get(StringKey.YONI_HORSE, language)
         "Elephant" -> StringResources.get(StringKey.YONI_ELEPHANT, language)
         "Sheep" -> StringResources.get(StringKey.YONI_SHEEP, language)
@@ -533,93 +492,7 @@ fun Yoni.getLocalizedAnimalName(language: Language): String {
         "Monkey" -> StringResources.get(StringKey.YONI_MONKEY, language)
         "Mongoose" -> StringResources.get(StringKey.YONI_MONGOOSE, language)
         "Lion" -> StringResources.get(StringKey.YONI_LION, language)
-        else -> this.animal
-    }
-}
-
-/**
- * Get localized display name for Nadi
- */
-fun Nadi.getLocalizedName(language: Language): String {
-    return when (this) {
-        Nadi.ADI -> StringResources.get(StringKey.NADI_ADI, language)
-        Nadi.MADHYA -> StringResources.get(StringKey.NADI_MADHYA, language)
-        Nadi.ANTYA -> StringResources.get(StringKey.NADI_ANTYA, language)
-    }
-}
-
-/**
- * Get localized description for Nadi
- */
-fun Nadi.getLocalizedDescription(language: Language): String {
-    return when (this) {
-        Nadi.ADI -> StringResources.get(StringKey.NADI_ADI_DESC, language)
-        Nadi.MADHYA -> StringResources.get(StringKey.NADI_MADHYA_DESC, language)
-        Nadi.ANTYA -> StringResources.get(StringKey.NADI_ANTYA_DESC, language)
-    }
-}
-
-/**
- * Get localized display name for Rajju
- */
-fun Rajju.getLocalizedName(language: Language): String {
-    return when (this) {
-        Rajju.PADA -> StringResources.get(StringKey.RAJJU_PADA, language)
-        Rajju.KATI -> StringResources.get(StringKey.RAJJU_KATI, language)
-        Rajju.NABHI -> StringResources.get(StringKey.RAJJU_NABHI, language)
-        Rajju.KANTHA -> StringResources.get(StringKey.RAJJU_KANTHA, language)
-        Rajju.SIRO -> StringResources.get(StringKey.RAJJU_SIRO, language)
-    }
-}
-
-/**
- * Get localized body part for Rajju
- */
-fun Rajju.getLocalizedBodyPart(language: Language): String {
-    return when (this) {
-        Rajju.PADA -> StringResources.get(StringKey.RAJJU_PADA_BODY, language)
-        Rajju.KATI -> StringResources.get(StringKey.RAJJU_KATI_BODY, language)
-        Rajju.NABHI -> StringResources.get(StringKey.RAJJU_NABHI_BODY, language)
-        Rajju.KANTHA -> StringResources.get(StringKey.RAJJU_KANTHA_BODY, language)
-        Rajju.SIRO -> StringResources.get(StringKey.RAJJU_SIRO_BODY, language)
-    }
-}
-
-/**
- * Get localized display name for ManglikDosha
- */
-fun ManglikDosha.getLocalizedName(language: Language): String {
-    return when (this) {
-        ManglikDosha.NONE -> StringResources.get(StringKey.MANGLIK_NONE, language)
-        ManglikDosha.PARTIAL -> StringResources.get(StringKey.MANGLIK_PARTIAL, language)
-        ManglikDosha.FULL -> StringResources.get(StringKey.MANGLIK_FULL, language)
-        ManglikDosha.DOUBLE -> StringResources.get(StringKey.MANGLIK_DOUBLE, language)
-    }
-}
-
-/**
- * Get localized display name for CompatibilityRating
- */
-fun CompatibilityRating.getLocalizedName(language: Language): String {
-    return when (this) {
-        CompatibilityRating.EXCELLENT -> StringResources.get(StringKey.COMPAT_EXCELLENT, language)
-        CompatibilityRating.GOOD -> StringResources.get(StringKey.COMPAT_GOOD, language)
-        CompatibilityRating.AVERAGE -> StringResources.get(StringKey.COMPAT_AVERAGE, language)
-        CompatibilityRating.BELOW_AVERAGE -> StringResources.get(StringKey.COMPAT_BELOW_AVERAGE, language)
-        CompatibilityRating.POOR -> StringResources.get(StringKey.COMPAT_POOR, language)
-    }
-}
-
-/**
- * Get localized description for CompatibilityRating
- */
-fun CompatibilityRating.getLocalizedDescription(language: Language): String {
-    return when (this) {
-        CompatibilityRating.EXCELLENT -> StringResources.get(StringKey.COMPAT_EXCELLENT_DESC, language)
-        CompatibilityRating.GOOD -> StringResources.get(StringKey.COMPAT_GOOD_DESC, language)
-        CompatibilityRating.AVERAGE -> StringResources.get(StringKey.COMPAT_AVERAGE_DESC, language)
-        CompatibilityRating.BELOW_AVERAGE -> StringResources.get(StringKey.COMPAT_BELOW_AVERAGE_DESC, language)
-        CompatibilityRating.POOR -> StringResources.get(StringKey.COMPAT_POOR_DESC, language)
+        else -> yoni.animal
     }
 }
 

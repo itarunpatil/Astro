@@ -51,7 +51,6 @@ import com.astro.storm.data.localization.stringResource
 import com.astro.storm.data.model.*
 import com.astro.storm.ephemeris.MatchmakingCalculator
 import com.astro.storm.ephemeris.VedicAstrologyUtils
-import com.astro.storm.ui.screen.matchmaking.MatchmakingReportUtils.getManglikQuickStatus
 import com.astro.storm.ui.theme.AppTheme
 import com.astro.storm.ui.viewmodel.ChartViewModel
 import kotlinx.coroutines.Dispatchers
@@ -749,7 +748,7 @@ private fun QuickInsightsRow(result: MatchmakingResult) {
         item {
             QuickInsightChip(
                 label = stringResource(StringKey.MATCH_MANGLIK),
-                value = getManglikQuickStatus(result),
+                value = result.getManglikQuickStatus(),
                 color = getManglikStatusColor(result.manglikCompatibility)
             )
         }
