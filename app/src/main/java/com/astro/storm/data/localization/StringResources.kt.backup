@@ -54,6 +54,8 @@ interface StringKeyInterface {
  *
  * Organized by category for maintainability.
  * Nepali translations are authentic and culturally appropriate for Vedic astrology context.
+ * 
+ * This is Part 1 of the enum split to handle method size limits in Kotlin compilation.
  */
 enum class StringKey(override val en: String, override val ne: String) : StringKeyInterface {
 
@@ -2185,8 +2187,124 @@ enum class StringKey(override val en: String, override val ne: String) : StringK
     DIALOG_GENERAL_CHARACTERISTICS("General Characteristics", "सामान्य विशेषताहरू"),
     DIALOG_CAREER_INDICATIONS("Career Indications", "क्यारियर संकेतहरू"),
     DIALOG_NUMBER("Number", "क्रमांक"),
-    DIALOG_DEGREE_RANGE("Degree Range", "अंश दायरा"),
+    DIALOG_DEGREE_RANGE("Degree Range", "अंश दायरा");
 
+    companion object {
+        /**
+         * Find key by English value
+         */
+        fun findByEnglish(value: String): StringKeyInterface? {
+            return entries.find { it.en.equals(value, ignoreCase = true) }
+        }
+    }
+}
+
+/**
+ * Extended translatable string keys (Part 2 of the enum split)
+ * 
+ * Contains the remaining keys from the original StringKey enum
+ * to avoid exceeding method size limits in Kotlin compilation.
+ */
+enum class StringKeyExtended(override val en: String, override val ne: String) : StringKeyInterface {
+    // ============================================
+    // PLANET DIALOG - SECTION HEADERS
+    // ============================================
+    DIALOG_POSITION_DETAILS("Position Details", "स्थिति विवरण"),
+    DIALOG_ZODIAC_SIGN("Zodiac Sign", "राशि"),
+    DIALOG_DEGREE("Degree", "अंश"),
+    DIALOG_HOUSE("House", "भाव"),
+    DIALOG_NAKSHATRA("Nakshatra", "नक्षत्र"),
+    DIALOG_NAKSHATRA_LORD("Nakshatra Lord", "नक्षत्र स्वामी"),
+    DIALOG_NAKSHATRA_DEITY("Nakshatra Deity", "नक्षत्र देवता"),
+    DIALOG_MOTION("Motion", "गति"),
+    DIALOG_RETROGRADE("Retrograde", "वक्री"),
+    DIALOG_STRENGTH_ANALYSIS("Strength Analysis (Shadbala)", "बल विश्लेषण (षड्बल)"),
+    DIALOG_STRENGTH_BREAKDOWN("Strength Breakdown (Virupas)", "बल विभाजन (विरुपा)"),
+    DIALOG_STHANA_BALA("Sthana Bala (Positional)", "स्थान बल"),
+    DIALOG_DIG_BALA("Dig Bala (Directional)", "दिग्बल"),
+    DIALOG_KALA_BALA("Kala Bala (Temporal)", "काल बल"),
+    DIALOG_CHESTA_BALA("Chesta Bala (Motional)", "चेष्टा बल"),
+    DIALOG_NAISARGIKA_BALA("Naisargika Bala (Natural)", "नैसर्गिक बल"),
+    DIALOG_DRIK_BALA("Drik Bala (Aspectual)", "दृग्बल"),
+    DIALOG_BENEFIC("Benefic", "शुभ"),
+    DIALOG_MALEFIC("Malefic", "पापी"),
+    DIALOG_ELEMENT("Element", "तत्व"),
+    DIALOG_REPRESENTS("Represents:", "प्रतिनिधित्व:"),
+    DIALOG_BODY_PARTS("Body Parts:", "शरीर अंग:"),
+    DIALOG_PROFESSIONS("Professions:", "पेशाहरू:"),
+    DIALOG_HOUSE_PLACEMENT("House %d Placement", "भाव %d स्थिति"),
+    DIALOG_STATUS_CONDITIONS("Status & Conditions", "स्थिति र अवस्था"),
+    DIALOG_DIGNITY("Dignity", "मर्यादा"),
+    DIALOG_COMBUSTION("Combustion", "अस्त"),
+    COMBUSTION_NOT_COMBUST("Not Combust", "अस्त छैन"),
+    COMBUSTION_APPROACHING("Approaching Combustion", "अस्त नजिक"),
+    COMBUSTION_COMBUST("Combust", "अस्त"),
+    COMBUSTION_DEEP_COMBUST("Deep Combustion", "गहिरो अस्त"),
+    COMBUSTION_CAZIMI("Cazimi", "काजिमी"),
+    COMBUSTION_SEPARATING("Separating", "विभाजन"),
+    DIALOG_PLANETARY_WAR("Planetary War", "ग्रहयुद्ध"),
+    DIALOG_AT_WAR_WITH("At war with %s", "%s सँग युद्धमा"),
+    DIALOG_INSIGHTS_PREDICTIONS("Insights & Predictions", "अन्तर्दृष्टि र भविष्यवाणी"),
+    DIALOG_OVERALL("Overall: %s / %s Rupas", "समग्र: %s / %s रुपा"),
+    DIALOG_REQUIRED_STRENGTH("Required", "आवश्यक"),
+    DIALOG_PERCENT_OF_REQUIRED("%s%% of required strength", "आवश्यक बलको %s%%"),
+    DIALOG_TOTAL_VIRUPAS("Total Virupas", "कुल विरुपा"),
+
+    // House Names
+    HOUSE_1_NAME("First House (Lagna)", "पहिलो भाव (लग्न)"),
+    HOUSE_2_NAME("Second House (Dhana)", "दोस्रो भाव (धन)"),
+    HOUSE_3_NAME("Third House (Sahaja)", "तेस्रो भाव (सहज)"),
+    HOUSE_4_NAME("Fourth House (Sukha)", "चौथो भाव (सुख)"),
+    HOUSE_5_NAME("Fifth House (Putra)", "पाँचौं भाव (पुत्र)"),
+    HOUSE_6_NAME("Sixth House (Ripu)", "छैटौं भाव (रिपु)"),
+    HOUSE_7_NAME("Seventh House (Kalatra)", "सातौं भाव (कलत्र)"),
+    HOUSE_8_NAME("Eighth House (Ayur)", "आठौं भाव (आयु)"),
+    HOUSE_9_NAME("Ninth House (Dharma)", "नवौं भाव (धर्म)"),
+    HOUSE_10_NAME("Tenth House (Karma)", "दसौं भाव (कर्म)"),
+    HOUSE_11_NAME("Eleventh House (Labha)", "एघारौं भाव (लाभ)"),
+    HOUSE_12_NAME("Twelfth House (Vyaya)", "बाह्रौं भाव (व्यय)"),
+
+    // House Signification Descriptions
+    HOUSE_1_SIG("Self, Body, Personality", "आत्म, शरीर, व्यक्तित्व"),
+    HOUSE_2_SIG("Wealth, Family, Speech", "धन, परिवार, वाणी"),
+    HOUSE_3_SIG("Siblings, Courage, Communication", "भाइबहिनी, साहस, सञ्चार"),
+    HOUSE_4_SIG("Home, Mother, Happiness", "घर, आमा, सुख"),
+    HOUSE_5_SIG("Children, Intelligence, Romance", "सन्तान, बुद्धि, प्रेम"),
+    HOUSE_6_SIG("Enemies, Health, Service", "शत्रु, स्वास्थ्य, सेवा"),
+    HOUSE_7_SIG("Marriage, Partnerships, Business", "विवाह, साझेदारी, व्यापार"),
+    HOUSE_8_SIG("Longevity, Transformation, Occult", "आयु, रूपान्तरण, तन्त्र"),
+    HOUSE_9_SIG("Fortune, Dharma, Father", "भाग्य, धर्म, पिता"),
+    HOUSE_10_SIG("Career, Status, Public Image", "क्यारियर, पद, सार्वजनिक छवि"),
+    HOUSE_11_SIG("Gains, Income, Desires", "लाभ, आय, इच्छाहरू"),
+    HOUSE_12_SIG("Losses, Expenses, Liberation", "हानि, खर्च, मोक्ष"),
+
+    // House Types
+    HOUSE_TYPE_KENDRA("Kendra (Angular)", "केन्द्र"),
+    HOUSE_TYPE_TRIKONA("Trikona (Trine)", "त्रिकोण"),
+    HOUSE_TYPE_DUSTHANA("Dusthana (Malefic)", "दुःस्थान"),
+    HOUSE_TYPE_UPACHAYA("Upachaya (Growth)", "उपचय"),
+    HOUSE_TYPE_MARAKA("Maraka (Death-inflicting)", "मारक"),
+    HOUSE_TYPE_PANAPARA("Panapara", "पणफर"),
+    HOUSE_TYPE_APOKLIMA("Apoklima", "आपोक्लिम"),
+
+    // Dialog Buttons
+    DIALOG_CLOSE("Close", "बन्द गर्नुहोस्"),
+    DIALOG_RESET("Reset", "रिसेट"),
+    DIALOG_ZOOM_IN("Zoom In", "ठूलो पार्नुहोस्"),
+    DIALOG_ZOOM_OUT("Zoom Out", "सानो पार्नुहोस्"),
+    DIALOG_DOWNLOAD("Download", "डाउनलोड"),
+    DIALOG_SAVING("Saving...", "सेभ गर्दै..."),
+    DIALOG_CHART_SAVED("Chart saved to gallery!", "चार्ट ग्यालेरीमा सेभ भयो!"),
+    DIALOG_SAVE_FAILED("Failed to save chart", "चार्ट सेभ गर्न असफल"),
+
+    // Nakshatra Dialog
+    DIALOG_BASIC_INFO("Basic Information", "आधारभूत जानकारी"),
+    DIALOG_NAKSHATRA_NATURE("Nakshatra Nature", "नक्षत्र प्रकृति"),
+    DIALOG_PADA_CHARACTERISTICS("Pada %d Characteristics", "पाद %d विशेषताहरू"),
+    DIALOG_GENERAL_CHARACTERISTICS("General Characteristics", "सामान्य विशेषताहरू"),
+    DIALOG_CAREER_INDICATIONS("Career Indications", "क्यारियर संकेतहरू"),
+    DIALOG_NUMBER("Number", "क्रमांक"),
+    DIALOG_DEGREE_RANGE("Degree Range", "अंश दायरा"),
     DIALOG_NAVAMSA_SIGN("Navamsa Sign", "नवांश राशि"),
     DIALOG_GENDER("Gender", "लिङ्ग"),
 
@@ -4106,9 +4224,10 @@ enum class StringKey(override val en: String, override val ne: String) : StringK
     SYNASTRY_MOON("Moon", "चन्द्र"),
     SYNASTRY_VENUS("Venus", "शुक्र"),
     SYNASTRY_HOUSE_IN("in House", "भावमा");
+
     companion object {
         /**
-         * Find key by English value
+         * Find extended key by English value
          */
         fun findByEnglish(value: String): StringKeyInterface? {
             return entries.find { it.en.equals(value, ignoreCase = true) }
