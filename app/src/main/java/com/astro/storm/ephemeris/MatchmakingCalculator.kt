@@ -2,7 +2,6 @@ package com.astro.storm.ephemeris
 
 import com.astro.storm.data.localization.Language
 import com.astro.storm.data.localization.StringKey
-import com.astro.storm.data.localization.StringKeyExtended
 import com.astro.storm.data.localization.StringResources
 import com.astro.storm.data.model.*
 import kotlin.math.abs

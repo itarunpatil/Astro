@@ -2193,6 +2193,7 @@ enum class StringKey(override val en: String, override val ne: String) : StringK
     // House Dialog
     DIALOG_HOUSE_INFO("House Information", "भाव जानकारी"),
     DIALOG_SIGNIFICATIONS("Significations & Nature", "करकत्व र प्रकृति"),
+    DIALOG_NATURE("Nature", "प्रकृति"),
     DIALOG_PLANETS_IN_HOUSE("Planets in House", "भावमा ग्रहहरू"),
     DIALOG_DETAILED_INTERPRETATION("Detailed Interpretation", "विस्तृत व्याख्या"),
     DIALOG_CUSP_DEGREE("Cusp Degree", "सन्धि अंश"),
