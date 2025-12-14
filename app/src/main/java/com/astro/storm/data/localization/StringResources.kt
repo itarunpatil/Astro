@@ -1043,6 +1043,9 @@ enum class StringKeyMatch(override val en: String, override val ne: String) : St
     FROM_LAGNA("from Lagna", "लग्नबाट"),
     FROM_MOON("from Moon", "चन्द्रबाट"),
     FROM_VENUS("from Venus", "शुक्रबाट"),
+    MANGLIK_FACTOR_FROM_LAGNA("Mars in House {house} from Lagna", "लग्नबाट भाव {house} मा मंगल"),
+    MANGLIK_FACTOR_FROM_MOON("Mars in House {house} from Moon", "चन्द्रबाट भाव {house} मा मंगल"),
+    MANGLIK_FACTOR_FROM_VENUS("Mars in House {house} from Venus", "शुक्रबाट भाव {house} मा मंगल"),
     MANGLIK_BOTH_NON("Both non-Manglik - No concerns", "दुवै गैर-मांगलिक - कुनै चिन्ता छैन"),
     MANGLIK_BOTH_MATCH("Both Manglik - Doshas cancel each other (Manglik to Manglik match is recommended)", "दुवै मांगलिक - दोषहरू एकअर्कालाई निष्क्रिय गर्छन् (मांगलिकसँग मांगलिक मिलान सिफारिस गरिएको)"),
     MANGLIK_MINOR_IMBALANCE("Minor Manglik imbalance - Manageable with remedies", "सानो मांगलिक असन्तुलन - उपायहरूद्वारा व्यवस्थापनयोग्य"),
@@ -3930,7 +3933,7 @@ enum class StringKeyDosha(override val en: String, override val ne: String) : St
         "Recommended for all Manglik levels",
         "सबै मांगलिक स्तरहरूको लागि सिफारिस"
     ),
-    REMEDY_EFFECTIVENESS_TUESDAYS(
+    REMEDY_EFFECTIVENESS_TUESDAY(
         "Daily recitation on Tuesdays",
         "मंगलबार दैनिक पाठ"
     ),
@@ -3942,6 +3945,53 @@ enum class StringKeyDosha(override val en: String, override val ne: String) : St
         "Every Tuesday",
         "हरेक मंगलबार"
     ),
+
+    // ============================================
+    // MANGLIK REFERENCE POINTS
+    // ============================================
+    MANGLIK_REF_LAGNA("Lagna", "लग्न"),
+    MANGLIK_REF_MOON("Moon", "चन्द्र"),
+    MANGLIK_REF_VENUS("Venus", "शुक्र"),
+    YES("Yes", "छ"),
+    NO("No", "छैन"),
+
+    // ============================================
+    // MANGLIK INTERPRETATION KEYS
+    // ============================================
+    MANGLIK_INTERP_NO_DOSHA_TITLE("NO MANGLIK DOSHA", "मांगलिक दोष छैन"),
+    MANGLIK_INTERP_NO_DOSHA_DESC(
+        "Mars is not placed in houses 1, 2, 4, 7, 8, or 12 from your Lagna, Moon, or Venus. There is no Manglik Dosha in your chart.",
+        "मंगल तपाईंको लग्न, चन्द्र वा शुक्रबाट १, २, ४, ७, ८ वा १२औं भावमा छैन। तपाईंको कुण्डलीमा मांगलिक दोष छैन।"
+    ),
+    MANGLIK_INTERP_TITLE("MANGLIK DOSHA ANALYSIS", "मांगलिक दोष विश्लेषण"),
+    MANGLIK_INTERP_MARS_POSITION("Mars Position: {sign} in House {house}", "मंगल स्थिति: {sign} भाव {house} मा"),
+    MANGLIK_INTERP_MARS_RETROGRADE("Note: Mars is retrograde which can intensify or modify its effects.", "नोट: मंगल वक्री छ जसले यसको प्रभावहरू तीव्र वा परिमार्जन गर्न सक्छ।"),
+    MANGLIK_INTERP_THREE_REF("ANALYSIS FROM THREE REFERENCE POINTS:", "तीन सन्दर्भ बिन्दुबाट विश्लेषण:"),
+    MANGLIK_INTERP_MARS_HOUSE("Mars in House {house}", "मंगल भाव {house} मा"),
+    MANGLIK_INTERP_IS_MANGLIK("Manglik", "मांगलिक"),
+    MANGLIK_INTERP_INITIAL_LEVEL("Initial Level: {level}", "प्रारम्भिक स्तर: {level}"),
+
+    // ============================================
+    // MANGLIK MARRIAGE CONSIDERATIONS
+    // ============================================
+    MANGLIK_MARRIAGE_TITLE("MARRIAGE CONSIDERATIONS", "विवाह सम्बन्धी विचारहरू"),
+    MANGLIK_MARRIAGE_NONE_1("No restrictions based on Manglik Dosha.", "मांगलिक दोषमा आधारित कुनै प्रतिबन्ध छैन।"),
+    MANGLIK_MARRIAGE_NONE_2("Compatible with both Manglik and non-Manglik partners.", "मांगलिक र गैर-मांगलिक दुवै साझेदारसँग मिल्दो।"),
+    MANGLIK_MARRIAGE_MILD_1("Mild Manglik effects - marriage with non-Manglik is possible.", "हल्का मांगलिक प्रभाव - गैर-मांगलिकसँग विवाह सम्भव।"),
+    MANGLIK_MARRIAGE_MILD_2("Simple remedies recommended before marriage.", "विवाह अघि सरल उपायहरू सिफारिस।"),
+    MANGLIK_MARRIAGE_MILD_3("Matching with another Manglik is beneficial but not essential.", "अर्को मांगलिकसँग मिलान लाभदायक तर अनिवार्य होइन।"),
+    MANGLIK_MARRIAGE_PARTIAL_1("Partial Manglik - remedies strongly recommended.", "आंशिक मांगलिक - उपायहरू जोडदार सिफारिस।"),
+    MANGLIK_MARRIAGE_PARTIAL_2("Marriage with Manglik partner is preferable.", "मांगलिक साझेदारसँग विवाह उपयुक्त।"),
+    MANGLIK_MARRIAGE_PARTIAL_3("If marrying non-Manglik, perform Kumbh Vivah.", "गैर-मांगलिकसँग विवाह गर्दा कुम्भ विवाह गर्नुहोस्।"),
+    MANGLIK_MARRIAGE_FULL_1("Full Manglik Dosha present.", "पूर्ण मांगलिक दोष उपस्थित।"),
+    MANGLIK_MARRIAGE_FULL_2("Marriage with Manglik partner highly recommended.", "मांगलिक साझेदारसँग विवाह अत्यधिक सिफारिस।"),
+    MANGLIK_MARRIAGE_FULL_3("Kumbh Vivah or equivalent ritual essential before marriage.", "विवाह अघि कुम्भ विवाह वा समतुल्य अनुष्ठान अनिवार्य।"),
+    MANGLIK_MARRIAGE_FULL_4("Regular Mars propitiation recommended.", "नियमित मंगल शान्ति सिफारिस।"),
+    MANGLIK_MARRIAGE_SEVERE_1("Severe Manglik Dosha - careful consideration required.", "गम्भीर मांगलिक दोष - सावधानीपूर्ण विचार आवश्यक।"),
+    MANGLIK_MARRIAGE_SEVERE_2("Only marry Manglik partner with similar intensity.", "समान तीव्रता भएको मांगलिक साझेदारसँग मात्र विवाह।"),
+    MANGLIK_MARRIAGE_SEVERE_3("Multiple remedies required before and after marriage.", "विवाह अघि र पछि बहु उपायहरू आवश्यक।"),
+    MANGLIK_MARRIAGE_SEVERE_4("Consider delaying marriage until after age 28 (Mars maturity).", "मंगल परिपक्वता (२८ वर्ष) सम्म विवाह ढिला गर्ने विचार गर्नुहोस्।"),
+    MANGLIK_MARRIAGE_FULL_CANCEL_NOTE("NOTE: Full cancellation present - Manglik Dosha effectively nullified.", "नोट: पूर्ण निरसन उपस्थित - मांगलिक दोष प्रभावकारी रूपमा शून्य।"),
 
     // ============================================
     // PITRA DOSHA INTERPRETATION

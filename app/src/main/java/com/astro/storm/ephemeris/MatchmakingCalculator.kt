@@ -62,15 +62,13 @@ object MatchmakingCalculator {
         val bhakootScore = gunaAnalyses.find { it.name == "Bhakoot" }?.obtainedPoints ?: 0.0
         val rating = CompatibilityRating.fromScore(totalPoints, nadiScore, bhakootScore)
 
-        // Delegate to ManglikDoshaCalculator for Manglik analysis
         val brideManglikEphemeris = ManglikDoshaCalculator.calculateManglikDosha(brideChart)
         val groomManglikEphemeris = ManglikDoshaCalculator.calculateManglikDosha(groomChart)
         val manglikCompatibilityAnalysis = ManglikDoshaCalculator.checkManglikCompatibility(brideManglikEphemeris, groomManglikEphemeris)
-        val manglikCompatibility = manglikCompatibilityAnalysis.recommendation
+        val manglikCompatibility = manglikCompatibilityAnalysis.getRecommendation(language)
 
-        // Convert to data model ManglikAnalysis for MatchmakingResult
-        val brideManglik = convertEphemerisToDataModel(brideManglikEphemeris, "Bride")
-        val groomManglik = convertEphemerisToDataModel(groomManglikEphemeris, "Groom")
+        val brideManglik = convertEphemerisToDataModel(brideManglikEphemeris, StringResources.get(StringKeyMatch.BRIDE, language), language)
+        val groomManglik = convertEphemerisToDataModel(groomManglikEphemeris, StringResources.get(StringKeyMatch.GROOM, language), language)
 
         // Calculate additional factors
         val additionalFactors = calculateAdditionalFactors(brideNakshatra, groomNakshatra, language)
@@ -678,18 +676,11 @@ object MatchmakingCalculator {
         }
     }
 
-    // ============================================
-    // CONVERSION UTILITIES
-    // ============================================
-
-    /**
-     * Convert ephemeris ManglikAnalysis to data model ManglikAnalysis
-     */
     private fun convertEphemerisToDataModel(
         ephemerisAnalysis: ManglikDoshaCalculator.ManglikAnalysis,
-        person: String
+        person: String,
+        language: Language = Language.ENGLISH
     ): com.astro.storm.data.model.ManglikAnalysis {
-        // Map the ephemeris level to data model dosha
         val dosha = when (ephemerisAnalysis.effectiveLevel) {
             ManglikDoshaCalculator.ManglikLevel.NONE -> ManglikDosha.NONE
             ManglikDoshaCalculator.ManglikLevel.MILD -> ManglikDosha.PARTIAL
@@ -698,21 +689,22 @@ object MatchmakingCalculator {
             ManglikDoshaCalculator.ManglikLevel.SEVERE -> ManglikDosha.DOUBLE
         }
 
-        // Collect factors and cancellations
         val factors = mutableListOf<String>()
         if (ephemerisAnalysis.analysisFromLagna.isManglik) {
-            factors.add("Mars in ${ephemerisAnalysis.analysisFromLagna.marsHouse}${VedicAstrologyUtils.getOrdinalSuffix(ephemerisAnalysis.analysisFromLagna.marsHouse)} house from Lagna")
+            factors.add(StringResources.get(StringKeyMatch.MANGLIK_FACTOR_FROM_LAGNA, language)
+                .replace("{house}", ephemerisAnalysis.analysisFromLagna.marsHouse.toString()))
         }
         if (ephemerisAnalysis.analysisFromMoon.isManglik) {
-            factors.add("Mars in ${ephemerisAnalysis.analysisFromMoon.marsHouse}${VedicAstrologyUtils.getOrdinalSuffix(ephemerisAnalysis.analysisFromMoon.marsHouse)} house from Moon")
+            factors.add(StringResources.get(StringKeyMatch.MANGLIK_FACTOR_FROM_MOON, language)
+                .replace("{house}", ephemerisAnalysis.analysisFromMoon.marsHouse.toString()))
         }
         if (ephemerisAnalysis.analysisFromVenus.isManglik) {
-            factors.add("Mars in ${ephemerisAnalysis.analysisFromVenus.marsHouse}${VedicAstrologyUtils.getOrdinalSuffix(ephemerisAnalysis.analysisFromVenus.marsHouse)} house from Venus")
+            factors.add(StringResources.get(StringKeyMatch.MANGLIK_FACTOR_FROM_VENUS, language)
+                .replace("{house}", ephemerisAnalysis.analysisFromVenus.marsHouse.toString()))
         }
 
         val cancellations = ephemerisAnalysis.cancellationFactors.map { factor ->
-            val key = factor.titleKey
-            if (key is Enum<*>) key.name else key.toString()
+            factor.getTitle(language)
         }
 
         return com.astro.storm.data.model.ManglikAnalysis(
@@ -722,10 +714,9 @@ object MatchmakingCalculator {
             marsHouseFromMoon = ephemerisAnalysis.analysisFromMoon.marsHouse,
             marsHouseFromVenus = ephemerisAnalysis.analysisFromVenus.marsHouse,
             marsDegreeInHouse = ephemerisAnalysis.marsPosition?.longitude?.let {
-                val houseStart = it - (it.toInt() % 30)
-                (it - houseStart) % 30
+                it % 30.0
             } ?: 0.0,
-            isRetrograde = false, // Add proper retrograde check if available
+            isRetrograde = ephemerisAnalysis.isMarsRetrograde,
             factors = factors,
             cancellations = cancellations,
             effectiveDosha = dosha,

@@ -199,7 +199,7 @@ object GunaMilanCalculator {
         7 -> StringResources.get(StringKeyMatch.TARA_VADHA, language)
         8 -> StringResources.get(StringKeyMatch.TARA_MITRA, language)
         9 -> StringResources.get(StringKeyMatch.TARA_PARAMA_MITRA, language)
-        else -> "Unknown"
+        else -> StringResources.get(StringKeyMatch.TARA_JANMA, language)
     }
 
     private fun isAuspiciousTara(taraNumber: Int): Boolean = taraNumber in listOf(2, 4, 6, 8, 9)
