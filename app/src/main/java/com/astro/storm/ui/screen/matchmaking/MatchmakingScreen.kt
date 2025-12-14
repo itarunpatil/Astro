@@ -743,8 +743,8 @@ private fun QuickInsightsRow(result: MatchmakingResult) {
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        val hasNadiDosha = result.gunaAnalyses.find { it.name == "Nadi" }?.obtainedPoints == 0.0
-        val hasBhakootDosha = result.gunaAnalyses.find { it.name == "Bhakoot" }?.obtainedPoints == 0.0
+        val hasNadiDosha = result.gunaAnalyses.find { it.gunaType == GunaType.NADI }?.hasDosha == true
+        val hasBhakootDosha = result.gunaAnalyses.find { it.gunaType == GunaType.BHAKOOT }?.hasDosha == true
 
         item {
             QuickInsightChip(

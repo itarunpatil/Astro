@@ -77,6 +77,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.VARNA,
             name = "Varna",
             maxPoints = MatchmakingConstants.MAX_VARNA,
             obtainedPoints = points,
@@ -111,6 +112,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.VASHYA,
             name = "Vashya",
             maxPoints = MatchmakingConstants.MAX_VASHYA,
             obtainedPoints = points,
@@ -173,6 +175,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.TARA,
             name = "Tara",
             maxPoints = MatchmakingConstants.MAX_TARA,
             obtainedPoints = points,
@@ -227,6 +230,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.YONI,
             name = "Yoni",
             maxPoints = MatchmakingConstants.MAX_YONI,
             obtainedPoints = points,
@@ -277,6 +281,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.GRAHA_MAITRI,
             name = "Graha Maitri",
             maxPoints = MatchmakingConstants.MAX_GRAHA_MAITRI,
             obtainedPoints = points,
@@ -330,6 +335,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.GANA,
             name = "Gana",
             maxPoints = MatchmakingConstants.MAX_GANA,
             obtainedPoints = points,
@@ -377,6 +383,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.BHAKOOT,
             name = "Bhakoot",
             maxPoints = MatchmakingConstants.MAX_BHAKOOT,
             obtainedPoints = points,
@@ -531,6 +538,7 @@ object GunaMilanCalculator {
         }
 
         return GunaAnalysis(
+            gunaType = GunaType.NADI,
             name = "Nadi",
             maxPoints = MatchmakingConstants.MAX_NADI,
             obtainedPoints = points,

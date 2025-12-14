@@ -4355,7 +4355,97 @@ enum class StringKeyDosha(override val en: String, override val ne: String) : St
     SYNASTRY_LAGNA("Lagna", "लग्न"),
     SYNASTRY_MOON("Moon", "चन्द्र"),
     SYNASTRY_VENUS("Venus", "शुक्र"),
-    SYNASTRY_HOUSE_IN("in House", "भावमा");
+    SYNASTRY_HOUSE_IN("in House", "भावमा"),
+
+    // ============================================
+    // BHRIGU BINDU ANALYSIS
+    // ============================================
+    BHRIGU_BINDU_TITLE("Bhrigu Bindu Analysis", "भृगु बिन्दु विश्लेषण"),
+    BHRIGU_BINDU_SUBTITLE("Karmic Destiny Point", "कार्मिक भाग्य बिन्दु"),
+    BHRIGU_BINDU_LONGITUDE("Bhrigu Bindu Longitude", "भृगु बिन्दु देशान्तर"),
+    BHRIGU_BINDU_SIGN("Sign", "राशि"),
+    BHRIGU_BINDU_NAKSHATRA("Nakshatra", "नक्षत्र"),
+    BHRIGU_BINDU_PADA("Pada", "पद"),
+    BHRIGU_BINDU_HOUSE("House", "भाव"),
+    BHRIGU_BINDU_LORD("Sign Lord", "राशि स्वामी"),
+    BHRIGU_BINDU_NAKSHATRA_LORD("Nakshatra Lord", "नक्षत्र स्वामी"),
+    BHRIGU_BINDU_STRENGTH("Strength Assessment", "शक्ति मूल्यांकन"),
+    BHRIGU_BINDU_EXCELLENT("Excellent", "उत्कृष्ट"),
+    BHRIGU_BINDU_GOOD("Good", "राम्रो"),
+    BHRIGU_BINDU_MODERATE("Moderate", "मध्यम"),
+    BHRIGU_BINDU_CHALLENGING("Challenging", "चुनौतीपूर्ण"),
+    BHRIGU_BINDU_DIFFICULT("Difficult", "कठिन"),
+    BHRIGU_BINDU_ASPECTS("Aspecting Planets", "दृष्टि गर्ने ग्रहहरू"),
+    BHRIGU_BINDU_CONJUNCTIONS("Conjunct Planets", "युति ग्रहहरू"),
+    BHRIGU_BINDU_TRANSITS("Transit Analysis", "गोचर विश्लेषण"),
+    BHRIGU_BINDU_KARMIC_SIGNIFICANCE("Karmic Significance", "कार्मिक महत्त्व"),
+    BHRIGU_BINDU_LIFE_AREAS("Life Area Influences", "जीवन क्षेत्र प्रभावहरू"),
+    BHRIGU_BINDU_RECOMMENDATIONS("Recommendations", "सिफारिसहरू"),
+    BHRIGU_BINDU_AUSPICIOUS_DAYS("Auspicious Days", "शुभ दिनहरू"),
+    BHRIGU_BINDU_REMEDIES("Remedial Measures", "उपचारात्मक उपायहरू"),
+    BHRIGU_BINDU_ABOUT("About Bhrigu Bindu", "भृगु बिन्दुको बारेमा"),
+    BHRIGU_BINDU_ABOUT_DESC("Bhrigu Bindu is a sensitive point calculated from the midpoint of Rahu and Moon. It indicates where significant karmic events manifest in life and is used for precise event timing.", "भृगु बिन्दु राहु र चन्द्रको मध्यबिन्दुबाट गणना गरिएको संवेदनशील बिन्दु हो। यसले जीवनमा महत्त्वपूर्ण कार्मिक घटनाहरू कहाँ प्रकट हुन्छन् भनेर संकेत गर्छ र सटीक घटना समयको लागि प्रयोग गरिन्छ।"),
+    BHRIGU_BINDU_CALCULATION("Calculation: (Rahu + Moon) / 2", "गणना: (राहु + चन्द्र) / २"),
+    BHRIGU_BINDU_RAHU_POSITION("Rahu Position", "राहु स्थिति"),
+    BHRIGU_BINDU_MOON_POSITION("Moon Position", "चन्द्र स्थिति"),
+
+    // ============================================
+    // YOGINI DASHA SYSTEM
+    // ============================================
+    YOGINI_DASHA_TITLE("Yogini Dasha", "योगिनी दशा"),
+    YOGINI_DASHA_SUBTITLE("36-Year Cycle Dasha System", "३६-वर्षे चक्र दशा प्रणाली"),
+    YOGINI_DASHA_ABOUT("About Yogini Dasha", "योगिनी दशाको बारेमा"),
+    YOGINI_DASHA_ABOUT_DESC("Yogini Dasha is a nakshatra-based timing system with a 36-year cycle. It is particularly effective for female horoscopes and relationship timing.", "योगिनी दशा ३६-वर्षे चक्रको साथ नक्षत्रमा आधारित समय प्रणाली हो। यो महिला कुण्डली र सम्बन्ध समयको लागि विशेष प्रभावकारी छ।"),
+    YOGINI_DASHA_CURRENT("Current Yogini", "वर्तमान योगिनी"),
+    YOGINI_DASHA_ANTARDASHA("Current Antardasha", "वर्तमान अन्तर्दशा"),
+    YOGINI_DASHA_BALANCE("Balance at Birth", "जन्ममा सन्तुलन"),
+    YOGINI_DASHA_SEQUENCE("Yogini Sequence", "योगिनी क्रम"),
+    YOGINI_DASHA_APPLICABILITY("Applicability", "प्रयोज्यता"),
+    YOGINI_DASHA_RECOMMENDED("Recommended for this chart", "यो कुण्डलीको लागि सिफारिस"),
+    YOGINI_DASHA_TIMELINE("Dasha Timeline", "दशा समयरेखा"),
+
+    // Yogini Names
+    YOGINI_MANGALA("Mangala", "मंगला"),
+    YOGINI_MANGALA_DESC("Auspicious beginnings, prosperity, and happiness. Moon's nurturing energy.", "शुभ शुरुआत, समृद्धि, र खुशी। चन्द्रको पोषणकारी ऊर्जा।"),
+    YOGINI_PINGALA("Pingala", "पिंगला"),
+    YOGINI_PINGALA_DESC("Authority, father-related matters, recognition. Sun's illuminating energy.", "अधिकार, पिता-सम्बन्धित मामिलाहरू, मान्यता। सूर्यको प्रकाशित ऊर्जा।"),
+    YOGINI_DHANYA("Dhanya", "धान्या"),
+    YOGINI_DHANYA_DESC("Wealth, wisdom, children, spiritual growth. Jupiter's expansive grace.", "धन, ज्ञान, सन्तान, आध्यात्मिक वृद्धि। गुरुको विस्तारित कृपा।"),
+    YOGINI_BHRAMARI("Bhramari", "भ्रामरी"),
+    YOGINI_BHRAMARI_DESC("Energy, conflicts, property matters. Mars brings action and courage.", "ऊर्जा, द्वन्द्व, सम्पत्ति मामिलाहरू। मंगलले कार्य र साहस ल्याउँछ।"),
+    YOGINI_BHADRIKA("Bhadrika", "भद्रिका"),
+    YOGINI_BHADRIKA_DESC("Intelligence, communication, business success. Mercury's intellectual wit.", "बुद्धि, सञ्चार, व्यापार सफलता। बुधको बौद्धिक कुशलता।"),
+    YOGINI_ULKA("Ulka", "उल्का"),
+    YOGINI_ULKA_DESC("Hardship, discipline, eventual success. Saturn teaches patience.", "कठिनाई, अनुशासन, अन्ततः सफलता। शनिले धैर्य सिकाउँछ।"),
+    YOGINI_SIDDHA("Siddha", "सिद्धा"),
+    YOGINI_SIDDHA_DESC("Success, luxury, marriage, artistic achievements. Venus brings love.", "सफलता, विलासिता, विवाह, कलात्मक उपलब्धिहरू। शुक्रले प्रेम ल्याउँछ।"),
+    YOGINI_SANKATA("Sankata", "संकटा"),
+    YOGINI_SANKATA_DESC("Obstacles, foreign influences, sudden changes. Rahu brings transformation.", "अवरोधहरू, विदेशी प्रभाव, अचानक परिवर्तन। राहुले रूपान्तरण ल्याउँछ।"),
+
+    // Yogini period durations
+    YOGINI_YEARS_1("1 Year", "१ वर्ष"),
+    YOGINI_YEARS_2("2 Years", "२ वर्ष"),
+    YOGINI_YEARS_3("3 Years", "३ वर्ष"),
+    YOGINI_YEARS_4("4 Years", "४ वर्ष"),
+    YOGINI_YEARS_5("5 Years", "५ वर्ष"),
+    YOGINI_YEARS_6("6 Years", "६ वर्ष"),
+    YOGINI_YEARS_7("7 Years", "७ वर्ष"),
+    YOGINI_YEARS_8("8 Years", "८ वर्ष"),
+
+    // Yogini nature
+    YOGINI_NATURE_HIGHLY_AUSPICIOUS("Highly Auspicious", "अत्यन्त शुभ"),
+    YOGINI_NATURE_AUSPICIOUS("Auspicious", "शुभ"),
+    YOGINI_NATURE_MIXED("Mixed", "मिश्रित"),
+    YOGINI_NATURE_CHALLENGING("Challenging", "चुनौतीपूर्ण"),
+    YOGINI_NATURE_DIFFICULT("Difficult", "कठिन"),
+
+    // Yogini effects labels
+    YOGINI_GENERAL_EFFECTS("General Effects", "सामान्य प्रभावहरू"),
+    YOGINI_CAREER_EFFECTS("Career Effects", "क्यारियर प्रभावहरू"),
+    YOGINI_RELATIONSHIP_EFFECTS("Relationship Effects", "सम्बन्ध प्रभावहरू"),
+    YOGINI_HEALTH_EFFECTS("Health Effects", "स्वास्थ्य प्रभावहरू"),
+    YOGINI_SPIRITUAL_EFFECTS("Spiritual Effects", "आध्यात्मिक प्रभावहरू"),
+    YOGINI_CAUTION_AREAS("Caution Areas", "सावधानी क्षेत्रहरू");
 }
 
 /**

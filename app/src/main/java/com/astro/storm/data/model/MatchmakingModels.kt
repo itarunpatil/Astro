@@ -491,9 +491,48 @@ enum class CompatibilityRating(val displayName: String, val description: String)
 // ============================================
 
 /**
+ * Enumeration of the 8 Gunas (Ashtakoota) for type-safe matching
+ * This replaces string-based matching for better code safety
+ */
+enum class GunaType(val displayName: String, val maxPoints: Double) {
+    VARNA("Varna", 1.0),
+    VASHYA("Vashya", 2.0),
+    TARA("Tara", 3.0),
+    YONI("Yoni", 4.0),
+    GRAHA_MAITRI("Graha Maitri", 5.0),
+    GANA("Gana", 6.0),
+    BHAKOOT("Bhakoot", 7.0),
+    NADI("Nadi", 8.0);
+
+    fun getLocalizedName(language: Language): String = when (this) {
+        VARNA -> StringResources.get(StringKeyMatch.GUNA_VARNA, language)
+        VASHYA -> StringResources.get(StringKeyMatch.GUNA_VASHYA, language)
+        TARA -> StringResources.get(StringKeyMatch.GUNA_TARA, language)
+        YONI -> StringResources.get(StringKeyMatch.GUNA_YONI, language)
+        GRAHA_MAITRI -> StringResources.get(StringKeyMatch.GUNA_GRAHA_MAITRI, language)
+        GANA -> StringResources.get(StringKeyMatch.GUNA_GANA, language)
+        BHAKOOT -> StringResources.get(StringKeyMatch.GUNA_BHAKOOT, language)
+        NADI -> StringResources.get(StringKeyMatch.GUNA_NADI, language)
+    }
+
+    companion object {
+        /**
+         * Find GunaType from name string (for backward compatibility)
+         */
+        fun fromName(name: String): GunaType? {
+            return entries.find {
+                it.displayName.equals(name, ignoreCase = true) ||
+                it.name.equals(name, ignoreCase = true)
+            }
+        }
+    }
+}
+
+/**
  * Result of individual Guna analysis
  */
 data class GunaAnalysis(
+    val gunaType: GunaType,
     val name: String,
     val maxPoints: Double,
     val obtainedPoints: Double,
@@ -504,6 +543,16 @@ data class GunaAnalysis(
     val isPositive: Boolean
 ) {
     val percentage: Double get() = (obtainedPoints / maxPoints) * 100.0
+
+    /**
+     * Check if this is a specific Guna type (type-safe)
+     */
+    fun isType(type: GunaType): Boolean = gunaType == type
+
+    /**
+     * Check if this Guna has dosha (0 points)
+     */
+    val hasDosha: Boolean get() = obtainedPoints == 0.0
 }
 
 /**
