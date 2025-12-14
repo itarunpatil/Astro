@@ -532,3 +532,158 @@ fun getChoghadiyaName(choghadiya: String, language: Language): String {
         else -> choghadiya
     }
 }
+
+// ============================================
+// HOROSCOPE CALCULATOR EXTENSIONS
+// ============================================
+
+/**
+ * Get localized display name for HoroscopeCalculator.LifeArea
+ */
+fun com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.getLocalizedName(language: Language): String {
+    return when (this) {
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.CAREER -> StringResources.get(StringKey.LIFE_AREA_CAREER, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.LOVE -> StringResources.get(StringKey.LIFE_AREA_LOVE, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.HEALTH -> StringResources.get(StringKey.LIFE_AREA_HEALTH, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.FINANCE -> StringResources.get(StringKey.LIFE_AREA_FINANCE, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.FAMILY -> StringResources.get(StringKey.LIFE_AREA_FAMILY, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.SPIRITUALITY -> StringResources.get(StringKey.LIFE_AREA_SPIRITUALITY, language)
+    }
+}
+
+/**
+ * Get localized full display name (with description) for HoroscopeCalculator.LifeArea
+ */
+fun com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.getLocalizedFullName(language: Language): String {
+    return when (this) {
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.CAREER -> StringResources.get(StringKey.LIFE_AREA_CAREER_FULL, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.LOVE -> StringResources.get(StringKey.LIFE_AREA_LOVE_FULL, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.HEALTH -> StringResources.get(StringKey.LIFE_AREA_HEALTH_FULL, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.FINANCE -> StringResources.get(StringKey.LIFE_AREA_FINANCE_FULL, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.FAMILY -> StringResources.get(StringKey.LIFE_AREA_FAMILY_FULL, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.SPIRITUALITY -> StringResources.get(StringKey.LIFE_AREA_SPIRITUALITY_FULL, language)
+    }
+}
+
+/**
+ * Get localized gemstone name for a planet
+ */
+fun Planet.getLocalizedGemstoneName(language: Language): String {
+    return when (this) {
+        Planet.SUN -> StringResources.get(StringKey.GEMSTONE_RUBY, language)
+        Planet.MOON -> StringResources.get(StringKey.GEMSTONE_PEARL, language)
+        Planet.MARS -> StringResources.get(StringKey.GEMSTONE_RED_CORAL, language)
+        Planet.MERCURY -> StringResources.get(StringKey.GEMSTONE_EMERALD, language)
+        Planet.JUPITER -> StringResources.get(StringKey.GEMSTONE_YELLOW_SAPPHIRE, language)
+        Planet.VENUS -> StringResources.get(StringKey.GEMSTONE_DIAMOND, language)
+        Planet.SATURN -> StringResources.get(StringKey.GEMSTONE_BLUE_SAPPHIRE, language)
+        Planet.RAHU -> StringResources.get(StringKey.GEMSTONE_HESSONITE, language)
+        Planet.KETU -> StringResources.get(StringKey.GEMSTONE_CATS_EYE, language)
+        else -> this.displayName
+    }
+}
+
+/**
+ * Get localized direction for a planet
+ */
+fun Planet.getLocalizedDirection(language: Language): String {
+    return when (this) {
+        Planet.SUN, Planet.MARS -> StringResources.get(StringKey.LUCKY_DIRECTION_EAST, language)
+        Planet.MOON, Planet.KETU -> StringResources.get(StringKey.LUCKY_DIRECTION_NORTHWEST, language)
+        Planet.VENUS -> StringResources.get(StringKey.LUCKY_DIRECTION_SOUTHEAST, language)
+        Planet.MERCURY -> StringResources.get(StringKey.LUCKY_DIRECTION_NORTH, language)
+        Planet.JUPITER -> StringResources.get(StringKey.LUCKY_DIRECTION_NORTHEAST, language)
+        Planet.SATURN -> StringResources.get(StringKey.LUCKY_DIRECTION_WEST, language)
+        Planet.RAHU -> StringResources.get(StringKey.LUCKY_DIRECTION_SOUTHWEST, language)
+        else -> StringResources.get(StringKey.LUCKY_DIRECTION_EAST, language)
+    }
+}
+
+/**
+ * Get localized dasha recommendation for a planet
+ */
+fun Planet.getLocalizedDashaRecommendation(language: Language): String {
+    return when (this) {
+        Planet.SUN -> StringResources.get(StringKey.DASHA_REC_SUN, language)
+        Planet.MOON -> StringResources.get(StringKey.DASHA_REC_MOON, language)
+        Planet.MARS -> StringResources.get(StringKey.DASHA_REC_MARS, language)
+        Planet.MERCURY -> StringResources.get(StringKey.DASHA_REC_MERCURY, language)
+        Planet.JUPITER -> StringResources.get(StringKey.DASHA_REC_JUPITER, language)
+        Planet.VENUS -> StringResources.get(StringKey.DASHA_REC_VENUS, language)
+        Planet.SATURN -> StringResources.get(StringKey.DASHA_REC_SATURN, language)
+        Planet.RAHU -> StringResources.get(StringKey.DASHA_REC_RAHU, language)
+        Planet.KETU -> StringResources.get(StringKey.DASHA_REC_KETU, language)
+        else -> ""
+    }
+}
+
+/**
+ * Get localized dasha affirmation for a planet
+ */
+fun Planet.getLocalizedDashaAffirmation(language: Language): String {
+    return when (this) {
+        Planet.SUN -> StringResources.get(StringKey.DASHA_AFF_SUN, language)
+        Planet.MOON -> StringResources.get(StringKey.DASHA_AFF_MOON, language)
+        Planet.MARS -> StringResources.get(StringKey.DASHA_AFF_MARS, language)
+        Planet.MERCURY -> StringResources.get(StringKey.DASHA_AFF_MERCURY, language)
+        Planet.JUPITER -> StringResources.get(StringKey.DASHA_AFF_JUPITER, language)
+        Planet.VENUS -> StringResources.get(StringKey.DASHA_AFF_VENUS, language)
+        Planet.SATURN -> StringResources.get(StringKey.DASHA_AFF_SATURN, language)
+        Planet.RAHU -> StringResources.get(StringKey.DASHA_AFF_RAHU, language)
+        Planet.KETU -> StringResources.get(StringKey.DASHA_AFF_KETU, language)
+        else -> ""
+    }
+}
+
+/**
+ * Get localized caution for a planet (if applicable)
+ */
+fun Planet.getLocalizedCaution(language: Language): String? {
+    return when (this) {
+        Planet.SATURN -> StringResources.get(StringKey.CAUTION_SATURN, language)
+        Planet.MARS -> StringResources.get(StringKey.CAUTION_MARS, language)
+        Planet.RAHU -> StringResources.get(StringKey.CAUTION_RAHU, language)
+        Planet.KETU -> StringResources.get(StringKey.CAUTION_KETU, language)
+        else -> null
+    }
+}
+
+/**
+ * Get localized lucky color by element
+ */
+fun getLocalizedElementColor(element: String, language: Language): String {
+    return when (element.lowercase()) {
+        "fire" -> StringResources.get(StringKey.LUCKY_COLOR_FIRE, language)
+        "earth" -> StringResources.get(StringKey.LUCKY_COLOR_EARTH, language)
+        "air" -> StringResources.get(StringKey.LUCKY_COLOR_AIR, language)
+        "water" -> StringResources.get(StringKey.LUCKY_COLOR_WATER, language)
+        else -> StringResources.get(StringKey.LUCKY_COLOR_EARTH, language)
+    }
+}
+
+/**
+ * Get localized element recommendation
+ */
+fun getLocalizedElementRecommendation(element: String, language: Language): String {
+    return when (element.lowercase()) {
+        "fire" -> StringResources.get(StringKey.ELEMENT_REC_FIRE, language)
+        "earth" -> StringResources.get(StringKey.ELEMENT_REC_EARTH, language)
+        "air" -> StringResources.get(StringKey.ELEMENT_REC_AIR, language)
+        "water" -> StringResources.get(StringKey.ELEMENT_REC_WATER, language)
+        else -> StringResources.get(StringKey.ELEMENT_REC_EARTH, language)
+    }
+}
+
+/**
+ * Get localized life area recommendation
+ */
+fun com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.getLocalizedRecommendation(language: Language): String {
+    return when (this) {
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.CAREER -> StringResources.get(StringKey.AREA_REC_CAREER, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.LOVE -> StringResources.get(StringKey.AREA_REC_LOVE, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.HEALTH -> StringResources.get(StringKey.AREA_REC_HEALTH, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.FINANCE -> StringResources.get(StringKey.AREA_REC_FINANCE, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.FAMILY -> StringResources.get(StringKey.AREA_REC_FAMILY, language)
+        com.astro.storm.ephemeris.HoroscopeCalculator.LifeArea.SPIRITUALITY -> StringResources.get(StringKey.AREA_REC_SPIRITUALITY, language)
+    }
+}

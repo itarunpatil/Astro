@@ -562,7 +562,7 @@ object ManglikDoshaCalculator {
             CompatibilityLevel.EXCELLENT -> StringKeyDosha.MANGLIK_COMPAT_EXCELLENT
             CompatibilityLevel.GOOD -> StringKeyDosha.MANGLIK_COMPAT_GOOD
             CompatibilityLevel.AVERAGE -> StringKeyDosha.MANGLIK_COMPAT_AVERAGE
-            CompatibilityLevel.BELOW_AVERAGE -> StringKeyDosha.MANGLIK_COMPAT_BELOW_AVG
+            CompatibilityLevel.BELOW_AVERAGE -> StringKeyDosha.MANGLIK_COMPAT_BELOW_AVERAGE
             CompatibilityLevel.POOR -> StringKeyDosha.MANGLIK_COMPAT_POOR
         }
 

@@ -369,6 +369,191 @@ enum class StringKey(override val en: String, override val ne: String) : StringK
     LIFE_AREA_FAMILY("Family", "परिवार"),
     LIFE_AREA_SPIRITUALITY("Spirituality", "आध्यात्मिकता"),
 
+    // Life Area Full Display Names (with descriptions)
+    LIFE_AREA_CAREER_FULL("Career", "क्यारियर"),
+    LIFE_AREA_LOVE_FULL("Love & Relationships", "प्रेम र सम्बन्ध"),
+    LIFE_AREA_HEALTH_FULL("Health & Vitality", "स्वास्थ्य र जीवनशक्ति"),
+    LIFE_AREA_FINANCE_FULL("Finance & Wealth", "वित्त र सम्पत्ति"),
+    LIFE_AREA_FAMILY_FULL("Family & Home", "परिवार र घर"),
+    LIFE_AREA_SPIRITUALITY_FULL("Spiritual Growth", "आध्यात्मिक वृद्धि"),
+
+    // ============================================
+    // HOROSCOPE THEMES
+    // ============================================
+    THEME_DYNAMIC_ACTION("Dynamic Action", "गतिशील कार्य"),
+    THEME_PRACTICAL_PROGRESS("Practical Progress", "व्यावहारिक प्रगति"),
+    THEME_SOCIAL_CONNECTIONS("Social Connections", "सामाजिक सम्बन्धहरू"),
+    THEME_EMOTIONAL_INSIGHT("Emotional Insight", "भावनात्मक अन्तर्दृष्टि"),
+    THEME_EXPANSION_WISDOM("Expansion & Wisdom", "विस्तार र ज्ञान"),
+    THEME_HARMONY_BEAUTY("Harmony & Beauty", "सामञ्जस्य र सौन्दर्य"),
+    THEME_DISCIPLINE_GROWTH("Discipline & Growth", "अनुशासन र वृद्धि"),
+    THEME_COMMUNICATION_LEARNING("Communication & Learning", "सञ्चार र सिकाइ"),
+    THEME_ENERGY_INITIATIVE("Energy & Initiative", "ऊर्जा र पहल"),
+    THEME_SELF_EXPRESSION("Self-Expression", "आत्म-अभिव्यक्ति"),
+    THEME_INTUITION_NURTURING("Intuition & Nurturing", "अन्तर्ज्ञान र पालन-पोषण"),
+    THEME_TRANSFORMATION("Transformation", "रूपान्तरण"),
+    THEME_SPIRITUAL_LIBERATION("Spiritual Liberation", "आध्यात्मिक मुक्ति"),
+    THEME_BALANCE_EQUILIBRIUM("Balance & Equilibrium", "सन्तुलन र समानता"),
+
+    // Theme Descriptions
+    THEME_DESC_DYNAMIC_ACTION(
+        "Your energy is high and aligned with fire elements. This is an excellent day for taking initiative, starting new projects, and asserting yourself confidently. Channel this vibrant energy into productive pursuits.",
+        "तपाईंको ऊर्जा उच्च छ र अग्नि तत्वहरूसँग मिलेको छ। यो पहल लिन, नयाँ परियोजनाहरू सुरु गर्न, र आत्मविश्वासका साथ आफूलाई प्रस्तुत गर्न उत्कृष्ट दिन हो। यो जीवन्त ऊर्जालाई उत्पादक कार्यहरूमा प्रयोग गर्नुहोस्।"
+    ),
+    THEME_DESC_PRACTICAL_PROGRESS(
+        "Grounded earth energy supports methodical progress today. Focus on practical tasks, financial planning, and building stable foundations. Your efforts will yield tangible results.",
+        "भूमिगत पृथ्वी ऊर्जाले आज व्यवस्थित प्रगतिलाई समर्थन गर्छ। व्यावहारिक कार्यहरू, वित्तीय योजना, र स्थिर आधारहरू निर्माण गर्नमा ध्यान दिनुहोस्। तपाईंको प्रयासले ठोस परिणामहरू दिनेछ।"
+    ),
+    THEME_DESC_SOCIAL_CONNECTIONS(
+        "Air element energy enhances communication and social interactions. Networking, negotiations, and intellectual pursuits are favored. Express your ideas and connect with like-minded people.",
+        "वायु तत्व ऊर्जाले सञ्चार र सामाजिक अन्तरक्रियाहरूलाई बढाउँछ। नेटवर्किङ, वार्ता, र बौद्धिक प्रयासहरू अनुकूल छन्। आफ्ना विचारहरू व्यक्त गर्नुहोस् र समान विचार भएका मानिसहरूसँग जोडिनुहोस्।"
+    ),
+    THEME_DESC_EMOTIONAL_INSIGHT(
+        "Water element energy deepens your intuition and emotional awareness. Trust your feelings and pay attention to subtle cues. This is a powerful day for healing and self-reflection.",
+        "जल तत्व ऊर्जाले तपाईंको अन्तर्ज्ञान र भावनात्मक जागरूकता गहिरो बनाउँछ। आफ्ना भावनाहरूमाथि विश्वास गर्नुहोस् र सूक्ष्म संकेतहरूमा ध्यान दिनुहोस्। यो उपचार र आत्म-चिन्तनको लागि शक्तिशाली दिन हो।"
+    ),
+    THEME_DESC_EXPANSION_WISDOM(
+        "Jupiter's benevolent influence brings opportunities for growth, learning, and good fortune. Be open to new possibilities and share your wisdom generously.",
+        "बृहस्पतिको उदार प्रभावले वृद्धि, सिकाइ र सौभाग्यका अवसरहरू ल्याउँछ। नयाँ सम्भावनाहरूको लागि खुला हुनुहोस् र आफ्नो ज्ञान उदारतापूर्वक साझा गर्नुहोस्।"
+    ),
+    THEME_DESC_HARMONY_BEAUTY(
+        "Venus graces you with appreciation for beauty, art, and relationships. Indulge in pleasurable activities and nurture your connections with loved ones.",
+        "शुक्रले तपाईंलाई सौन्दर्य, कला र सम्बन्धहरूको प्रशंसाको वरदान दिन्छ। रमाइलो गतिविधिहरूमा संलग्न हुनुहोस् र आफ्ना प्रियजनहरूसँगको सम्बन्ध पोषण गर्नुहोस्।"
+    ),
+    THEME_DESC_DISCIPLINE_GROWTH(
+        "Saturn's influence calls for patience, hard work, and responsibility. Embrace challenges as opportunities for growth and stay committed to your long-term goals.",
+        "शनिको प्रभावले धैर्य, कडा परिश्रम र जिम्मेवारीको आह्वान गर्छ। चुनौतीहरूलाई वृद्धिका अवसरहरूको रूपमा स्वीकार गर्नुहोस् र आफ्नो दीर्घकालीन लक्ष्यहरूप्रति प्रतिबद्ध रहनुहोस्।"
+    ),
+    THEME_DESC_COMMUNICATION_LEARNING(
+        "Mercury enhances your mental agility and communication skills. This is ideal for learning, teaching, writing, and all forms of information exchange.",
+        "बुधले तपाईंको मानसिक चुस्ती र सञ्चार कौशल बढाउँछ। यो सिक्न, सिकाउन, लेख्न र सूचना आदानप्रदानको सबै रूपहरूको लागि आदर्श छ।"
+    ),
+    THEME_DESC_ENERGY_INITIATIVE(
+        "Mars provides courage and drive. Take bold action, compete with integrity, and channel aggressive energy into constructive activities.",
+        "मंगलले साहस र प्रेरणा प्रदान गर्छ। साहसी कदम चाल्नुहोस्, इमानदारीताका साथ प्रतिस्पर्धा गर्नुहोस्, र आक्रामक ऊर्जालाई रचनात्मक गतिविधिहरूमा प्रयोग गर्नुहोस्।"
+    ),
+    THEME_DESC_SELF_EXPRESSION(
+        "The Sun illuminates your path to self-expression and leadership. Shine your light confidently and pursue activities that bring you recognition.",
+        "सूर्यले तपाईंको आत्म-अभिव्यक्ति र नेतृत्वको बाटो उज्यालो बनाउँछ। आत्मविश्वासका साथ आफ्नो प्रकाश फैलाउनुहोस् र पहिचान ल्याउने गतिविधिहरू अनुसरण गर्नुहोस्।"
+    ),
+    THEME_DESC_INTUITION_NURTURING(
+        "The Moon heightens your sensitivity and caring nature. Nurture yourself and others, and trust your instincts in important decisions.",
+        "चन्द्रमाले तपाईंको संवेदनशीलता र हेरचाहको स्वभाव बढाउँछ। आफू र अरूलाई पोषण गर्नुहोस्, र महत्त्वपूर्ण निर्णयहरूमा आफ्नो सहजज्ञानमाथि विश्वास गर्नुहोस्।"
+    ),
+    THEME_DESC_TRANSFORMATION(
+        "Rahu's influence brings unconventional opportunities and desires for change. Embrace innovation but stay grounded in your values.",
+        "राहुको प्रभावले अपरम्परागत अवसरहरू र परिवर्तनको इच्छा ल्याउँछ। नवीनतालाई अँगाल्नुहोस् तर आफ्ना मूल्यहरूमा जमिनमा रहनुहोस्।"
+    ),
+    THEME_DESC_SPIRITUAL_LIBERATION(
+        "Ketu's energy supports detachment and spiritual insight. Let go of what no longer serves you and focus on inner growth.",
+        "केतुको ऊर्जाले वैराग्य र आध्यात्मिक अन्तर्दृष्टिलाई समर्थन गर्छ। जुन कुरा अब तपाईंको सेवा गर्दैन त्यसलाई छोडिदिनुहोस् र आन्तरिक वृद्धिमा ध्यान केन्द्रित गर्नुहोस्।"
+    ),
+    THEME_DESC_BALANCE_EQUILIBRIUM(
+        "A day of balance where all energies are in equilibrium. Maintain steadiness and make measured progress in all areas of life.",
+        "सन्तुलनको दिन जहाँ सबै ऊर्जाहरू समानमा छन्। स्थिरता कायम राख्नुहोस् र जीवनका सबै क्षेत्रहरूमा मापित प्रगति गर्नुहोस्।"
+    ),
+
+    // ============================================
+    // LUCKY ELEMENTS
+    // ============================================
+    LUCKY_COLOR_FIRE("Red, Orange, or Gold", "रातो, सुन्तला, वा सुनौलो"),
+    LUCKY_COLOR_EARTH("Green, Brown, or White", "हरियो, खैरो, वा सेतो"),
+    LUCKY_COLOR_AIR("Blue, Light Blue, or Silver", "निलो, हल्का निलो, वा चाँदी"),
+    LUCKY_COLOR_WATER("White, Cream, or Sea Green", "सेतो, क्रीम, वा समुद्री हरियो"),
+
+    LUCKY_DIRECTION_EAST("East", "पूर्व"),
+    LUCKY_DIRECTION_WEST("West", "पश्चिम"),
+    LUCKY_DIRECTION_NORTH("North", "उत्तर"),
+    LUCKY_DIRECTION_SOUTH("South", "दक्षिण"),
+    LUCKY_DIRECTION_NORTHEAST("North-East", "उत्तर-पूर्व"),
+    LUCKY_DIRECTION_NORTHWEST("North-West", "उत्तर-पश्चिम"),
+    LUCKY_DIRECTION_SOUTHEAST("South-East", "दक्षिण-पूर्व"),
+    LUCKY_DIRECTION_SOUTHWEST("South-West", "दक्षिण-पश्चिम"),
+
+    // ============================================
+    // GEMSTONES
+    // ============================================
+    GEMSTONE_RUBY("Ruby", "माणिक"),
+    GEMSTONE_PEARL("Pearl", "मोती"),
+    GEMSTONE_RED_CORAL("Red Coral", "मूंगा"),
+    GEMSTONE_EMERALD("Emerald", "पन्ना"),
+    GEMSTONE_YELLOW_SAPPHIRE("Yellow Sapphire", "पुष्पराज"),
+    GEMSTONE_DIAMOND("Diamond or White Sapphire", "हीरा वा सेतो नीलम"),
+    GEMSTONE_BLUE_SAPPHIRE("Blue Sapphire", "नीलम"),
+    GEMSTONE_HESSONITE("Hessonite", "गोमेद"),
+    GEMSTONE_CATS_EYE("Cat's Eye", "वैदूर्य"),
+
+    // ============================================
+    // DASHA RECOMMENDATIONS
+    // ============================================
+    DASHA_REC_SUN("Engage in activities that build confidence and leadership skills.", "आत्मविश्वास र नेतृत्व कौशल विकास गर्ने गतिविधिहरूमा संलग्न हुनुहोस्।"),
+    DASHA_REC_MOON("Prioritize emotional well-being and nurturing relationships.", "भावनात्मक कल्याण र पोषणपूर्ण सम्बन्धहरूलाई प्राथमिकता दिनुहोस्।"),
+    DASHA_REC_MARS("Channel your energy into physical activities and competitive pursuits.", "आफ्नो ऊर्जालाई शारीरिक गतिविधि र प्रतिस्पर्धात्मक प्रयासहरूमा प्रयोग गर्नुहोस्।"),
+    DASHA_REC_MERCURY("Focus on learning, communication, and intellectual growth.", "सिकाइ, सञ्चार र बौद्धिक वृद्धिमा ध्यान दिनुहोस्।"),
+    DASHA_REC_JUPITER("Expand your horizons through education, travel, or spiritual practices.", "शिक्षा, यात्रा वा आध्यात्मिक अभ्यासहरूको माध्यमबाट आफ्नो क्षितिज विस्तार गर्नुहोस्।"),
+    DASHA_REC_VENUS("Cultivate beauty, art, and harmonious relationships.", "सौन्दर्य, कला र सामञ्जस्यपूर्ण सम्बन्धहरू विकास गर्नुहोस्।"),
+    DASHA_REC_SATURN("Embrace discipline, hard work, and long-term planning.", "अनुशासन, कडा परिश्रम र दीर्घकालीन योजनालाई अँगाल्नुहोस्।"),
+    DASHA_REC_RAHU("Explore unconventional paths while staying grounded.", "जमिनमा रहँदै अपरम्परागत मार्गहरू अन्वेषण गर्नुहोस्।"),
+    DASHA_REC_KETU("Practice detachment and focus on spiritual development.", "वैराग्यको अभ्यास गर्नुहोस् र आध्यात्मिक विकासमा ध्यान दिनुहोस्।"),
+
+    // ============================================
+    // DASHA AFFIRMATIONS
+    // ============================================
+    DASHA_AFF_SUN("I shine my light confidently and inspire those around me.", "म आत्मविश्वासका साथ आफ्नो प्रकाश फैलाउँछु र वरिपरिका मानिसहरूलाई प्रेरित गर्छु।"),
+    DASHA_AFF_MOON("I trust my intuition and nurture myself with compassion.", "म आफ्नो अन्तर्ज्ञानमाथि विश्वास गर्छु र करुणाका साथ आफूलाई पोषण गर्छु।"),
+    DASHA_AFF_MARS("I channel my energy constructively and act with courage.", "म आफ्नो ऊर्जा रचनात्मक रूपमा प्रयोग गर्छु र साहसका साथ काम गर्छु।"),
+    DASHA_AFF_MERCURY("I communicate clearly and embrace continuous learning.", "म स्पष्ट रूपमा सञ्चार गर्छु र निरन्तर सिकाइलाई अँगाल्छु।"),
+    DASHA_AFF_JUPITER("I am open to abundance and share my wisdom generously.", "म प्रचुरताको लागि खुला छु र आफ्नो ज्ञान उदारतापूर्वक साझा गर्छु।"),
+    DASHA_AFF_VENUS("I attract beauty and harmony into my life.", "म आफ्नो जीवनमा सौन्दर्य र सामञ्जस्य आकर्षित गर्छु।"),
+    DASHA_AFF_SATURN("I embrace discipline and trust in the timing of my journey.", "म अनुशासनलाई अँगाल्छु र आफ्नो यात्राको समयमाथि विश्वास गर्छु।"),
+    DASHA_AFF_RAHU("I embrace change and transform challenges into opportunities.", "म परिवर्तनलाई अँगाल्छु र चुनौतीहरूलाई अवसरहरूमा रूपान्तरण गर्छु।"),
+    DASHA_AFF_KETU("I release what no longer serves me and embrace spiritual growth.", "म जुन कुराले अब मेरो सेवा गर्दैन त्यसलाई छाड्छु र आध्यात्मिक वृद्धिलाई अँगाल्छु।"),
+
+    // ============================================
+    // ELEMENT RECOMMENDATIONS
+    // ============================================
+    ELEMENT_REC_FIRE("Take bold action and express yourself confidently.", "साहसी कदम चाल्नुहोस् र आत्मविश्वासका साथ आफूलाई व्यक्त गर्नुहोस्।"),
+    ELEMENT_REC_EARTH("Focus on practical matters and material progress.", "व्यावहारिक मामिलाहरू र भौतिक प्रगतिमा ध्यान दिनुहोस्।"),
+    ELEMENT_REC_AIR("Engage in social activities and intellectual pursuits.", "सामाजिक गतिविधिहरू र बौद्धिक प्रयासहरूमा संलग्न हुनुहोस्।"),
+    ELEMENT_REC_WATER("Trust your intuition and honor your emotions.", "आफ्नो अन्तर्ज्ञानमाथि विश्वास गर्नुहोस् र आफ्ना भावनाहरूलाई सम्मान गर्नुहोस्।"),
+
+    // ============================================
+    // LIFE AREA RECOMMENDATIONS
+    // ============================================
+    AREA_REC_CAREER("Capitalize on favorable career energy today.", "आज अनुकूल क्यारियर ऊर्जाको फाइदा उठाउनुहोस्।"),
+    AREA_REC_LOVE("Nurture your relationships with extra attention.", "थप ध्यानका साथ आफ्ना सम्बन्धहरूलाई पोषण गर्नुहोस्।"),
+    AREA_REC_HEALTH("Make the most of your vibrant health energy.", "आफ्नो जीवन्त स्वास्थ्य ऊर्जाको अधिकतम फाइदा लिनुहोस्।"),
+    AREA_REC_FINANCE("Take advantage of positive financial influences.", "सकारात्मक वित्तीय प्रभावहरूको फाइदा उठाउनुहोस्।"),
+    AREA_REC_FAMILY("Spend quality time with family members.", "परिवारका सदस्यहरूसँग गुणस्तरीय समय बिताउनुहोस्।"),
+    AREA_REC_SPIRITUALITY("Deepen your spiritual practices.", "आफ्नो आध्यात्मिक अभ्यासहरूलाई गहिरो बनाउनुहोस्।"),
+
+    // ============================================
+    // PLANET CAUTIONS
+    // ============================================
+    CAUTION_SATURN("Avoid rushing into decisions. Patience is key.", "निर्णयहरूमा हतार नगर्नुहोस्। धैर्य महत्त्वपूर्ण छ।"),
+    CAUTION_MARS("Control impulsive reactions and avoid conflicts.", "आवेगपूर्ण प्रतिक्रियाहरू नियन्त्रण गर्नुहोस् र विवादहरूबाट बच्नुहोस्।"),
+    CAUTION_RAHU("Be wary of deception and unrealistic expectations.", "छलकपट र अवास्तविक अपेक्षाहरूबाट सावधान रहनुहोस्।"),
+    CAUTION_KETU("Don't neglect practical responsibilities for escapism.", "पलायनवादको लागि व्यावहारिक जिम्मेवारीहरूलाई बेवास्ता नगर्नुहोस्।"),
+
+    // ============================================
+    // HOROSCOPE UI STRINGS
+    // ============================================
+    HOROSCOPE_BALANCE("Balance", "सन्तुलन"),
+    HOROSCOPE_STEADY_ENERGY("Steady energy expected", "स्थिर ऊर्जा अपेक्षित"),
+    HOROSCOPE_CALCULATING("Calculating...", "गणना गर्दै..."),
+    HOROSCOPE_VEDHA_OBSTRUCTION("However, %s creates Vedha obstruction, reducing benefits.", "तर, %s ले वेध अवरोध सिर्जना गर्छ, फाइदाहरू घटाउँछ।"),
+    HOROSCOPE_ASHTAKAVARGA_STRONG("Ashtakavarga (%d/8) strengthens results.", "अष्टकवर्ग (%d/8) ले परिणामहरू बलियो बनाउँछ।"),
+    HOROSCOPE_ASHTAKAVARGA_MODERATE("Ashtakavarga (%d/8) moderates results.", "अष्टकवर्ग (%d/8) ले परिणामहरूलाई मध्यम बनाउँछ।"),
+    HOROSCOPE_ASHTAKAVARGA_WEAK("Low Ashtakavarga (%d/8) weakens results.", "कम अष्टकवर्ग (%d/8) ले परिणामहरू कमजोर बनाउँछ।"),
+    HOROSCOPE_RETROGRADE_DELAY("%s's retrograde motion delays manifestation.", "%s को वक्री गतिले प्रकटीकरणमा ढिलाइ गर्छ।"),
+    HOROSCOPE_RETROGRADE_RELIEF("%s's retrograde provides some relief from challenges.", "%s को वक्रीले चुनौतीहरूबाट केही राहत प्रदान गर्छ।"),
+    HOROSCOPE_OWN_SIGN("Strong in own sign.", "आफ्नै राशिमा बलियो।"),
+    HOROSCOPE_EXALTED("Exalted - excellent results.", "उच्च - उत्कृष्ट परिणामहरू।"),
+    HOROSCOPE_DEBILITATED("Debilitated - results weakened.", "नीच - परिणामहरू कमजोर।"),
+    HOROSCOPE_FAVORABLE_TRANSIT("Favorable %s transit in house %d.", "भाव %d मा अनुकूल %s गोचर।"),
+    HOROSCOPE_UNFAVORABLE_TRANSIT("Challenging %s transit in house %d.", "भाव %d मा चुनौतीपूर्ण %s गोचर।"),
+    HOROSCOPE_BALANCED_ENERGY("Balanced energy in this area.", "यस क्षेत्रमा सन्तुलित ऊर्जा।"),
+
     // ============================================
     // SETTINGS TAB
     // ============================================
@@ -3804,12 +3989,7 @@ enum class StringKeyDosha(override val en: String, override val ne: String) : St
         "Mars is not placed in houses 1, 2, 4, 7, 8, or 12 from your Lagna, Moon, or Venus.",
         "मंगल तपाईंको लग्न, चन्द्र वा शुक्रबाट १, २, ४, ७, ८ वा १२ भावमा छैन।"
     ),
-    MANGLIK_INTERP_NO_DOSHA_DESC(
-        "There is no Manglik Dosha in your chart.",
-        "तपाईंको कुण्डलीमा मांगलिक दोष छैन।"
-    ),
     MANGLIK_INTERP_HEADER("MANGLIK DOSHA ANALYSIS", "मांगलिक दोष विश्लेषण"),
-    MANGLIK_INTERP_MARS_POSITION("Mars Position:", "मंगलको स्थिति:"),
     MANGLIK_INTERP_FROM_REFERENCE("ANALYSIS FROM THREE REFERENCE POINTS:", "तीन सन्दर्भ बिन्दुबाट विश्लेषण:"),
     MANGLIK_INTERP_FROM_LAGNA("From Lagna", "लग्नबाट"),
     MANGLIK_INTERP_FROM_MOON("From Moon", "चन्द्रबाट"),
@@ -3817,7 +3997,6 @@ enum class StringKeyDosha(override val en: String, override val ne: String) : St
     MANGLIK_INTERP_MARS_IN_HOUSE("Mars in house", "मंगल भावमा"),
     MANGLIK_INTERP_MANGLIK_YES("YES", "छ"),
     MANGLIK_INTERP_MANGLIK_NO("NO", "छैन"),
-    MANGLIK_INTERP_INITIAL_LEVEL("Initial Level:", "प्रारम्भिक स्तर:"),
     MANGLIK_INTERP_CANCELLATION_PRESENT("CANCELLATION FACTORS PRESENT:", "निरसन कारकहरू उपस्थित:"),
     MANGLIK_INTERP_EFFECTIVE_LEVEL("Effective Level After Cancellations:", "निरसन पछिको प्रभावकारी स्तर:"),
     MANGLIK_INTERP_HOUSE_SUFFIX_ST("st", "औं"),
